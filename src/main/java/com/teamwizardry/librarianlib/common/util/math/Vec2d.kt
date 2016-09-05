@@ -1,6 +1,6 @@
 package com.teamwizardry.librarianlib.common.util.math
 
-class Vec2d(var x: Double, var y: Double) {
+data class Vec2d(val x: Double, val y: Double) {
 
     val xf: Float
     val yf: Float
@@ -95,27 +95,6 @@ class Vec2d(var x: Double, var y: Double) {
         return norm.mul(this.dot(norm))
     }
     //=============================================================================
-
-    override fun hashCode(): Int {
-        val prime = 31
-        var result = 1
-        var temp: Long
-        temp = java.lang.Double.doubleToLongBits(x)
-        result = prime * result + (temp xor temp.ushr(32)).toInt()
-        temp = java.lang.Double.doubleToLongBits(y)
-        result = prime * result + (temp xor temp.ushr(32)).toInt()
-        return result
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other)
-            return true
-        if (other == null)
-            return false
-        if (javaClass != other.javaClass)
-            return false
-        return x == (other as Vec2d).x && y == other.y
-    }
 
     override fun toString(): String {
         return "($x,$y)"

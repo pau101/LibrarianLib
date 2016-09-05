@@ -1,7 +1,10 @@
 package com.teamwizardry.librarianlib.client.gui.components
 
 import com.teamwizardry.librarianlib.client.gui.GuiComponent
+import com.teamwizardry.librarianlib.common.util.div
 import com.teamwizardry.librarianlib.common.util.math.Vec2d
+import com.teamwizardry.librarianlib.common.util.plus
+import com.teamwizardry.librarianlib.common.util.times
 
 class ComponentCenterAlign(posX: Int, posY: Int, var centerHorizontal: Boolean, var centerVertical: Boolean) : GuiComponent<ComponentCenterAlign>(posX, posY) {
 
@@ -15,9 +18,8 @@ class ComponentCenterAlign(posX: Int, posY: Int, var centerHorizontal: Boolean, 
                 val compPos = component.pos
                 val bb = component.getLogicalSize()
                 bb ?: continue
-                val posOffsetFromBB = compPos.sub(bb.min)
-                val centerPos = bb.max.sub(bb.min).mul((1f / 2f).toDouble()).sub(posOffsetFromBB)
-                var adjustedPos = centerPos.mul(-1.0)
+                val centerPos = (bb.max - bb.min) / 2 + (bb.min - compPos)
+                var adjustedPos = centerPos * -1.0
                 if (!centerHorizontal)
                     adjustedPos = adjustedPos.setX(compPos.x)
                 if (!centerVertical)

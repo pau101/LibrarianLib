@@ -15,6 +15,7 @@ import net.minecraftforge.fml.relauncher.Side
 import net.minecraftforge.fml.relauncher.SideOnly
 import org.lwjgl.input.Keyboard
 import org.lwjgl.opengl.GL11
+import scala.annotation.meta.field
 import java.util.*
 
 /**
@@ -77,6 +78,9 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     class MouseOffsetEvent<out T : GuiComponent<*>>(val component: T, var offset: Vec2d) : Event()
     class MouseOverEvent<T : GuiComponent<T>>(val component: T, val mousePos: Vec2d, var isOver: Boolean) : Event()
 
+    class SetSizeEvent<T : GuiComponent<T>>(val component: T, var size: Vec2d) : Event()
+    class SetPosEvent<T : GuiComponent<T>>(val component: T, var pos: Vec2d) : Event()
+
     var zIndex = 0
     /**
      * Get the position of the component relative to it's parent
@@ -84,14 +88,20 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     /**
      * Set the position of the component relative to it's parent
      */
-    var pos: Vec2d
+    var pos: Vec2d = Vec2d(posX.toDouble(), posY.toDouble())
+        set(value) {
+            field = BUS.fire(SetPosEvent(thiz(), value)).pos
+        }
     /**
      * Get the size of the component
      */
     /**
      * Set the size of the component
      */
-    var size: Vec2d
+    var size: Vec2d = Vec2d(width.toDouble(), height.toDouble())
+        set(value) {
+            field = BUS.fire(SetSizeEvent(thiz(), value)).size
+        }
 
     var mouseOver = false
     var mousePosThisFrame = Vec2d.ZERO
@@ -157,11 +167,6 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     protected var components: MutableList<GuiComponent<*>> = ArrayList()
     var parent: GuiComponent<*>? = null
         private set
-
-    init {
-        this.pos = Vec2d(posX.toDouble(), posY.toDouble())
-        this.size = Vec2d(width.toDouble(), height.toDouble())
-    }
 
     /**
      * Draws the component, this is called between pre and post draw events
@@ -336,20 +341,6 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
         BUS.fire(PreDrawEvent(thiz(), mousePos, partialTicks))
 
         drawComponent(mousePos, partialTicks)
-
-        if (!mouseOver) GlStateManager.color(1f, 0f, 1f)
-        GlStateManager.disableTexture2D()
-        val tessellator = Tessellator.getInstance()
-        val vb = tessellator.buffer
-        vb.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION)
-        vb.pos(pos.x, pos.y, 0.0).endVertex()
-        vb.pos(pos.x + size.x, pos.y, 0.0).endVertex()
-        vb.pos(pos.x + size.x, pos.y + size.y, 0.0).endVertex()
-        vb.pos(pos.x, pos.y + size.y, 0.0).endVertex()
-        vb.pos(pos.x, pos.y, 0.0).endVertex()
-        tessellator.draw()
-        GlStateManager.enableTexture2D()
-        GlStateManager.color(1f, 1f, 1f)
 
         GlStateManager.pushMatrix()
         GlStateManager.pushAttrib()

@@ -4,6 +4,7 @@ import com.teamwizardry.librarianlib.LibrarianLib
 import com.teamwizardry.librarianlib.client.book.Book
 import com.teamwizardry.librarianlib.client.fx.shader.LibShaders
 import com.teamwizardry.librarianlib.client.fx.shader.ShaderHelper
+import com.teamwizardry.librarianlib.client.newbook.BookCommand
 import com.teamwizardry.librarianlib.client.sprite.SpritesMetadataSection
 import com.teamwizardry.librarianlib.client.sprite.SpritesMetadataSectionSerializer
 import com.teamwizardry.librarianlib.client.sprite.Texture
@@ -37,7 +38,7 @@ class LibClientProxy : LibCommonProxy(), IResourceManagerReloadListener {
         bookInstance = Book(LibrarianLib.MODID)
 
         if (LibrarianLib.DEV_ENVIRONMENT)
-            ClientCommandHandler.instance.registerCommand(ExampleBookCommand())
+            ClientCommandHandler.instance.registerCommand(BookCommand())
 
         ScissorUtil
         LibShaders
