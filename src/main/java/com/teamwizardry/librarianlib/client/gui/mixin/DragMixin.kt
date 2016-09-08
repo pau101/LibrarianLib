@@ -21,6 +21,7 @@ class DragMixin<T : GuiComponent<T>>(protected var component: T, protected var c
 
     private fun init() {
         component.BUS.hook(GuiComponent.MouseDownEvent::class.java) { event ->
+            if(event.isCanceled()) return@hook
             if (mouseDown == null && event.component.mouseOver && !component.BUS.fire(DragPickupEvent(event.component, event.mousePos, event.button)).isCanceled()) {
                 mouseDown = event.button
                 clickPos = event.mousePos
@@ -28,6 +29,7 @@ class DragMixin<T : GuiComponent<T>>(protected var component: T, protected var c
             }
         }
         component.BUS.hook(GuiComponent.MouseUpEvent::class.java) { event ->
+            if(event.isCanceled()) return@hook
             if (mouseDown == event.button && !component.BUS.fire(DragDropEvent(event.component, event.mousePos, event.button)).isCanceled()) {
                 mouseDown = null
                 event.cancel()

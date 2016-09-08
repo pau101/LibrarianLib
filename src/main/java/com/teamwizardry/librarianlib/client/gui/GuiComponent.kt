@@ -82,6 +82,12 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     class SetPosEvent<T : GuiComponent<T>>(val component: T, var pos: Vec2d) : Event()
 
     var zIndex = 0
+        set(value) {
+            field = value
+            zChanged = true
+        }
+
+    var zChanged = false
     /**
      * Get the position of the component relative to it's parent
      */
@@ -204,7 +210,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
             return
         components.add(component)
         component.parent = this
-        Collections.sort<GuiComponent<*>>(components, { a, b -> Integer.compare(a.zIndex, b.zIndex) })
+        sortChildren()
     }
 
     operator fun contains(component: GuiComponent<*>): Boolean {
@@ -271,6 +277,10 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
         return list
     }
 
+    fun sortChildren() {
+        Collections.sort(components, { a, b -> Integer.compare(a.zIndex, b.zIndex) })
+    }
+
     //=============================================================================
     /* Events/checks */
     //=============================================================================
@@ -328,6 +338,9 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
             }
             b
         }
+
+        if(components.any { it.zChanged })
+            sortChildren()
 
         if (wasMouseOver != this.mouseOver) {
             if (this.mouseOver) {
