@@ -2,10 +2,7 @@ package com.teamwizardry.librarianlib.client.newbook.editor
 
 import com.teamwizardry.librarianlib.client.gui.GuiBase
 import com.teamwizardry.librarianlib.client.gui.GuiComponent
-import com.teamwizardry.librarianlib.client.gui.components.ComponentCenterAlign
-import com.teamwizardry.librarianlib.client.gui.components.ComponentRect
-import com.teamwizardry.librarianlib.client.gui.components.ComponentText
-import com.teamwizardry.librarianlib.client.gui.components.ComponentVoid
+import com.teamwizardry.librarianlib.client.gui.components.*
 import com.teamwizardry.librarianlib.client.gui.mixin.DragMixin
 import com.teamwizardry.librarianlib.client.gui.mixin.DrawBorderMixin
 import com.teamwizardry.librarianlib.client.gui.mixin.ResizableMixin
@@ -43,6 +40,10 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
     val sidebarInfo = ComponentRect(0, 0, 100, 0)
     val sprites = ComponentVoid(0, 0, 0, 0)
 
+    val sidebar_size: ComponentText
+    val sidebar_pos: ComponentText
+    val sidebar_zIndex: ComponentTextInput
+
     init {
 
         val center = ComponentCenterAlign(0,0,true,true)
@@ -59,18 +60,22 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
         fullscreenComponents.add(sidebarList)
         fullscreenComponents.add(sidebarInfo)
 
-        val pos = ComponentText(1, 1, ComponentText.TextAlignH.LEFT, ComponentText.TextAlignV.TOP)
-        val size = ComponentText(1, 10, ComponentText.TextAlignH.LEFT, ComponentText.TextAlignV.TOP)
 
-        pos.text.func {
+        //region Sidebar stuff
+        //==============================================================================================================
+
+        sidebar_pos = ComponentText(1, 1, ComponentText.TextAlignH.LEFT, ComponentText.TextAlignV.TOP)
+        sidebar_pos.text.func {
             val sel = selected
             if(sel == null)
                 "(N/A, N/A)"
             else
                 "(${sel.pos.xi}, ${sel.pos.yi})"
         }
+        sidebarInfo.add(sidebar_pos)
 
-        size.text.func {
+        sidebar_size = ComponentText(1, 10, ComponentText.TextAlignH.LEFT, ComponentText.TextAlignV.TOP)
+        sidebar_size.text.func {
             val sel = selected
             if(sel == null)
                 "N/A x N/A"
@@ -78,8 +83,17 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
                 "${sel.size.xi} x ${sel.size.yi}"
         }
 
-        sidebarInfo.add(pos)
-        sidebarInfo.add(size)
+        sidebarInfo.add(sidebar_size)
+
+
+        sidebar_zIndex = ComponentTextInput(0, 20, 100, 100)
+
+
+
+        sidebarInfo.add(ComponentRect(sidebar_zIndex.pos.xi, sidebar_zIndex.pos.yi, sidebar_zIndex.size.xi, sidebar_zIndex.size.yi))
+        sidebarInfo.add(sidebar_zIndex)
+        //==============================================================================================================
+        //endregion
 
         sprites.calculateOwnHover = false
         components.add(sprites)
@@ -87,7 +101,7 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
         val componentsbg = ComponentVoid(-1000, -1000, 1000, 1000)
         componentsbg.zIndex = -1000
         componentsbg.BUS.hook(GuiComponent.MouseDownEvent::class.java) {
-            if(componentsbg.mouseOver) selected = null
+            if(componentsbg.mouseOver) select(null)
         }
         sprites.add(componentsbg)
 
@@ -112,10 +126,15 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
         ResizableMixin(rect, 8, false)
         DragMixin(rect, { it })
 
-        rect.BUS.hook(GuiComponent.MouseDownEvent::class.java) { if(rect.mouseOver) selected = rect }
+        rect.BUS.hook(GuiComponent.MouseDownEvent::class.java) { if(rect.mouseOver) select(rect) }
 
         sprites.add(rect)
         return rect
+    }
+
+    fun select(component: GuiComponent<*>?) {
+        selected = component
+
     }
 
     fun resize(size: Vec2d) {

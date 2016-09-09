@@ -382,12 +382,12 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
         if (BUS.fire(MouseDownEvent(thiz(), mousePos, button)).isCanceled())
             return
 
-        if (mouseOver)
-            mouseButtonsDown[button.ordinal] = true
-
         for (child in components) {
             child.mouseDown(transformChildPos(child, mousePos), button)
         }
+
+        if (mouseOver)
+            mouseButtonsDown[button.ordinal] = true
     }
 
     /**
@@ -398,13 +398,11 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      */
     fun mouseUp(mousePos: Vec2d, button: EnumMouseButton) {
         if (!isVisible) return
-        val wasDown = mouseButtonsDown[button.ordinal]
-        mouseButtonsDown[button.ordinal] = false
 
         if (BUS.fire(MouseUpEvent(thiz(), mousePos, button)).isCanceled())
             return
 
-        if (mouseOver && wasDown) {
+        if (mouseOver && mouseButtonsDown[button.ordinal]) {
             BUS.fire(MouseClickEvent(thiz(), mousePos, button))
             // don't return here, if a click was handled we should still handle the mouseUp
         }
@@ -412,6 +410,8 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
         for (child in components) {
             child.mouseUp(transformChildPos(child, mousePos), button)
         }
+
+        mouseButtonsDown[button.ordinal] = false
     }
 
     /**

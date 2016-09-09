@@ -29,4 +29,38 @@ object MethodHandleHelper {
         val f = ReflectionHelper.findField(clazz, *fieldNames)
         return if (getter) publicLookup().unreflectGetter(f) else publicLookup().unreflectSetter(f)
     }
+
+    /* === Copy-paste stuff for MethodHandles. ===
+    ========== !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ==========
+    !!!!!!!!!! Make sure the method is static, and that the methodhandle field is a static final field !!!!!!!!!!
+    ========== !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ==========
+                                  $%&$%&$%&$%& ^^^^ READ THAT ^^^^ $%&$%&$%&$%&
+
+    Getter/Setter: (change the true/false argument to true for get, false for set)
+                   (change getter and get for setter and set if you're doing a setter)
+
+        private static final MethodHandle getter_ClassName_memberName = MethodHandleHelper.handleForField(SourceClass, true, YourLibObfuscation.ClassName_MemberName);
+
+        public static MemberType get_ClassName_memberName(@Nonnull SourceClass instance) {
+            try {
+                return (MemberType) getter_ClassName_MemberName.invokeExact(instance);
+            } catch (Throwable t) {
+                throw propagate(t);
+            }
+        }
+
+    Method call: (make method return void if the method is a void method)
+                 (remember that for primitives you have to do something like int.class instead of Integer.class)
+
+        private static final MethodHandle method_ClassName_methodName = MethodHandleHelper.handleForMethod(SourceClass, YourLibObfuscation.ClassName_methodName);
+
+        public static ReturnType call_ClassName_methodName(@Nonnull SourceClass instance, ParamType param) {
+            try {
+                return (ReturnType) method_ClassName_methodName.invokeExact(instance, param);
+            } catch (Throwable t) {
+                throw propagate(t);
+            }
+        }
+
+     */
 }

@@ -17,7 +17,7 @@ open class GuiBase(protected var guiWidth: Int, protected var guiHeight: Int) : 
     init {
         components.calculateOwnHover = false
         fullscreenComponents.calculateOwnHover = false
-
+        components.zIndex = -100000 // really far back
         fullscreenComponents.add(components)
     }
 
