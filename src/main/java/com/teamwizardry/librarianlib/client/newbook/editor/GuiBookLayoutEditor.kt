@@ -1,6 +1,6 @@
 package com.teamwizardry.librarianlib.client.newbook.editor
 
-import com.teamwizardry.librarianlib.client.font.LLFontRenderer
+import com.teamwizardry.librarianlib.client.font.FontLoader
 import com.teamwizardry.librarianlib.client.font.StringRenderer
 import com.teamwizardry.librarianlib.client.gui.GuiBase
 import com.teamwizardry.librarianlib.client.gui.GuiComponent
@@ -119,8 +119,9 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
         selected = rect
 
         val sr = StringRenderer()
-        sr.addText("Hello world! a¡b™c£d¢e∞f§g¶h•iªjºk")
-        sr.buildText()
+        sr.addText("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ac condimentum ex. Donec cursus rutrum tortor. Nullam tincidunt elit consectetur justo accumsan blandit. Cras porta mi nulla, rutrum hendrerit ex hendrerit in. Integer rutrum diam nec massa tincidunt maximus. Quisque ac diam purus. Integer consequat pretium augue, sed congue enim interdum in. Suspendisse pretium scelerisque nunc, a vulputate quam egestas eu. Vivamus hendrerit sodales aliquet. Nulla non libero in turpis laoreet aliquet non vel augue. Praesent pellentesque ante ut turpis hendrerit, et tempor nisl venenatis. Curabitur urna nunc, interdum at lectus ut, blandit consectetur dui. Nam varius rutrum mi, quis condimentum nulla convallis sed. In dapibus magna ut elit ornare, at ornare erat fringilla. Donec in mauris tincidunt nisi tincidunt sodales vel eget odio.")
+        sr.wrap = 200
+
         sidebarInfo.BUS.hook(GuiComponent.PostDrawEvent::class.java) { event ->
             GlStateManager.blendFunc(GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA)
             sr.render(0, 30)

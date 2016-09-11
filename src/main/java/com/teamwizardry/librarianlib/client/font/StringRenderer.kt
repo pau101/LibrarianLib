@@ -1,7 +1,9 @@
 package com.teamwizardry.librarianlib.client.font
 
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.GlyphLayout
+import com.badlogic.gdx.utils.Align
 import com.teamwizardry.librarianlib.LibrarianLog
 import com.teamwizardry.librarianlib.client.core.GLTextureExport
 import com.teamwizardry.librarianlib.client.util.ScissorUtil
@@ -27,7 +29,6 @@ class StringRenderer {
         private val textBuffer = VertexBuffer(50000)
         private val layout = GlyphLayout()
         private var screenScale = 1
-
         init {
             MinecraftForge.EVENT_BUS.register(this)
         }
@@ -38,9 +39,43 @@ class StringRenderer {
         }
     }
 
+    private var screenScaleUsed = screenScale
+        set(value) {
+            if(value != field) {
+                dirty = true
+                updateFont()
+            }
+            field = value
+        }
+    var pointSize = 8
+        set(value) {
+            if(value != field) {
+                dirty = true
+                updateFont()
+            }
+            field = value
+        }
+
+    var wrap = 0
+    var fontFamily = EnumFont.HELVETICA
+        set(value) {
+            if(value != field) {
+                dirty = true
+                updateFont()
+            }
+            field = value
+        }
+
+    private var font: BitmapFont? = null
+    private var fontScale: Float = 1f
+
+    private fun updateFont() {
+        val (font, scale) = FontLoader.getFont(fontFamily, EnumFontStyle.NORMAL, pointSize*screenScaleUsed)
+        this.font = font
+        this.fontScale = scale
+    }
 
     private var text = ""
-    private var font = LLFontRenderer.standard
     private var dirty = false
 
     fun addText(str: String) {
@@ -56,17 +91,27 @@ class StringRenderer {
     private val glyphByPage = mutableMapOf<Int, MutableList<CompiledGlyph>>()
 
     fun buildText() {
+        updateFont()
+
+        val font = this.font
+        if(font == null) {
+            LibrarianLog.warn("[StringRenderer] Couldn't find font $fontFamily! Text build canceled!")
+            return
+        }
+
         try {
             GLContext.getCapabilities()
         } catch(e: RuntimeException) {
             LibrarianLog.warn("[StringRenderer] Tried to build text in a non-opengl context! This can cause glitches when "+
-                    "new glyphs have to be added to the map! Skipping build. This may cause problems with formatting")
+                    "new glyphs have to be added to the map!")
         }
 
         bufferByPage.clear()
-
-        layout.setText(font, text)
-
+        if(wrap < 1) {
+            layout.setText(font, text)
+        } else {
+            layout.setText(font, text, Color.BLACK, wrap*4f, Align.left, true)
+        }
         var y = 0f
         for(run in layout.runs) {
             buildRunGlyphs(run, y)
@@ -126,9 +171,18 @@ class StringRenderer {
         if(dirty) {
             buildText()
         }
+        val font = font
+        if(font == null) {
+            LibrarianLog.warn("[StringRenderer] Couldn't find font $fontFamily! Text render canceled!")
+            return
+        }
+
+        screenScaleUsed = screenScale
+        val scale = 1.0/( fontScale * screenScaleUsed )
+
         GlStateManager.pushMatrix()
         GlStateManager.translate(posX.toDouble(), posY.toDouble(), 0.0)
-        GlStateManager.scale(1.0/screenScale, 1.0/screenScale, 1.0)
+        GlStateManager.scale(scale, scale, 1.0)
         GlStateManager.enableTexture2D()
         GlStateManager.enableBlend()
         GlStateManager.color(1f, 1f, 1f, 1f)

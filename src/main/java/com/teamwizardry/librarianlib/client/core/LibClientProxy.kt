@@ -8,7 +8,7 @@ import com.teamwizardry.librarianlib.LibrarianLib
 import com.teamwizardry.librarianlib.client.book.Book
 import com.teamwizardry.librarianlib.client.core.libgdxhax.DummyApplication
 import com.teamwizardry.librarianlib.client.core.libgdxhax.DummyGraphics
-import com.teamwizardry.librarianlib.client.font.LLFontRenderer
+import com.teamwizardry.librarianlib.client.font.FontLoader
 import com.teamwizardry.librarianlib.client.fx.shader.LibShaders
 import com.teamwizardry.librarianlib.client.fx.shader.ShaderHelper
 import com.teamwizardry.librarianlib.client.newbook.BookCommand
@@ -64,7 +64,7 @@ class LibClientProxy : LibCommonProxy(), IResourceManagerReloadListener {
 
         onResourceManagerReload(Minecraft.getMinecraft().resourceManager)
 
-        LLFontRenderer
+        FontLoader
     }
 
     override fun init(e: FMLInitializationEvent) {
