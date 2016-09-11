@@ -93,22 +93,3 @@ fun <T> Class<T>.genericClass(index: Int): Class<*>? {
 
 @Suppress("UNCHECKED_CAST")
 fun <T, O> Class<T>.genericClassTyped(index: Int) = genericClass(index) as Class<O>?
-
-// VertexBuffer
-
-fun VertexBuffer.cache() : IntArray {
-    this.finishDrawing()
-
-    val intBuf = this.byteBuffer.asIntBuffer()
-    val bufferInts = IntArray(intBuf.limit())
-    for (i in bufferInts.indices) {
-        bufferInts[i] = intBuf.get(i)
-    }
-
-    this.reset()
-    return bufferInts
-}
-
-fun VertexBuffer.putCache(cache: IntArray) {
-    this.addVertexData(cache)
-}

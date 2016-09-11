@@ -5,8 +5,8 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout
 import com.teamwizardry.librarianlib.LibrarianLog
 import com.teamwizardry.librarianlib.client.core.GLTextureExport
 import com.teamwizardry.librarianlib.client.util.ScissorUtil
-import com.teamwizardry.librarianlib.common.util.cache
-import com.teamwizardry.librarianlib.common.util.putCache
+import com.teamwizardry.librarianlib.client.util.cache
+import com.teamwizardry.librarianlib.client.util.putCache
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.ScaledResolution
 import net.minecraft.client.renderer.GlStateManager
@@ -98,6 +98,9 @@ class StringRenderer {
             val texture = region.texture
 
             for(glyph in glyphs) {
+
+                if(glyph.glyph.width == 0 || glyph.glyph.height == 0)
+                    continue
 
                 val minX: Float = glyph.x + glyph.glyph.xoffset
                 val minY: Float = glyph.y + glyph.glyph.yoffset
