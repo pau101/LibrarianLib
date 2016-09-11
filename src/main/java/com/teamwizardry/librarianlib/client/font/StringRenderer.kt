@@ -2,6 +2,7 @@ package com.teamwizardry.librarianlib.client.font
 
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.GlyphLayout
+import com.teamwizardry.librarianlib.LibrarianLog
 import com.teamwizardry.librarianlib.client.core.GLTextureExport
 import com.teamwizardry.librarianlib.client.util.ScissorUtil
 import com.teamwizardry.librarianlib.common.util.cache
@@ -16,6 +17,7 @@ import net.minecraftforge.client.event.GuiScreenEvent
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GLContext
 
 /**
  * Created by TheCodeWarrior
@@ -39,15 +41,28 @@ class StringRenderer {
 
     private var text = ""
     private var font = LLFontRenderer.standard
+    private var dirty = false
 
     fun addText(str: String) {
         text += str
+        dirty = true
+    }
+    fun setText(str: String) {
+        text = str
+        dirty = true
     }
 
     private val bufferByPage = mutableMapOf<Int, IntArray>()
     private val glyphByPage = mutableMapOf<Int, MutableList<CompiledGlyph>>()
 
     fun buildText() {
+        try {
+            GLContext.getCapabilities()
+        } catch(e: RuntimeException) {
+            LibrarianLog.warn("[StringRenderer] Tried to build text in a non-opengl context! This can cause glitches when "+
+                    "new glyphs have to be added to the map! Skipping build. This may cause problems with formatting")
+        }
+
         bufferByPage.clear()
 
         layout.setText(font, text)
@@ -61,6 +76,8 @@ class StringRenderer {
         buildGlyphBuffers(font)
 
         glyphByPage.clear()
+
+        dirty = false
     }
 
     fun buildRunGlyphs(run: GlyphLayout.GlyphRun, y: Float) {
@@ -96,11 +113,6 @@ class StringRenderer {
                 textBuffer.pos(minX.toDouble(), maxY.toDouble(), 0.0).tex(minU.toDouble(), maxV.toDouble()).endVertex()
                 textBuffer.pos(maxX.toDouble(), maxY.toDouble(), 0.0).tex(maxU.toDouble(), maxV.toDouble()).endVertex()
                 textBuffer.pos(maxX.toDouble(), minY.toDouble(), 0.0).tex(maxU.toDouble(), minV.toDouble()).endVertex()
-
-//                textBuffer.pos(maxX.toDouble(), minY.toDouble(), 0.0).tex(maxU.toDouble(), maxV.toDouble()).endVertex()
-//                textBuffer.pos(maxX.toDouble(), maxY.toDouble(), 0.0).tex(maxU.toDouble(), minV.toDouble()).endVertex()
-//                textBuffer.pos(minX.toDouble(), maxY.toDouble(), 0.0).tex(minU.toDouble(), maxV.toDouble()).endVertex()
-//                textBuffer.pos(minX.toDouble(), minY.toDouble(), 0.0).tex(minU.toDouble(), minV.toDouble()).endVertex()
             }
 
             bufferByPage[page] = textBuffer.cache()
@@ -108,6 +120,9 @@ class StringRenderer {
     }
 
     fun render(posX: Int, posY: Int) {
+        if(dirty) {
+            buildText()
+        }
         GlStateManager.pushMatrix()
         GlStateManager.translate(posX.toDouble(), posY.toDouble(), 0.0)
         GlStateManager.scale(1.0/screenScale, 1.0/screenScale, 1.0)
@@ -122,10 +137,6 @@ class StringRenderer {
             font.regions[page].texture.bind()
 //            GLTextureExport.saveGlTexture("font_$page", 1)
             vb.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX)
-//            vb.pos(0.0,  0.0,  0.0).tex(0.0, 0.0).endVertex()
-//            vb.pos(0.0,  256.0, 0.0).tex(0.0, 1.0).endVertex()
-//            vb.pos(256.0, 256.0, 0.0).tex(1.0, 1.0).endVertex()
-//            vb.pos(256.0, 0.0,  0.0).tex(1.0, 0.0).endVertex()
             vb.putCache(buffer)
             tessellator.draw()
         }

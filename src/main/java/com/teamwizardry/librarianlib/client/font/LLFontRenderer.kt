@@ -3,10 +3,14 @@ package com.teamwizardry.librarianlib.client.font
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.files.FileHandleStream
 import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.graphics.g2d.PixmapPacker
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator
+import com.badlogic.gdx.math.MathUtils
 import com.teamwizardry.librarianlib.LibrarianLib
+import com.teamwizardry.librarianlib.client.core.libgdxhax.MyPixmapPacker
 import java.io.InputStream
 
 /**
@@ -35,9 +39,16 @@ object LLFontRenderer {
         parameter.flip = true
         parameter.incremental = true
         parameter.genMipMaps = true
+
 //        parameter.characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-=_+`~[]{}\\|;:'\",<.>/?"
 
-        val font = generator.generateFont(parameter)
+        val data = FreeTypeFontGenerator.FreeTypeBitmapFontData()
+        val font = generator.generateFont(parameter, data)
+
+        val packer = LLFontRendererMethodHandles.get_FreeTypeBitmapFontData_packer(data)
+        val newPacker = MyPixmapPacker(packer, LLFontRendererMethodHandles.get_PixmapPacker_packStrategy(packer))
+        LLFontRendererMethodHandles.set_FreeTypeBitmapFontData_packer(data, newPacker)
+
 //        generator.dispose()
         return font
     }

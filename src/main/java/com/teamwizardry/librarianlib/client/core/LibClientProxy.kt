@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.GL30
 import com.teamwizardry.librarianlib.LibrarianLib
 import com.teamwizardry.librarianlib.client.book.Book
+import com.teamwizardry.librarianlib.client.core.libgdxhax.DummyApplication
+import com.teamwizardry.librarianlib.client.core.libgdxhax.DummyGraphics
 import com.teamwizardry.librarianlib.client.font.LLFontRenderer
 import com.teamwizardry.librarianlib.client.fx.shader.LibShaders
 import com.teamwizardry.librarianlib.client.fx.shader.ShaderHelper
@@ -103,6 +105,10 @@ class LibClientProxy : LibCommonProxy(), IResourceManagerReloadListener {
             gl20 = constructor.newInstance() as GL20?
         }
 
+        Gdx.app = DummyApplication()
+        val g = DummyGraphics()
+        g.gl30 = gl30
+        Gdx.graphics = g
         Gdx.gl = gl20
         Gdx.gl20 = gl20
         Gdx.gl30 = gl30

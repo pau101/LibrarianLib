@@ -121,7 +121,6 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
         val sr = StringRenderer()
         sr.addText("Hello world! a¡b™c£d¢e∞f§g¶h•iªjºk")
         sr.buildText()
-
         sidebarInfo.BUS.hook(GuiComponent.PostDrawEvent::class.java) { event ->
             GlStateManager.blendFunc(GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA)
             sr.render(0, 30)
