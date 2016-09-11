@@ -3,13 +3,10 @@
 package com.teamwizardry.librarianlib.common.util
 
 import com.teamwizardry.librarianlib.common.util.math.Vec2d
-import net.minecraft.client.renderer.GlStateManager
+import net.minecraft.client.renderer.VertexBuffer
 import net.minecraft.util.math.AxisAlignedBB
 import net.minecraft.util.math.Vec3d
 import net.minecraft.util.text.TextFormatting
-import net.minecraftforge.fml.relauncher.Side
-import net.minecraftforge.fml.relauncher.SideOnly
-import java.awt.Color
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
@@ -96,3 +93,22 @@ fun <T> Class<T>.genericClass(index: Int): Class<*>? {
 
 @Suppress("UNCHECKED_CAST")
 fun <T, O> Class<T>.genericClassTyped(index: Int) = genericClass(index) as Class<O>?
+
+// VertexBuffer
+
+fun VertexBuffer.cache() : IntArray {
+    this.finishDrawing()
+
+    val intBuf = this.byteBuffer.asIntBuffer()
+    val bufferInts = IntArray(intBuf.limit())
+    for (i in bufferInts.indices) {
+        bufferInts[i] = intBuf.get(i)
+    }
+
+    this.reset()
+    return bufferInts
+}
+
+fun VertexBuffer.putCache(cache: IntArray) {
+    this.addVertexData(cache)
+}

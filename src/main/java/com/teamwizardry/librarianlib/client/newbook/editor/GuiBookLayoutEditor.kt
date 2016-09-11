@@ -1,5 +1,7 @@
 package com.teamwizardry.librarianlib.client.newbook.editor
 
+import com.teamwizardry.librarianlib.client.font.LLFontRenderer
+import com.teamwizardry.librarianlib.client.font.StringRenderer
 import com.teamwizardry.librarianlib.client.gui.GuiBase
 import com.teamwizardry.librarianlib.client.gui.GuiComponent
 import com.teamwizardry.librarianlib.client.gui.components.*
@@ -9,7 +11,9 @@ import com.teamwizardry.librarianlib.client.gui.mixin.ResizableMixin
 import com.teamwizardry.librarianlib.client.newbook.backend.Book
 import com.teamwizardry.librarianlib.client.sprite.Texture
 import com.teamwizardry.librarianlib.common.util.math.Vec2d
+import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.util.ResourceLocation
+import org.lwjgl.opengl.GL11
 import java.awt.Color
 import java.util.concurrent.ThreadLocalRandom
 
@@ -88,8 +92,6 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
 
         sidebar_zIndex = ComponentTextInput(0, 20, 100, 100)
 
-
-
         sidebarInfo.add(ComponentRect(sidebar_zIndex.pos.xi, sidebar_zIndex.pos.yi, sidebar_zIndex.size.xi, sidebar_zIndex.size.yi))
         sidebarInfo.add(sidebar_zIndex)
         //==============================================================================================================
@@ -116,6 +118,14 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
 
         selected = rect
 
+        val sr = StringRenderer()
+        sr.addText("Hello world! a¡b™c£d¢e∞f§g¶h•iªjºk")
+        sr.buildText()
+
+        sidebarInfo.BUS.hook(GuiComponent.PostDrawEvent::class.java) { event ->
+            GlStateManager.blendFunc(GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA)
+            sr.render(0, 30)
+        }
 
     }
 
