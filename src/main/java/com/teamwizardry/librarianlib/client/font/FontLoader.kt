@@ -1,18 +1,9 @@
 package com.teamwizardry.librarianlib.client.font
 
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.files.FileHandleStream
-import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.Pixmap
-import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g2d.BitmapFont
-import com.badlogic.gdx.graphics.g2d.PixmapPacker
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator
-import com.badlogic.gdx.math.MathUtils
-import com.sun.tools.doclets.formats.html.resources.standard
 import com.teamwizardry.librarianlib.LibrarianLib
-import com.teamwizardry.librarianlib.client.core.libgdxhax.MyPixmapPacker
+import org.newdawn.slick.TrueTypeFont
+import java.awt.Font
 import java.io.InputStream
 
 /**
@@ -20,17 +11,19 @@ import java.io.InputStream
  */
 object FontLoader {
 
+    val bitmapFont: BitmapFont
     val fontBitmapSizes = intArrayOf(32, 24, 16)
 
-    private val fonts = mutableMapOf<FontSpecification, BitmapFont>()
+    private val fonts = mutableMapOf<FontSpecification, TrueTypeFont>()
 
     init {
+        bitmapFont = BitmapFont(Font("Arial", Font.PLAIN, 16), true)
         loadFonts(EnumFont.HELVETICA, EnumFontStyle.NORMAL)
         loadFonts(EnumFont.UNIFONT, EnumFontStyle.NORMAL)
     }
 
-    fun getFont(family: EnumFont, style: EnumFontStyle, targetSize: Int): Pair<BitmapFont?, Float> {
-        var fontFound: BitmapFont? = null
+    fun getFont(family: EnumFont, style: EnumFontStyle, targetSize: Int): Pair<TrueTypeFont?, Float> {
+        var fontFound: TrueTypeFont? = null
         var maxSize = 0
         var foundStyle = false
 
@@ -60,34 +53,26 @@ object FontLoader {
 
     private fun loadFonts(family: EnumFont, style: EnumFontStyle) {
         val stream = LibrarianLib::class.java.getResourceAsStream("/assets/librarianlib/font/${family.name.toLowerCase()}/${style.name.toLowerCase()}.ttf")
-        val generator = FreeTypeFontGenerator(FileHandleInputStream(stream))
+
+//        val generator = FreeTypeFontGenerator(FileHandleInputStream(stream))
 
         for(size in fontBitmapSizes) {
-            loadFont(FontSpecification(family, style, size), generator)
+            loadFont(FontSpecification(family, style, size), stream)
         }
     }
 
-    private fun loadFont(specification: FontSpecification, generator: FreeTypeFontGenerator) {
-        val parameter = FreeTypeFontGenerator.FreeTypeFontParameter()
-        parameter.color = Color.RED
-        parameter.shadowColor = Color.GREEN
-        parameter.flip = true
-        parameter.incremental = true
-        parameter.magFilter = Texture.TextureFilter.Linear
-        parameter.minFilter = Texture.TextureFilter.Linear
+    private fun loadFont(specification: FontSpecification, stream: InputStream) {
 
-        parameter.size = specification.resolution
-        parameter.shadowOffsetX = specification.resolution/8
-        parameter.shadowOffsetY = specification.resolution/8
+        try {
 
-        val data = FreeTypeFontGenerator.FreeTypeBitmapFontData()
-        val font = generator.generateFont(parameter, data)
+            var awtFont = Font.createFont(Font.TRUETYPE_FONT, stream)
+            awtFont = awtFont.deriveFont(specification.resolution) // set font size
+            val font = TrueTypeFont(awtFont, true)
 
-        val packer = LLFontRendererMethodHandles.get_FreeTypeBitmapFontData_packer(data)
-        val newPacker = MyPixmapPacker(packer, LLFontRendererMethodHandles.get_PixmapPacker_packStrategy(packer))
-        LLFontRendererMethodHandles.set_FreeTypeBitmapFontData_packer(data, newPacker)
-
-        fonts[specification] = font
+            fonts[specification] = font
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
 }

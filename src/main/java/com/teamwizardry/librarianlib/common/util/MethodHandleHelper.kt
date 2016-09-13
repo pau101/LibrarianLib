@@ -39,9 +39,9 @@ object MethodHandleHelper {
     Getter/Setter: (change the true/false argument to true for get, false for set)
                    (change getter and get for setter and set if you're doing a setter)
 
-        private static final MethodHandle getter_ClassName_memberName = MethodHandleHelper.handleForField(SourceClass, true, YourLibObfuscation.ClassName_MemberName);
+        private static final MethodHandle getter_ClassName_memberName = MethodHandleHelper.handleForField(ClassName.class, true, YourLibObfuscation.ClassName_MemberName|new String[] {"memberName"});
 
-        public static MemberType get_ClassName_memberName(@Nonnull SourceClass instance) {
+        public static MemberType get_ClassName_memberName(@Nonnull ClassName instance) {
             try {
                 return (MemberType) getter_ClassName_MemberName.invokeExact(instance);
             } catch (Throwable t) {
@@ -52,11 +52,11 @@ object MethodHandleHelper {
     Method call: (make method return void if the method is a void method)
                  (remember that for primitives you have to do something like int.class instead of Integer.class)
 
-        private static final MethodHandle method_ClassName_methodName = MethodHandleHelper.handleForMethod(SourceClass, YourLibObfuscation.ClassName_methodName);
+        private static final MethodHandle method_ClassName_methodName = MethodHandleHelper.handleForMethod(ClassName.class, YourLibObfuscation.ClassName_methodName|new String[] {"methodName"}, paramClasses...);
 
-        public static ReturnType call_ClassName_methodName(@Nonnull SourceClass instance, ParamType param) {
+        public static Return_Type call_ClassName_methodName(@Nonnull ClassName instance, ParamType param) {
             try {
-                return (ReturnType) method_ClassName_methodName.invokeExact(instance, param);
+                return (Return_Type) method_ClassName_methodName.invokeExact(instance, param);
             } catch (Throwable t) {
                 throw propagate(t);
             }
