@@ -5,33 +5,34 @@ import java.awt.Rectangle
 /**
  * Created by TheCodeWarrior
  */
-class Packer(size: Int) {
+class Packer(size: Int, val maxSize: Int) {
     var padding = 0
-    protected val rootNode = Node()
+    protected val rootNode = mutableListOf<Node>()
 
     var width = size
-        set(value) {
-            field = value
-            rootNode.rect.width = value
-        }
+        private set
     var height = size
-        set(value) {
-            field = value
-            rootNode.rect.height = value
-        }
+        private set
 
     init {
-        rootNode.rect.width = width
-        rootNode.rect.height = height
+        val node = Node()
+        node.rect.width = width
+        node.rect.height = height
+        rootNode.add(node)
     }
 
     fun pack(w: Int, h: Int): Rectangle? {
         val rect = Rectangle(0, 0, w+padding, h+padding)
 
-        var node = insert(rootNode, rect)
+        var node: Node? = null
+        for(root in rootNode) {
+            node = insert(root, rect)
+            if(node != null)
+                break
+        }
         if(node == null) {
-            expand()
-            node = insert(rootNode, rect)
+            if(expand())
+                node = insert(rootNode.last(), rect)
         }
         if(node == null)
             return null
@@ -46,12 +47,29 @@ class Packer(size: Int) {
         return rect
     }
 
-    fun expand() {
+    fun expand(): Boolean {
+        val oldH = height
+        val oldW = width
+
+        val node = Node()
+        // we're doubling the size either way, so the only thing that changes is where it's positioned
+        node.rect.width = oldW
+        node.rect.height = oldH
+
         if(height > width) {
+            if(width * 2 > maxSize)
+                return false
             width *= 2
+            node.rect.x = oldW
         } else {
+            if(height * 2 > maxSize)
+                return false
             height *= 2
+            node.rect.y = oldH
         }
+        rootNode.add(node)
+
+        return true
     }
 
     private fun insert(node: Node, rect: Rectangle): Node? {

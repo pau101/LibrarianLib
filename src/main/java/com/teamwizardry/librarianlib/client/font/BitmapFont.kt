@@ -3,6 +3,7 @@ package com.teamwizardry.librarianlib.client.font
 import com.teamwizardry.librarianlib.LibrarianLog
 import com.teamwizardry.librarianlib.client.core.GLTextureExport
 import net.minecraft.client.renderer.GlStateManager
+import net.minecraft.client.renderer.OpenGlHelper
 import net.minecraft.client.renderer.texture.TextureUtil
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
@@ -40,7 +41,7 @@ class BitmapFont(val font: Font, val antiAlias: Boolean) {
     private val textRenderBuffer: BufferedImage
     private val g: Graphics2D
 
-    private val packer = Packer(64)
+    private val packer = Packer(64, maxTextureSize)
     var textureID: Int
         private set
     init {
@@ -224,6 +225,12 @@ class BitmapFont(val font: Font, val antiAlias: Boolean) {
         TextureUtil.deleteTexture(textureID)
         textureID = TextureUtil.glGenTextures()
         TextureUtil.uploadTextureImage(textureID, image)
+    }
+
+    companion object {
+        val maxTextureSize by lazy {
+            GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE)
+        }
     }
 
 }
