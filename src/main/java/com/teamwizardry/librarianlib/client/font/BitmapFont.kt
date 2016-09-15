@@ -1,10 +1,12 @@
 package com.teamwizardry.librarianlib.client.font
 
-import com.teamwizardry.librarianlib.LibrarianLog
+import com.teamwizardry.librarianlib.LibrarianLib
 import com.teamwizardry.librarianlib.client.core.GLTextureExport
+import com.teamwizardry.librarianlib.client.fx.shader.ShaderProgram
+import com.teamwizardry.librarianlib.client.vbo.*
 import net.minecraft.client.renderer.GlStateManager
-import net.minecraft.client.renderer.OpenGlHelper
 import net.minecraft.client.renderer.texture.TextureUtil
+import net.minecraft.util.ResourceLocation
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
@@ -13,11 +15,7 @@ import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL12
 import sun.font.Font2D
 import java.awt.*
-import java.awt.geom.Point2D
 import java.awt.image.BufferedImage
-import java.io.File
-import java.io.IOException
-import javax.imageio.ImageIO
 
 /**
  * Created by TheCodeWarrior
@@ -227,12 +225,72 @@ class BitmapFont(val font: Font, val antiAlias: Boolean) {
         TextureUtil.uploadTextureImage(textureID, image)
     }
 
+    fun enableShader() {
+        shader.use()
+        shader.setUniformVar(TEX_SIZE, textureWidth, textureHeight)
+    }
+
+    fun disableShader() {
+        shader.unbind()
+    }
+
     companion object {
         val maxTextureSize by lazy {
             GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE)
         }
+
+        val shader: ShaderProgram by lazy {
+            ShaderProgram(ResourceLocation(LibrarianLib.MODID, "text"))
+        }
+
+        private val TEX_SIZE by lazy {
+            shader.getUniformLocation("texSize")
+        }
+
+        val format = TextFormat()
     }
 
+}
+
+class TextFormat : VertexFormat(
+        PositionElement(3),
+        UVElement(),
+        ColorElement(),
+        AttributeElement(BitmapFont.shader.getAttributeLocation("shadowColor"), EnumType.FLOAT, 4)
+) {
+    private val pos: PositionElement = elements[0] as PositionElement
+    private val uv: UVElement = elements[1] as UVElement
+    private val color: ColorElement = elements[2] as ColorElement
+    private val shadow: AttributeElement = elements[3] as AttributeElement
+
+    fun pos(x: Number, y: Number, z: Number): TextFormat {
+        pos.x = x.toFloat()
+        pos.y = y.toFloat()
+        pos.z = z.toFloat()
+        return this
+    }
+
+    fun tex(u: Number, v: Number): TextFormat {
+        uv.u = u.toFloat()
+        uv.v = v.toFloat()
+        return this
+    }
+
+    fun color(r: Number, g: Number, b: Number, a: Number): TextFormat {
+        color.r = r.toFloat()
+        color.g = g.toFloat()
+        color.b = b.toFloat()
+        color.a = a.toFloat()
+        return this
+    }
+
+    fun shadow(r: Number, g: Number, b: Number, a: Number): TextFormat {
+        shadow.arrF[0] = r.toFloat()
+        shadow.arrF[1] = g.toFloat()
+        shadow.arrF[2] = b.toFloat()
+        shadow.arrF[3] = a.toFloat()
+        return this
+    }
 }
 
 data class Glyph(val c: Char, val u: Int, val v: Int, val width: Int, val height: Int, val metrics: GlyphMetrics)

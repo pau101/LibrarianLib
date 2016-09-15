@@ -2,8 +2,7 @@ package com.teamwizardry.librarianlib.common.util.math
 
 data class Vec2d(val x: Double, val y: Double) {
 
-    constructor(x: Float, y: Float) : this(x.toDouble(), y.toDouble())
-    constructor(x: Int, y: Int) : this(x.toDouble(), y.toDouble())
+    constructor(x: Number, y: Number) : this(x.toDouble(), y.toDouble())
 
     val xf: Float
     val yf: Float

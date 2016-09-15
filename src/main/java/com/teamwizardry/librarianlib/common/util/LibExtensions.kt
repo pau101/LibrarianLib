@@ -93,3 +93,15 @@ fun <T> Class<T>.genericClass(index: Int): Class<*>? {
 
 @Suppress("UNCHECKED_CAST")
 fun <T, O> Class<T>.genericClassTyped(index: Int) = genericClass(index) as Class<O>?
+
+// Clamp!
+
+fun <T: Comparable<T>> T.clamp(range: ClosedRange<T>): T {
+    if(range.endInclusive < range.start)
+        return this
+    if(this < range.start)
+        return range.start
+    if(this > range.endInclusive)
+        return range.endInclusive
+    return this
+}

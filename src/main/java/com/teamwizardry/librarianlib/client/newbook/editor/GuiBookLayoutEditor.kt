@@ -119,7 +119,13 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
         selected = rect
 
         val sr = StringRenderer()
-        sr.addText("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`0123456789-=~!@#$%^&*()_+[]\\{}|;':\",./<>?")//"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ac condimentum ex. Donec cursus rutrum tortor. Nullam tincidunt elit consectetur justo accumsan blandit. Cras porta mi nulla, rutrum hendrerit ex hendrerit in. Integer rutrum diam nec massa tincidunt maximus. Quisque ac diam purus. Integer consequat pretium augue, sed congue enim interdum in. Suspendisse pretium scelerisque nunc, a vulputate quam egestas eu. Vivamus hendrerit sodales aliquet. Nulla non libero in turpis laoreet aliquet non vel augue. Praesent pellentesque ante ut turpis hendrerit, et tempor nisl venenatis. Curabitur urna nunc, interdum at lectus ut, blandit consectetur dui. Nam varius rutrum mi, quis condimentum nulla convallis sed. In dapibus magna ut elit ornare, at ornare erat fringilla. Donec in mauris tincidunt nisi tincidunt sodales vel eget odio.")
+
+        var str = ""
+        for(i in 0x0000..0x04FF) {
+            str += String(Character.toChars(i))
+        }
+
+        sr.addText("Hello world!")//"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`0123456789-=~!@#$%^&*()_+[]\\{}|;':\",./<>?")//"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ac condimentum ex. Donec cursus rutrum tortor. Nullam tincidunt elit consectetur justo accumsan blandit. Cras porta mi nulla, rutrum hendrerit ex hendrerit in. Integer rutrum diam nec massa tincidunt maximus. Quisque ac diam purus. Integer consequat pretium augue, sed congue enim interdum in. Suspendisse pretium scelerisque nunc, a vulputate quam egestas eu. Vivamus hendrerit sodales aliquet. Nulla non libero in turpis laoreet aliquet non vel augue. Praesent pellentesque ante ut turpis hendrerit, et tempor nisl venenatis. Curabitur urna nunc, interdum at lectus ut, blandit consectetur dui. Nam varius rutrum mi, quis condimentum nulla convallis sed. In dapibus magna ut elit ornare, at ornare erat fringilla. Donec in mauris tincidunt nisi tincidunt sodales vel eget odio.")
         sr.wrap = 200
 
         sidebarInfo.BUS.hook(GuiComponent.PostDrawEvent::class.java) { event ->

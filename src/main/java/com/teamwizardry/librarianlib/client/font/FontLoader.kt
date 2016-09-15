@@ -2,6 +2,8 @@ package com.teamwizardry.librarianlib.client.font
 
 import com.badlogic.gdx.files.FileHandleStream
 import com.teamwizardry.librarianlib.LibrarianLib
+import com.teamwizardry.librarianlib.client.fx.shader.ShaderProgram
+import net.minecraft.util.ResourceLocation
 import org.newdawn.slick.TrueTypeFont
 import java.awt.Font
 import java.io.InputStream

@@ -14,7 +14,9 @@ import java.nio.FloatBuffer
  * Created by TheCodeWarrior
  */
 class ShaderProgram {
-    protected var buf16Pool: FloatBuffer? = null
+    protected val buf16Pool: FloatBuffer by lazy {
+        BufferUtils.createFloatBuffer(16)
+    }
 
     /**
      * Makes the "default shader" (0) the active program. In GL 3.1+ core profile,
@@ -34,8 +36,8 @@ class ShaderProgram {
      */
     @Throws(LWJGLException::class)
     constructor(location: ResourceLocation): this(
-            readFileAsString("/assets/${location.resourceDomain}/shader/${location.resourcePath}.vert"),
-            readFileAsString("/assets/${location.resourceDomain}/shader/${location.resourcePath}.frag"),
+            readFileAsString("/assets/${location.resourceDomain}/shaders/${location.resourcePath}.vert"),
+            readFileAsString("/assets/${location.resourceDomain}/shaders/${location.resourcePath}.frag"),
             null)
 
     @Throws(LWJGLException::class)
@@ -149,6 +151,16 @@ class ShaderProgram {
         return GL20.glGetUniformLocation(program, str)
     }
 
+    /**
+     * Gets the location of the specified attribute name.
+     * @param str the name of the attribute
+     * *
+     * @return the location of the attribute in this program
+     */
+    fun getAttributeLocation(str: String): Int {
+        return GL20.glGetAttribLocation(program, str)
+    }
+
     /* ------ UNIFORM SETTERS/GETTERS ------ */
 
     /**
@@ -163,6 +175,54 @@ class ShaderProgram {
     }
 
     /**
+     * Sets the value of the specified uniform variable to that given.
+     * @param program The id of the program containing the variable.
+     * *
+     * @param name The name of the variable.
+     * *
+     * @param values The value or values to be set.
+     */
+    fun setUniformVar(loc: Int, vararg values: Float) {
+        if (loc == -1) return
+        when (values.size) {
+            1 -> GL20.glUniform1f(loc, values[0])
+            2 -> GL20.glUniform2f(loc, values[0], values[1])
+            3 -> GL20.glUniform3f(loc, values[0], values[1], values[2])
+            4 -> GL20.glUniform4f(loc, values[0], values[1], values[2], values[3])
+            else -> {
+                val buff = BufferUtils.createFloatBuffer(values.size)
+                buff.put(values)
+                buff.rewind()
+                GL20.glUniform1(loc, buff)
+            }
+        }
+    }
+
+    /**
+     * Sets the value of the specified uniform variable to that given.
+     * @param program The id of the program containing the variable.
+     * *
+     * @param name The name of the variable.
+     * *
+     * @param values The value or values to be set.
+     */
+    fun setUniformVar(loc: Int, vararg values: Int) {
+        if (loc == -1) return
+        when (values.size) {
+            1 -> GL20.glUniform1i(loc, values[0])
+            2 -> GL20.glUniform2i(loc, values[0], values[1])
+            3 -> GL20.glUniform3i(loc, values[0], values[1], values[2])
+            4 -> GL20.glUniform4i(loc, values[0], values[1], values[2], values[3])
+            else -> {
+                val buff = BufferUtils.createIntBuffer(values.size)
+                buff.put(values)
+                buff.rewind()
+                GL20.glUniform1(loc, buff)
+            }
+        }
+    }
+
+    /**
      * Sends a 4x4 matrix to the shader program.
      * @param loc the location of the mat4 uniform
      * *
@@ -172,11 +232,9 @@ class ShaderProgram {
      */
     fun setUniformMatrix(loc: Int, transposed: Boolean, mat: Matrix4f) {
         if (loc == -1) return
-        if (buf16Pool == null)
-            buf16Pool = BufferUtils.createFloatBuffer(16)
-        buf16Pool!!.clear()
+        buf16Pool.clear()
         mat.store(buf16Pool)
-        buf16Pool!!.flip()
+        buf16Pool.flip()
         GL20.glUniformMatrix4(loc, transposed, buf16Pool)
     }
 
