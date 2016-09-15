@@ -20,7 +20,7 @@ import java.awt.image.BufferedImage
 /**
  * Created by TheCodeWarrior
  */
-class BitmapFont(val font: Font, val antiAlias: Boolean) {
+class BitmapFont(val font: Font, val antiAlias: Boolean, val shadowDistX: Int, val shadowDistY: Int) {
 
     var textureWidth = 64
         private set
@@ -88,6 +88,8 @@ class BitmapFont(val font: Font, val antiAlias: Boolean) {
             g.clearRect(0,0, textRenderBuffer.width, textRenderBuffer.height)
 
             // render the text
+            g.color = Color.GREEN
+            g.drawString(str, bufferTextOrigin+shadowDistX, bufferTextOrigin+shadowDistY)
             g.color = Color.RED
             g.drawString(str, bufferTextOrigin, bufferTextOrigin)
 

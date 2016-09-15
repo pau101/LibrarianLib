@@ -19,7 +19,7 @@ object FontLoader {
     private val fonts = mutableMapOf<FontSpecification, TrueTypeFont>()
 
     init {
-        bitmapFont = BitmapFont(Font("Arial", Font.PLAIN, 16), true)
+        bitmapFont = BitmapFont(Font("Arial", Font.PLAIN, 16), true, 1, 1)
         loadFonts(EnumFont.HELVETICA, EnumFontStyle.NORMAL)
         loadFonts(EnumFont.UNIFONT, EnumFontStyle.NORMAL)
     }

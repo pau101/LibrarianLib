@@ -13,6 +13,7 @@ import net.minecraftforge.client.event.GuiScreenEvent
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.opengl.GL11
+import java.awt.Color
 
 /**
  * Created by TheCodeWarrior
@@ -35,6 +36,8 @@ class StringRenderer {
     private var glyphLayout = GlyphLayout(FontLoader.bitmapFont)
 
     var wrap = 0
+    var textColor = Color.BLACK
+    var shadowColor = Color(0, 0, 0, 0)
 
     private var text = ""
     private var dirty = false
@@ -53,7 +56,7 @@ class StringRenderer {
 
     fun buildText() {
 
-        val list = glyphLayout.layout(text)
+        val list = glyphLayout.layout(text, TextFormatting(textColor))
 
         buildGlyphBuffer(list)
         dirty = false
@@ -81,10 +84,20 @@ class StringRenderer {
             val maxU: Float = (glyph.u + glyph.width ).toFloat() / w
             val maxV: Float = (glyph.v + glyph.height ).toFloat() / h
 
-            f.pos(minX.toDouble(), minY.toDouble(), 0.0).tex(minU.toDouble(), minV.toDouble()).color(1f, 1f, 0f, 1f).endVertex()
-            f.pos(minX.toDouble(), maxY.toDouble(), 0.0).tex(minU.toDouble(), maxV.toDouble()).color(1f, 1f, 0f, 1f).endVertex()
-            f.pos(maxX.toDouble(), maxY.toDouble(), 0.0).tex(maxU.toDouble(), maxV.toDouble()).color(1f, 1f, 0f, 1f).endVertex()
-            f.pos(maxX.toDouble(), minY.toDouble(), 0.0).tex(maxU.toDouble(), minV.toDouble()).color(1f, 1f, 0f, 1f).endVertex()
+            val tR = info.formatting.text.red/255f
+            val tG = info.formatting.text.green/255f
+            val tB = info.formatting.text.blue/255f
+            val tA = info.formatting.text.alpha/255f
+
+            val sR = if(info.formatting.shadow == null) 0f else info.formatting.shadow.red/255f
+            val sG = if(info.formatting.shadow == null) 0f else info.formatting.shadow.green/255f
+            val sB = if(info.formatting.shadow == null) 0f else info.formatting.shadow.blue/255f
+            val sA = if(info.formatting.shadow == null) 0f else info.formatting.shadow.alpha/255f
+
+            f.pos(minX.toDouble(), minY.toDouble(), 0.0).tex(minU.toDouble(), minV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
+            f.pos(minX.toDouble(), maxY.toDouble(), 0.0).tex(minU.toDouble(), maxV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
+            f.pos(maxX.toDouble(), maxY.toDouble(), 0.0).tex(maxU.toDouble(), maxV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
+            f.pos(maxX.toDouble(), minY.toDouble(), 0.0).tex(maxU.toDouble(), minV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
         }
         cache = f.cache()
     }
@@ -100,7 +113,6 @@ class StringRenderer {
         GlStateManager.pushMatrix()
         GlStateManager.translate(posX.toDouble(), posY.toDouble(), 0.0)
         GlStateManager.scale(scale, scale, 1.0)
-//        GlStateManager.disableTexture2D()
         GlStateManager.enableBlend()
         GlStateManager.color(0f, 0f, 0f, 1f)
 
@@ -111,7 +123,6 @@ class StringRenderer {
         if(c != null) {
             FontLoader.bitmapFont.enableShader()
             GlStateManager.bindTexture(FontLoader.bitmapFont.textureID)
-//            GLTextureExport.saveGlTexture("font", 1)
 
             f.start(VertexBuffer.INSTANCE)
             f.addCache(c)
@@ -119,17 +130,6 @@ class StringRenderer {
 
             FontLoader.bitmapFont.disableShader()
         }
-
-        GlStateManager.bindTexture(FontLoader.bitmapFont.textureID)
-
-        f.start(VertexBuffer.INSTANCE)
-
-        f.pos( 0,  0, 0).color(0, 0, 0, 1).tex(0, 0).endVertex()
-        f.pos( 0, 50, 0).color(0, 1, 0, 1).tex(0, 1).endVertex()
-        f.pos(50, 50, 0).color(1, 1, 0, 1).tex(1, 1).endVertex()
-        f.pos(50,  0, 0).color(1, 0, 0, 1).tex(1, 0).endVertex()
-
-        f.draw(GL11.GL_QUADS)
 
         GlStateManager.popMatrix()
     }
