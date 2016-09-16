@@ -20,28 +20,29 @@ import java.awt.image.BufferedImage
 /**
  * Created by TheCodeWarrior
  */
-class BitmapFont(val font: Font, val antiAlias: Boolean, val shadowDistX: Int, val shadowDistY: Int) {
+class BitmapFont(val spec: FontSpecification, val font: Font, val antiAlias: Boolean, val shadowDistX: Int, val shadowDistY: Int, var shear: Float = 0f) : BasicFont() {
 
-    var textureWidth = 64
-        private set
-    var textureHeight = 64
-        private set
+    private var textureWidth = 64
+    private var textureHeight = 64
 
     private val glyphs = mutableMapOf<Int, Glyph>()
     private val glyphMetrics = mutableMapOf<Int, GlyphMetrics>()
+    private val invalidGlyph: Glyph
+    private val invalidGlyphRect: Rectangle
 
     private val queuedGlyphUploads = mutableSetOf<GlyphUpload>()
 
-    val metrics: FontMetrics
-    val font2d: Font2D
+    private val metrics: FontMetrics
+    private val font2d: Font2D
 
     private val bufferTextOrigin: Int
     private val textRenderBuffer: BufferedImage
     private val g: Graphics2D
 
-    private val packer = Packer(64, maxTextureSize)
-    var textureID: Int
-        private set
+    private val packer = Packer(64, FontRenderer.maxTextureSize)
+    private var textureID: Int
+    private val texture: Texture
+
     init {
         MinecraftForge.EVENT_BUS.register(this)
 
@@ -67,9 +68,30 @@ class BitmapFont(val font: Font, val antiAlias: Boolean, val shadowDistX: Int, v
 
         textureID = TextureUtil.glGenTextures()
         TextureUtil.uploadTextureImage(textureID, img)
+
+        var thiz = this
+
+        texture = object : Texture() {
+            override val textureID: Int
+                get() = thiz.textureID
+            override val width: Int
+                get() = thiz.textureWidth
+            override val height: Int
+                get() = thiz.textureHeight
+        }
+
+        invalidGlyph = getGlyph(0)
+        invalidGlyphRect = Rectangle(invalidGlyph.u, invalidGlyph.v, invalidGlyph.width, invalidGlyph.height)
     }
 
-    fun getGlyph(c: Int): Glyph {
+    // =================================================================================================================
+
+    override fun getStyle() = spec.style
+    override fun withStyle(style: Int): BasicFont {
+        return FontLoader.font(FontSpecification(spec.font, style, spec.resolution)) ?: this
+    }
+
+    override fun getGlyph(c: Int): Glyph {
         return glyphs.getOrPut(c) {
             val str = String(Character.toChars(c))
 
@@ -77,19 +99,19 @@ class BitmapFont(val font: Font, val antiAlias: Boolean, val shadowDistX: Int, v
             val awtMetrics = font.createGlyphVector(g.fontRenderContext, str).getGlyphMetrics(0)
             val advance = metrics.charWidth(c)
 
-            if(awtMetrics.isWhitespace) {
+            if (awtMetrics.isWhitespace) {
                 val info = GlyphMetrics(this, c.toChar(), 0, 0, 0, 0, advance)
-                return@getOrPut Glyph(c.toChar(), 0, 0, 0, 0, info)
+                return@getOrPut Glyph(texture, c.toChar(), 0, 0, 0, 0, info)
             }
 
             // clear the graphics
 
             g.background = Color(0, 0, 0, 0)
-            g.clearRect(0,0, textRenderBuffer.width, textRenderBuffer.height)
+            g.clearRect(0, 0, textRenderBuffer.width, textRenderBuffer.height)
 
             // render the text
             g.color = Color.GREEN
-            g.drawString(str, bufferTextOrigin+shadowDistX, bufferTextOrigin+shadowDistY)
+            g.drawString(str, bufferTextOrigin + shadowDistX, bufferTextOrigin + shadowDistY)
             g.color = Color.RED
             g.drawString(str, bufferTextOrigin, bufferTextOrigin)
 
@@ -110,14 +132,16 @@ class BitmapFont(val font: Font, val antiAlias: Boolean, val shadowDistX: Int, v
             val image = textRenderBuffer.getSubimageCopy(rect.x, rect.y, rect.width, rect.height)
 
             var atlasRect = packer.pack(width, height)
-            if(atlasRect != null)
+            if (atlasRect != null)
                 queuedGlyphUploads.add(GlyphUpload(atlasRect.x, atlasRect.y, image))
-            if(atlasRect == null)
-                atlasRect = Rectangle(0, 0, width, height)
+            if (atlasRect == null)
+                atlasRect = Rectangle(invalidGlyphRect)
 
-            Glyph(c.toChar(), atlasRect.x, atlasRect.y, atlasRect.width, atlasRect.height, glyphInfo)
+            Glyph(texture, c.toChar(), atlasRect.x, atlasRect.y, atlasRect.width, atlasRect.height, glyphInfo)
         }
     }
+
+    // =================================================================================================================
 
     private fun getWrittenArea(): Rectangle {
         val raster = textRenderBuffer.alphaRaster
@@ -173,16 +197,12 @@ class BitmapFont(val font: Font, val antiAlias: Boolean, val shadowDistX: Int, v
         return Rectangle(left, top, right - left + 1, bottom - top + 1)
     }
 
-    fun getGlyphMetrics(c: Int): GlyphMetrics {
-        return getGlyph(c).metrics
-    }
-
     @SubscribeEvent
     fun renderTick(event: TickEvent.RenderTickEvent) {
         uploadQueued()
     }
 
-    fun uploadQueued() {
+    private fun uploadQueued() {
         if(packer.width != textureWidth || packer.height != textureHeight) {
             resize()
         }
@@ -226,78 +246,7 @@ class BitmapFont(val font: Font, val antiAlias: Boolean, val shadowDistX: Int, v
         textureID = TextureUtil.glGenTextures()
         TextureUtil.uploadTextureImage(textureID, image)
     }
-
-    fun enableShader() {
-        shader.use()
-        shader.setUniformVar(TEX_SIZE, textureWidth, textureHeight)
-    }
-
-    fun disableShader() {
-        shader.unbind()
-    }
-
-    companion object {
-        val maxTextureSize by lazy {
-            GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE)
-        }
-
-        val shader: ShaderProgram by lazy {
-            ShaderProgram(ResourceLocation(LibrarianLib.MODID, "text"))
-        }
-
-        private val TEX_SIZE by lazy {
-            shader.getUniformLocation("texSize")
-        }
-
-        val format = TextFormat()
-    }
-
 }
-
-class TextFormat : VertexFormat(
-        PositionElement(3),
-        UVElement(),
-        ColorElement(),
-        AttributeElement(BitmapFont.shader.getAttributeLocation("shadowColor"), EnumType.FLOAT, 4)
-) {
-    private val pos: PositionElement = elements[0] as PositionElement
-    private val uv: UVElement = elements[1] as UVElement
-    private val color: ColorElement = elements[2] as ColorElement
-    private val shadow: AttributeElement = elements[3] as AttributeElement
-
-    fun pos(x: Number, y: Number, z: Number): TextFormat {
-        pos.x = x.toFloat()
-        pos.y = y.toFloat()
-        pos.z = z.toFloat()
-        return this
-    }
-
-    fun tex(u: Number, v: Number): TextFormat {
-        uv.u = u.toFloat()
-        uv.v = v.toFloat()
-        return this
-    }
-
-    fun color(r: Number, g: Number, b: Number, a: Number): TextFormat {
-        color.r = r.toFloat()
-        color.g = g.toFloat()
-        color.b = b.toFloat()
-        color.a = a.toFloat()
-        return this
-    }
-
-    fun shadow(r: Number, g: Number, b: Number, a: Number): TextFormat {
-        shadow.arrF[0] = r.toFloat()
-        shadow.arrF[1] = g.toFloat()
-        shadow.arrF[2] = b.toFloat()
-        shadow.arrF[3] = a.toFloat()
-        return this
-    }
-}
-
-data class Glyph(val c: Char, val u: Int, val v: Int, val width: Int, val height: Int, val metrics: GlyphMetrics)
-
-data class GlyphMetrics(val font: BitmapFont, val c: Char, val bearingX: Int, val bearingY: Int, val width: Int, val height: Int, val advance: Int)
 
 data class GlyphUpload(val posX: Int, val posY: Int, val tex: BufferedImage)
 

@@ -1,23 +1,19 @@
 #version 120
 
 uniform sampler2D tex;
+uniform ivec2 texSize;
 
-varying vec4 textColorVarying;
-varying vec4 shadowColorVarying;
+varying vec4 textColor;
+varying vec4 shadowColor;
+varying vec2 uv;
 
 void main() {
-	vec4 tex = texture2D(tex,gl_TexCoord[0].st);
+	vec4 tex = texture2D(tex,uv/texSize);
 
-	vec3 color = ( (textColorVarying * tex.r) + (shadowColorVarying * tex.g) ).rgb;
+	vec3 color = ( (textColor * tex.r) + (shadowColor * tex.g) ).rgb;
 
-	// make the main alpha more pronounced, makes small text sharper
-    tex.r = clamp(tex.r * 2.0, 0.0, 1.0);
-
-    // alpha is the sum of main alpha and outline alpha
-    // main alpha is main font color alpha
-    // outline alpha is the stroke or shadow alpha
-    float mainAlpha = tex.r * textColorVarying.a;
-    float outlineAlpha = tex.g * shadowColorVarying.a * textColorVarying.a;
+    float mainAlpha = tex.a * tex.r * textColor.a;
+    float outlineAlpha = tex.a * tex.g * shadowColor.a * textColor.a;
 
 	gl_FragColor = vec4(color, mainAlpha + outlineAlpha);
 }

@@ -86,6 +86,10 @@ abstract class VertexFormat(vararg val elements: VertexElement) {
     var vertexCount = 0
         protected set
 
+    fun start() {
+        start(VertexBuffer.INSTANCE)
+    }
+
     fun start(buffer: VertexBuffer) {
         linked = buffer
         buffer.link(this)
@@ -112,20 +116,22 @@ abstract class VertexFormat(vararg val elements: VertexElement) {
 
     fun draw(drawMode: Int) {
         buf { vbo ->
-            vbo.finishDrawing(stride*vertexCount)
+            if(vertexCount > 0) {
+                vbo.finishDrawing(stride * vertexCount)
 
-            var i = 0
-            for (elem in elements) {
-                vbo.byteBuffer.position(i)
-                elem.setupRender(vbo, i, stride)
-                i += elem.size()
-            }
-            vbo.byteBuffer.position(0)
+                var i = 0
+                for (elem in elements) {
+                    vbo.byteBuffer.position(i)
+                    elem.setupRender(vbo, i, stride)
+                    i += elem.size()
+                }
+                vbo.byteBuffer.position(0)
 
-            GlStateManager.glDrawArrays(drawMode, 0, vertexCount)
+                GlStateManager.glDrawArrays(drawMode, 0, vertexCount)
 
-            for (elem in elements) {
-                elem.breakdownRender()
+                for (elem in elements) {
+                    elem.breakdownRender()
+                }
             }
 
             vbo.reset()
@@ -134,7 +140,7 @@ abstract class VertexFormat(vararg val elements: VertexElement) {
         }
     }
 
-    fun cache(): VboCache? {
+    fun cache(): VboCache {
         return buf { vbo ->
             vbo.finishDrawing(stride*vertexCount)
 
@@ -151,7 +157,7 @@ abstract class VertexFormat(vararg val elements: VertexElement) {
             vertexCount = 0
 
             return@buf c
-        }
+        } ?: VboCache(this, 0, ByteArray(0))
     }
 
     fun addCache(cache: VboCache) {

@@ -21,21 +21,21 @@ class BookCommand : CommandBase() {
 
 
     override fun execute(server: MinecraftServer?, sender: ICommandSender?, args: Array<out String>?) {
-        if(args == null)
-            return
-        if(args.size < 2)
-            return
+//        if(args == null)
+//            return
+//        if(args.size < 2)
+//            return
+//
+//        val list = args[0].split(":");
+//        if(list.size < 2)
+//            return
+//        val rl = ResourceLocation(list[0], list[1])
+//
+//        val action = args[1]
 
-        val list = args[0].split(":");
-        if(list.size < 2)
-            return
-        val rl = ResourceLocation(list[0], list[1])
-
-        val action = args[1]
-
-        if(action == "editlayout") {
+//        if(action == "editlayout") {
             server!!.addScheduledTask { Minecraft.getMinecraft().displayGuiScreen(GuiBookLayoutEditor(buuk)) }
-        }
+//        }
     }
 
     override fun getCommandName(): String {

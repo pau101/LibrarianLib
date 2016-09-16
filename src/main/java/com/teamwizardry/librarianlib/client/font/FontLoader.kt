@@ -2,6 +2,7 @@ package com.teamwizardry.librarianlib.client.font
 
 import com.badlogic.gdx.files.FileHandleStream
 import com.teamwizardry.librarianlib.LibrarianLib
+import com.teamwizardry.librarianlib.LibrarianLog
 import com.teamwizardry.librarianlib.client.fx.shader.ShaderProgram
 import net.minecraft.util.ResourceLocation
 import org.newdawn.slick.TrueTypeFont
@@ -13,26 +14,40 @@ import java.io.InputStream
  */
 object FontLoader {
 
-    val bitmapFont: BitmapFont
     val fontBitmapSizes = intArrayOf(32, 24, 16)
 
-    private val fonts = mutableMapOf<FontSpecification, TrueTypeFont>()
+    private val fonts = mutableMapOf<FontSpecification, BasicFont>()
+    val defaultFont: BasicFont
+
+    private val validFonts = mutableSetOf<String>()
 
     init {
-        bitmapFont = BitmapFont(Font("Arial", Font.PLAIN, 16), true, 1, 1)
-        loadFonts(EnumFont.HELVETICA, EnumFontStyle.NORMAL)
-        loadFonts(EnumFont.UNIFONT, EnumFontStyle.NORMAL)
+        registerFont("Arial", 16)
+        defaultFont = fonts.get(FontSpecification("Arial", Font.PLAIN, 16))!!
     }
 
-    fun getFont(family: EnumFont, style: EnumFontStyle, targetSize: Int): Pair<TrueTypeFont?, Float> {
-        var fontFound: TrueTypeFont? = null
+    fun font(spec: FontSpecification): BasicFont? {
+        return fonts.get(spec)
+    }
+
+    /**
+     * divide in-font size by float result to get actual size
+     * multiply actual size by float result to get in-font size
+     */
+    fun font(fontName: String, style: Int, targetSize: Int): Pair<BasicFont, Float> {
+        if(fontName !in validFonts) {
+            LibrarianLog.warn("Asked for font '$fontName' that isn't registered! Register it using `FontLoader.registerFont(\"$fontName\")`")
+            return Pair(defaultFont, 16f/targetSize)
+        }
+
+        var fontFound: BasicFont? = null
         var maxSize = 0
         var foundStyle = false
 
         for((spec, font) in fonts.entries) {
-            if(spec.family == family) {
+            if(spec.font == fontName) {
 
-                if(!foundStyle && spec.style == EnumFontStyle.NORMAL && (spec.resolution >= targetSize && maxSize < spec.resolution)) {
+                if(!foundStyle && spec.style == 0 && (spec.resolution >= targetSize && maxSize < spec.resolution)) {
                     fontFound = font
                     maxSize = spec.resolution
                 }
@@ -50,45 +65,34 @@ object FontLoader {
             }
         }
 
+        fontFound ?: return Pair(defaultFont, 16f/targetSize)
+
         return Pair(fontFound, maxSize.toFloat()/targetSize)
     }
 
-    private fun loadFonts(family: EnumFont, style: EnumFontStyle) {
-        val stream = LibrarianLib::class.java.getResourceAsStream("/assets/librarianlib/font/${family.name.toLowerCase()}/${style.name.toLowerCase()}.ttf")
-
-//        val generator = FreeTypeFontGenerator(FileHandleInputStream(stream))
+    /**
+     * font size is divided by [shadowDist] to get the shadow offset
+     */
+    fun registerFont(font: String, shadowDist: Int) {
+        validFonts.add(font)
 
         for(size in fontBitmapSizes) {
-            loadFont(FontSpecification(family, style, size), stream)
+            loadFont(font, Font.PLAIN, size, size/shadowDist)
+            loadFont(font, Font.BOLD, size, size/shadowDist)
+            loadFont(font, Font.ITALIC, size, size/shadowDist)
+            loadFont(font, Font.BOLD or Font.ITALIC, size, size/shadowDist)
         }
     }
 
-    private fun loadFont(specification: FontSpecification, stream: InputStream) {
-
-        try {
-
-            var awtFont = Font.createFont(Font.TRUETYPE_FONT, stream)
-            awtFont = awtFont.deriveFont(specification.resolution) // set font size
-            val font = TrueTypeFont(awtFont, true)
-
-            fonts[specification] = font
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+    private fun loadFont(font: String, style: Int, size: Int, shadow: Int) {
+        val spec = FontSpecification(font, style, size)
+        val bitmap = BitmapFont(spec, Font(font, style, size), true, shadow, shadow)
+        fonts.put(spec, bitmap)
     }
-
 }
 
 private class FileHandleInputStream(val stream: InputStream) : FileHandleStream("foobar") {
     override fun read() = stream
 }
 
-private data class FontSpecification(val family: EnumFont, val style: EnumFontStyle, val resolution: Int)
-
-enum class EnumFont {
-    HELVETICA, UNIFONT;
-}
-
-enum class EnumFontStyle {
-    NORMAL, ITALIC, BOLD, BOLD_ITALIC
-}
+data class FontSpecification(val font: String, val style: Int, val resolution: Int)

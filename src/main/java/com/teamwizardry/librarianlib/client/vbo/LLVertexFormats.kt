@@ -1,5 +1,7 @@
 package com.teamwizardry.librarianlib.client.vbo
 
+import com.teamwizardry.librarianlib.client.font.BitmapFont
+import com.teamwizardry.librarianlib.client.font.TextFormat
 import com.teamwizardry.librarianlib.common.util.clamp
 import net.minecraft.client.renderer.OpenGlHelper
 import org.lwjgl.opengl.GL11.*
@@ -8,6 +10,29 @@ import org.lwjgl.opengl.GL20.*
 /**
  * Created by TheCodeWarrior
  */
+
+object PosColorFormat : VertexFormat(
+        PositionElement(3),
+        ColorElement()
+) {
+    private val pos: PositionElement = elements[0] as PositionElement
+    private val color: ColorElement  = elements[1] as ColorElement
+
+    fun pos(x: Number, y: Number, z: Number): PosColorFormat {
+        pos.x = x.toFloat()
+        pos.y = y.toFloat()
+        pos.z = z.toFloat()
+        return this
+    }
+
+    fun color(r: Number, g: Number, b: Number, a: Number): PosColorFormat {
+        color.r = r.toFloat()
+        color.g = g.toFloat()
+        color.b = b.toFloat()
+        color.a = a.toFloat()
+        return this
+    }
+}
 
 class PositionElement(count: Int) : VertexElement(EnumType.FLOAT, count.clamp(1..4)) {
     var x = 0f
@@ -123,5 +148,56 @@ class AttributeElement(val attr: Int, type: EnumType, count: Int) : VertexElemen
 
     override fun breakdownRender() {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY)
+    }
+
+    fun set(vararg nums: Number) {
+        if(type == EnumType.FLOAT)
+            setF(*nums)
+        if(type == EnumType.INT || type == EnumType.UINT)
+            setI(*nums)
+        if(type == EnumType.SHORT || type == EnumType.USHORT)
+            setS(*nums)
+        if(type == EnumType.BYTE || type == EnumType.UBYTE)
+            setB(*nums)
+    }
+
+    fun setF(vararg nums: Number) {
+        for(i in arrF.indices) {
+            if(i < nums.size) {
+                arrF[i] = nums[i].toFloat()
+            } else {
+                arrF[i] = 0f
+            }
+        }
+    }
+
+    fun setI(vararg nums: Number) {
+        for(i in arrI.indices) {
+            if(i < nums.size) {
+                arrI[i] = nums[i].toInt()
+            } else {
+                arrI[i] = 0
+            }
+        }
+    }
+
+    fun setS(vararg nums: Number) {
+        for(i in arrS.indices) {
+            if(i < nums.size) {
+                arrS[i] = nums[i].toShort()
+            } else {
+                arrS[i] = 0
+            }
+        }
+    }
+
+    fun setB(vararg nums: Number) {
+        for(i in arrB.indices) {
+            if(i < nums.size) {
+                arrB[i] = nums[i].toByte()
+            } else {
+                arrB[i] = 0
+            }
+        }
     }
 }

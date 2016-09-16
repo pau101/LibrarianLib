@@ -1,9 +1,12 @@
 package com.teamwizardry.librarianlib.client.font
 
+import com.teamwizardry.librarianlib.client.core.GLTextureExport
 import com.teamwizardry.librarianlib.client.util.cache
 import com.teamwizardry.librarianlib.client.util.putCache
+import com.teamwizardry.librarianlib.client.vbo.PosColorFormat
 import com.teamwizardry.librarianlib.client.vbo.VboCache
 import com.teamwizardry.librarianlib.client.vbo.VertexBuffer
+import com.teamwizardry.librarianlib.common.util.math.Vec2d
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.ScaledResolution
 import net.minecraft.client.renderer.GlStateManager
@@ -13,6 +16,7 @@ import net.minecraftforge.client.event.GuiScreenEvent
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.opengl.GL11
+import sun.security.provider.certpath.Vertex
 import java.awt.Color
 
 /**
@@ -33,73 +37,134 @@ class StringRenderer {
         }
     }
 
-    private var glyphLayout = GlyphLayout(FontLoader.bitmapFont)
+    private var glyphLayout = GlyphLayout()
 
     var wrap = 0
+        set(value) { field = value; dirty = true }
     var textColor = Color.BLACK
+        set(value) { field = value; dirty = true }
     var shadowColor = Color(0, 0, 0, 0)
+        set(value) { field = value; dirty = true }
+    var font = FontLoader.defaultFont
+        set(value) { field = value; dirty = true }
 
-    private var text = ""
+    var text = ""
+        set(value) { field = value; dirty = true }
     private var dirty = false
 
     fun addText(str: String) {
         text += str
-        dirty = true
     }
 
-    fun setText(str: String) {
-        text = str
-        dirty = true
-    }
-
-    private var cache: VboCache? = null
+    private var caches = mutableMapOf<Texture, VboCache>()
+    private var underlineCache: VboCache? = null
+    private var strikeCache: VboCache? = null
 
     fun buildText() {
 
-        val list = glyphLayout.layout(text, TextFormatting(textColor))
+        val list = glyphLayout.layout(text, TextFormatting(font, textColor))
 
         buildGlyphBuffer(list)
         dirty = false
     }
 
     fun buildGlyphBuffer(list: List<GlyphDrawInfo>) {
-        val w = FontLoader.bitmapFont.textureWidth
-        val h = FontLoader.bitmapFont.textureHeight
-        val f = BitmapFont.format
-        f.start(VertexBuffer.INSTANCE)
+        caches.clear()
+
+        val map = mutableMapOf<Texture, MutableList<GlyphDrawInfo>>()
+        for(info in list) {
+            map.getOrPut(info.glyph.texture, { mutableListOf() }).add(info)
+        }
+
+        val f = FontRenderer.format
+
+        for( (tex, glyphs) in map.entries ) {
+            f.start(VertexBuffer.INSTANCE)
+            for(info in glyphs) {
+
+                val glyph = info.glyph
+
+                if(glyph.metrics.width == 0 || glyph.metrics.height == 0)
+                    continue
+
+                val minX: Float = info.x + glyph.metrics.bearingX
+                val minY: Float = info.y - glyph.metrics.bearingY
+                val maxX: Float = minX + glyph.metrics.width
+                val maxY: Float = minY + glyph.metrics.height
+
+                val minU: Float = (glyph.u ).toFloat()
+                val minV: Float = (glyph.v ).toFloat()
+                val maxU: Float = (glyph.u + glyph.width ).toFloat()
+                val maxV: Float = (glyph.v + glyph.height ).toFloat()
+
+                val tR = info.formatting.text.red/255f
+                val tG = info.formatting.text.green/255f
+                val tB = info.formatting.text.blue/255f
+                val tA = info.formatting.text.alpha/255f
+
+                val sR = info.formatting.shadow.let { if(it == null) 0f else it.red  /255f }
+                val sG = info.formatting.shadow.let { if(it == null) 0f else it.green/255f }
+                val sB = info.formatting.shadow.let { if(it == null) 0f else it.blue /255f }
+                val sA = info.formatting.shadow.let { if(it == null) 0f else it.alpha/255f }
+
+                f.pos(minX.toDouble(), minY.toDouble(), 0.0).tex(minU.toDouble(), minV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
+                f.pos(minX.toDouble(), maxY.toDouble(), 0.0).tex(minU.toDouble(), maxV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
+                f.pos(maxX.toDouble(), maxY.toDouble(), 0.0).tex(maxU.toDouble(), maxV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
+                f.pos(maxX.toDouble(), minY.toDouble(), 0.0).tex(maxU.toDouble(), minV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
+            }
+            caches.put(tex, f.cache())
+        }
+
+        // =============================================================================================================
+
+        val underlineDist = 2
+
+        var underlinePos = Vec2d.ZERO
+        var underlineColor: Color? = null
+
+        var prevEnd = Vec2d.ZERO
+
+        PosColorFormat.start(VertexBuffer.INSTANCE)
         for(info in list) {
 
-            val glyph = info.glyph
+            if(underlineColor != info.formatting.underline || info.y != underlinePos.yf) {
+                if(underlineColor != null) {
+                    PosColorFormat.pos(underlinePos.x, underlinePos.y+underlineDist, 0).color(underlineColor.red/255f, underlineColor.green/255f, underlineColor.blue/255f, 1).endVertex()
+                    PosColorFormat.pos(prevEnd.x, prevEnd.y+underlineDist, 0)          .color(underlineColor.red/255f, underlineColor.green/255f, underlineColor.blue/255f, 1).endVertex()
+                }
+                underlineColor = info.formatting.underline
+                underlinePos = Vec2d(info.x, info.y)
+            }
 
-            if(glyph.metrics.width == 0 || glyph.metrics.height == 0)
-                continue
-
-            val minX: Float = info.x + glyph.metrics.bearingX
-            val minY: Float = info.y - glyph.metrics.bearingY
-            val maxX: Float = minX + glyph.metrics.width //+ glyph.metrics.bearingX
-            val maxY: Float = minY + glyph.metrics.height//+ glyph.metrics.bearingY
-
-            val minU: Float = (glyph.u ).toFloat() / w
-            val minV: Float = (glyph.v ).toFloat() / h
-            val maxU: Float = (glyph.u + glyph.width ).toFloat() / w
-            val maxV: Float = (glyph.v + glyph.height ).toFloat() / h
-
-            val tR = info.formatting.text.red/255f
-            val tG = info.formatting.text.green/255f
-            val tB = info.formatting.text.blue/255f
-            val tA = info.formatting.text.alpha/255f
-
-            val sR = if(info.formatting.shadow == null) 0f else info.formatting.shadow.red/255f
-            val sG = if(info.formatting.shadow == null) 0f else info.formatting.shadow.green/255f
-            val sB = if(info.formatting.shadow == null) 0f else info.formatting.shadow.blue/255f
-            val sA = if(info.formatting.shadow == null) 0f else info.formatting.shadow.alpha/255f
-
-            f.pos(minX.toDouble(), minY.toDouble(), 0.0).tex(minU.toDouble(), minV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
-            f.pos(minX.toDouble(), maxY.toDouble(), 0.0).tex(minU.toDouble(), maxV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
-            f.pos(maxX.toDouble(), maxY.toDouble(), 0.0).tex(maxU.toDouble(), maxV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
-            f.pos(maxX.toDouble(), minY.toDouble(), 0.0).tex(maxU.toDouble(), minV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
+            prevEnd = Vec2d(info.x + info.glyph.metrics.advance, info.y)
         }
-        cache = f.cache()
+
+        underlineCache = PosColorFormat.cache()
+
+        // =============================================================================================================
+
+        val strikeHeight = 5
+
+        var strikePos = Vec2d.ZERO
+        var strikeColor: Color? = null
+        prevEnd = Vec2d.ZERO
+
+        PosColorFormat.start(VertexBuffer.INSTANCE)
+        for(info in list) {
+
+            if(strikeColor != info.formatting.strikethrough || info.y != strikePos.yf) {
+                if(strikeColor != null) {
+                    PosColorFormat.pos(strikePos.x, strikePos.y-strikeHeight, 0).color(strikeColor.red/255f, strikeColor.green/255f, strikeColor.blue/255f, 1).endVertex()
+                    PosColorFormat.pos(prevEnd.x, prevEnd.y-strikeHeight, 0)    .color(strikeColor.red/255f, strikeColor.green/255f, strikeColor.blue/255f, 1).endVertex()
+                }
+                strikeColor = info.formatting.strikethrough
+                strikePos = Vec2d(info.x, info.y)
+            }
+
+            prevEnd = Vec2d(info.x + info.glyph.metrics.advance, info.y)
+        }
+
+        strikeCache = PosColorFormat.cache()
     }
 
     fun render(posX: Int, posY: Int) {
@@ -114,21 +179,45 @@ class StringRenderer {
         GlStateManager.translate(posX.toDouble(), posY.toDouble(), 0.0)
         GlStateManager.scale(scale, scale, 1.0)
         GlStateManager.enableBlend()
-        GlStateManager.color(0f, 0f, 0f, 1f)
+        GlStateManager.color(1f, 1f, 1f, 1f)
 
-        val f = BitmapFont.format
+        val f = FontRenderer.format
 
-        val c = cache
+        val c2 = underlineCache
+        val c3 = strikeCache
 
-        if(c != null) {
-            FontLoader.bitmapFont.enableShader()
-            GlStateManager.bindTexture(FontLoader.bitmapFont.textureID)
+        if(c2 != null && c3 != null) {
+            GlStateManager.disableTexture2D()
 
-            f.start(VertexBuffer.INSTANCE)
-            f.addCache(c)
-            f.draw(GL11.GL_QUADS)
+            GlStateManager.glLineWidth(2f)
+            PosColorFormat.start(VertexBuffer.INSTANCE)
+            PosColorFormat.addCache(c2)
+            PosColorFormat.draw(GL11.GL_LINES)
 
-            FontLoader.bitmapFont.disableShader()
+            GlStateManager.enableTexture2D()
+
+            // =============================================================================================================
+
+            FontRenderer.enableShader()
+            for( (tex, cache) in caches.entries) {
+                GlStateManager.bindTexture(tex.textureID)
+                FontRenderer.setShaderTexSize(tex)
+                f.start(VertexBuffer.INSTANCE)
+                f.addCache(cache)
+                f.draw(GL11.GL_QUADS)
+            }
+            FontRenderer.disableShader()
+
+            // =============================================================================================================
+
+            GlStateManager.disableTexture2D()
+
+            GlStateManager.glLineWidth(2f)
+            PosColorFormat.start(VertexBuffer.INSTANCE)
+            PosColorFormat.addCache(c3)
+            PosColorFormat.draw(GL11.GL_LINES)
+
+            GlStateManager.enableTexture2D()
         }
 
         GlStateManager.popMatrix()
