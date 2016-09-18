@@ -101,7 +101,8 @@ class GlyphLayout() {
                 }
             }
         }
-        val color = parseColor(str.substring(1, str.length-1))
+
+        val color = parseColor(if(str.length < 3) "" else str.substring(1, str.length-1))
         if(color != null) {
             format.text = color
         }

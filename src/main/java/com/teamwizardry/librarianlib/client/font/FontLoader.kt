@@ -39,10 +39,10 @@ object FontLoader {
         val unifont_italic = ItalicMinecraftFont(unifont)
         val unifont_bold_italic = ItalicMinecraftFont(unifont_bold)
 
-        fonts.put(uniSpec, unifont)
-        fonts.put(uniSpecBold, unifont_bold)
-        fonts.put(uniSpecItalic, unifont_italic)
-        fonts.put(uniSpecBoldItalic, unifont_bold_italic)
+        registerFont(uniSpec, unifont)
+        registerFont(uniSpecBold, unifont_bold)
+        registerFont(uniSpecItalic, unifont_italic)
+        registerFont(uniSpecBoldItalic, unifont_bold_italic)
 
         defaultFont = unifont
 
@@ -62,31 +62,31 @@ object FontLoader {
      * multiply actual size by float result to get in-font size
      */
     fun font(fontName: String, style: Int, targetSize: Int): Pair<BasicFont, Float> {
-        if(fontName !in validFonts) {
+        if(fontName.toLowerCase() !in validFonts) {
             LibrarianLog.warn("Asked for font '$fontName' that isn't registered! Register it using `FontLoader.registerFont(\"$fontName\")`")
             return Pair(defaultFont, 16f/targetSize)
         }
 
         var fontFound: BasicFont? = null
-        var maxSize = 0
+        var currentSize = 0
         var foundStyle = false
 
         for((spec, font) in fonts.entries) {
             if(spec.font.equals(fontName, true)) {
 
-                if(!foundStyle && spec.style == 0 && (spec.resolution >= targetSize && maxSize < spec.resolution)) {
+                if(!foundStyle && spec.style == 0 && (spec.resolution >= targetSize && currentSize < spec.resolution)) {
                     fontFound = font
-                    maxSize = spec.resolution
+                    currentSize = spec.resolution
                 }
 
                 if(spec.style == style) {
                     if(!foundStyle) {
                         foundStyle = true
-                        maxSize = 0
+                        currentSize = 0
                     }
-                    if(spec.resolution >= targetSize && maxSize < spec.resolution) {
+                    if(Math.abs(targetSize-spec.resolution) < Math.abs(targetSize-currentSize)) {
                         fontFound = font
-                        maxSize = spec.resolution
+                        currentSize = spec.resolution
                     }
                 }
             }
@@ -94,15 +94,18 @@ object FontLoader {
 
         fontFound ?: return Pair(defaultFont, targetSize/16f)
 
-        return Pair(fontFound, targetSize/maxSize.toFloat())
+        return Pair(fontFound, targetSize/currentSize.toFloat())
+    }
+
+    fun registerFont(spec: FontSpecification, font: BasicFont) {
+        validFonts.add(spec.font.toLowerCase())
+        fonts.put(spec, font)
     }
 
     /**
      * font size is divided by [shadowDist] to get the shadow offset
      */
     fun registerFont(font: String, shadowDist: Int) {
-        validFonts.add(font)
-
         for(size in fontBitmapSizes) {
             loadFont(font, Font.PLAIN, size, size/shadowDist)
             loadFont(font, Font.BOLD, size, size/shadowDist)
@@ -114,7 +117,7 @@ object FontLoader {
     private fun loadFont(font: String, style: Int, size: Int, shadow: Int) {
         val spec = FontSpecification(font, style, size)
         val bitmap = BitmapFont(spec, Font(font, style, size), true, shadow, shadow)
-        fonts.put(spec, bitmap)
+        registerFont(spec, bitmap)
     }
 }
 
