@@ -1,5 +1,6 @@
 package com.teamwizardry.librarianlib.client.core
 
+import com.teamwizardry.librarianlib.LibrarianLib
 import com.teamwizardry.librarianlib.LibrarianLog
 import net.minecraftforge.fml.common.FMLLog
 import org.lwjgl.BufferUtils
@@ -17,14 +18,18 @@ object GLTextureExport {
 
     fun saveGlTexture(name: String, mipmapLevels: Int) {
 
+        if(!LibrarianLib.DEV_ENVIRONMENT)
+            return;
+
         GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1)
         GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1)
+        var level = 0
 
-        for (level in 0..mipmapLevels) {
+        while (true) {
             val width = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, level, GL11.GL_TEXTURE_WIDTH)
             val height = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, level, GL11.GL_TEXTURE_HEIGHT)
             if(width == 0 || height == 0)
-                continue;
+                break;
             val size = width * height
 
             val bufferedimage = BufferedImage(width, height, 2)
@@ -43,7 +48,7 @@ object GLTextureExport {
             } catch (ioexception: IOException) {
                 LibrarianLog.info("[GLTextureExport] Unable to write: ", ioexception)
             }
-
+            level++
         }
     }
 

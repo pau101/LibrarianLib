@@ -3,7 +3,9 @@ package com.teamwizardry.librarianlib.client.font
 /**
  * Created by TheCodeWarrior
  */
-abstract class BasicFont() {
+abstract class BasicFont {
+
+    abstract fun getShear(): Float
 
     abstract fun getStyle(): Int
     abstract fun withStyle(style: Int): BasicFont
@@ -17,7 +19,7 @@ abstract class BasicFont() {
 
 data class Glyph(val texture: Texture, val c: Char, val u: Int, val v: Int, val width: Int, val height: Int, val metrics: GlyphMetrics)
 
-data class GlyphMetrics(val font: BitmapFont, val c: Char, val bearingX: Int, val bearingY: Int, val width: Int, val height: Int, val advance: Int)
+data class GlyphMetrics(val font: BasicFont, val c: Char, val bearingX: Int, val bearingY: Int, val width: Int, val height: Int, val advance: Int)
 
 abstract class Texture {
     abstract val textureID: Int

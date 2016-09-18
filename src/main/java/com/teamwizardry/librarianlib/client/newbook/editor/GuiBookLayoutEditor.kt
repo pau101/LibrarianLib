@@ -11,6 +11,7 @@ import com.teamwizardry.librarianlib.client.gui.mixin.ResizableMixin
 import com.teamwizardry.librarianlib.client.newbook.backend.Book
 import com.teamwizardry.librarianlib.client.sprite.Texture
 import com.teamwizardry.librarianlib.common.util.math.Vec2d
+import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.util.ResourceLocation
 import org.lwjgl.opengl.GL11
@@ -124,13 +125,16 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
         for(i in 0x0000..0x04FF) {
             str += String(Character.toChars(i))
         }
-
-        sr.addText("Hello world! I'm §4four-matted! § I have a section §[mo]symbol§[r4nl]sign§[r4]! §rI'm not formatted! I'm §[ol]REALLY§r important.")//"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ac condimentum ex. Donec cursus rutrum tortor. Nullam tincidunt elit consectetur justo accumsan blandit. Cras porta mi nulla, rutrum hendrerit ex hendrerit in. Integer rutrum diam nec massa tincidunt maximus. Quisque ac diam purus. Integer consequat pretium augue, sed congue enim interdum in. Suspendisse pretium scelerisque nunc, a vulputate quam egestas eu. Vivamus hendrerit sodales aliquet. Nulla non libero in turpis laoreet aliquet non vel augue. Praesent pellentesque ante ut turpis hendrerit, et tempor nisl venenatis. Curabitur urna nunc, interdum at lectus ut, blandit consectetur dui. Nam varius rutrum mi, quis condimentum nulla convallis sed. In dapibus magna ut elit ornare, at ornare erat fringilla. Donec in mauris tincidunt nisi tincidunt sodales vel eget odio.")
+//"§[ol]¡™£ §[ro]¡™£ §[rl]¡™£")//
+            sr.addText("Here's some GNU Unifont and §{font=Arial}Here's some arial. §{style=bold}This is bold §{style=italic}This is italic §{font=Unifont}Now we're back to unifont, but §{shadow=on}with a shadow, and now we're §{")//"Hello world! I'm §4four-matted! Section §[mo]symbol§[r4nl]sign§[r4]! §rI'm not formatted! I'm §[ol]REALLY§r important.")//"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ac condimentum ex. Donec cursus rutrum tortor. Nullam tincidunt elit consectetur justo accumsan blandit. Cras porta mi nulla, rutrum hendrerit ex hendrerit in. Integer rutrum diam nec massa tincidunt maximus. Quisque ac diam purus. Integer consequat pretium augue, sed congue enim interdum in. Suspendisse pretium scelerisque nunc, a vulputate quam egestas eu. Vivamus hendrerit sodales aliquet. Nulla non libero in turpis laoreet aliquet non vel augue. Praesent pellentesque ante ut turpis hendrerit, et tempor nisl venenatis. Curabitur urna nunc, interdum at lectus ut, blandit consectetur dui. Nam varius rutrum mi, quis condimentum nulla convallis sed. In dapibus magna ut elit ornare, at ornare erat fringilla. Donec in mauris tincidunt nisi tincidunt sodales vel eget odio.")
         sr.wrap = 200
 
         sidebarInfo.BUS.hook(GuiComponent.PostDrawEvent::class.java) { event ->
             GlStateManager.blendFunc(GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA)
             sr.render(30, 30)
+            Minecraft.getMinecraft().fontRendererObj.unicodeFlag = true
+            Minecraft.getMinecraft().fontRendererObj.drawString("Hello world! I'm §4four-matted! Section §m§osymbol§r§4§n§lsign§r§4! §rI'm not formatted! I'm §o§lREALLY§r important.", 30, 30, 0)
+            Minecraft.getMinecraft().fontRendererObj.unicodeFlag = false
         }
 
     }

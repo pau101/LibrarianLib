@@ -14,6 +14,11 @@ import java.io.InputStream
  */
 object FontLoader {
 
+    val unifont: MinecraftFont
+    val unifont_italic: ItalicMinecraftFont
+    val unifont_bold: BoldMinecraftFont
+    val unifont_bold_italic: ItalicMinecraftFont
+
     val fontBitmapSizes = intArrayOf(32, 24, 16)
 
     private val fonts = mutableMapOf<FontSpecification, BasicFont>()
@@ -23,7 +28,29 @@ object FontLoader {
 
     init {
         registerFont("Arial", 16)
-        defaultFont = fonts.get(FontSpecification("Arial", Font.PLAIN, 16))!!
+
+        val uniSpec = FontSpecification("Unifont", Font.PLAIN, 16)
+        val uniSpecBold = FontSpecification("Unifont", Font.BOLD, 16)
+        val uniSpecItalic = FontSpecification("Unifont", Font.ITALIC, 16)
+        val uniSpecBoldItalic = FontSpecification("Unifont", Font.BOLD or Font.ITALIC, 16)
+
+        val unifont = MinecraftFont(uniSpec)
+        val unifont_bold = BoldMinecraftFont(uniSpecBold)
+        val unifont_italic = ItalicMinecraftFont(unifont)
+        val unifont_bold_italic = ItalicMinecraftFont(unifont_bold)
+
+        fonts.put(uniSpec, unifont)
+        fonts.put(uniSpecBold, unifont_bold)
+        fonts.put(uniSpecItalic, unifont_italic)
+        fonts.put(uniSpecBoldItalic, unifont_bold_italic)
+
+        defaultFont = unifont
+
+        this.unifont = unifont
+        this.unifont_bold = unifont_bold
+        this.unifont_italic = unifont_italic
+        this.unifont_bold_italic = unifont_bold_italic
+//        defaultFont = fonts.get(FontSpecification("Arial", Font.PLAIN, 16))!!
     }
 
     fun font(spec: FontSpecification): BasicFont? {
@@ -45,7 +72,7 @@ object FontLoader {
         var foundStyle = false
 
         for((spec, font) in fonts.entries) {
-            if(spec.font == fontName) {
+            if(spec.font.equals(fontName, true)) {
 
                 if(!foundStyle && spec.style == 0 && (spec.resolution >= targetSize && maxSize < spec.resolution)) {
                     fontFound = font
@@ -65,9 +92,9 @@ object FontLoader {
             }
         }
 
-        fontFound ?: return Pair(defaultFont, 16f/targetSize)
+        fontFound ?: return Pair(defaultFont, targetSize/16f)
 
-        return Pair(fontFound, maxSize.toFloat()/targetSize)
+        return Pair(fontFound, targetSize/maxSize.toFloat())
     }
 
     /**

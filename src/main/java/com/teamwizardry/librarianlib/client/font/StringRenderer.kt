@@ -18,6 +18,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.opengl.GL11
 import sun.security.provider.certpath.Vertex
 import java.awt.Color
+import java.awt.Font
 
 /**
  * Created by TheCodeWarrior
@@ -62,7 +63,7 @@ class StringRenderer {
 
     fun buildText() {
 
-        val list = glyphLayout.layout(text, TextFormatting(font, textColor))
+        val list = glyphLayout.layout(text, TextFormatting("Unifont", Font.PLAIN, 16))
 
         buildGlyphBuffer(list)
         dirty = false
@@ -87,10 +88,13 @@ class StringRenderer {
                 if(glyph.metrics.width == 0 || glyph.metrics.height == 0)
                     continue
 
-                val minX: Float = info.x + glyph.metrics.bearingX
-                val minY: Float = info.y - glyph.metrics.bearingY
-                val maxX: Float = minX + glyph.metrics.width
-                val maxY: Float = minY + glyph.metrics.height
+                val minX: Float = info.x + ( glyph.metrics.bearingX * info.formatting.scale ).toInt()
+                val minY: Float = info.y - ( glyph.metrics.bearingY * info.formatting.scale ).toInt()
+                val maxX: Float = minX + ( glyph.metrics.width * info.formatting.scale ).toInt()
+                val maxY: Float = minY + ( glyph.metrics.height * info.formatting.scale ).toInt()
+
+                val shearTop: Float = ( glyph.metrics.bearingY * info.formatting.font.getShear() ) * info.formatting.scale
+                val shearBottom: Float = ( (glyph.metrics.bearingY - glyph.metrics.height) * info.formatting.font.getShear() ) * info.formatting.scale
 
                 val minU: Float = (glyph.u ).toFloat()
                 val minV: Float = (glyph.v ).toFloat()
@@ -107,10 +111,10 @@ class StringRenderer {
                 val sB = info.formatting.shadow.let { if(it == null) 0f else it.blue /255f }
                 val sA = info.formatting.shadow.let { if(it == null) 0f else it.alpha/255f }
 
-                f.pos(minX.toDouble(), minY.toDouble(), 0.0).tex(minU.toDouble(), minV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
-                f.pos(minX.toDouble(), maxY.toDouble(), 0.0).tex(minU.toDouble(), maxV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
-                f.pos(maxX.toDouble(), maxY.toDouble(), 0.0).tex(maxU.toDouble(), maxV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
-                f.pos(maxX.toDouble(), minY.toDouble(), 0.0).tex(maxU.toDouble(), minV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
+                f.pos(minX.toDouble()+shearTop,    minY.toDouble(), 0.0).tex(minU.toDouble(), minV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
+                f.pos(minX.toDouble()+shearBottom, maxY.toDouble(), 0.0).tex(minU.toDouble(), maxV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
+                f.pos(maxX.toDouble()+shearBottom, maxY.toDouble(), 0.0).tex(maxU.toDouble(), maxV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
+                f.pos(maxX.toDouble()+shearTop,    minY.toDouble(), 0.0).tex(maxU.toDouble(), minV.toDouble()).color(tR, tG, tB, tA).shadow(sR, sG, sB, sA).endVertex()
             }
             caches.put(tex, f.cache())
         }
