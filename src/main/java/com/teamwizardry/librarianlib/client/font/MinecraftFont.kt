@@ -23,14 +23,6 @@ open class MinecraftFont(val spec: FontSpecification) : PackedFont() {
     /** Array of the start/end column (in upper/lower nibble) for every glyph in the /font directory. */
     protected val glyphWidth = ByteArray(65536)
 
-    private val whitespace = intArrayOf(
-            0x0009, 0x000A, 0x000B, 0x000C, 0x000D,
-            0x0020, 0x0085, 0x00A0, 0x1680, 0x2000,
-            0x2001, 0x2002, 0x2003, 0x2004, 0x2005,
-            0x2006, 0x2007, 0x2008, 0x2009, 0x200A,
-            0x2028, 0x2029, 0x202F, 0x205F, 0x3000
-    )
-
     private val pageTextures = mutableMapOf<Int, BufferedImage>()
 
     init {
@@ -140,10 +132,6 @@ open class MinecraftFont(val spec: FontSpecification) : PackedFont() {
         if(i == 0)
             return 0
         return (i and 0x0F) - (i and 0xF0 shr 4) + 2
-    }
-
-    override fun isWhitespace(c: Int): Boolean {
-        return c in whitespace
     }
 
     override fun drawToGraphcs(c: Int, g: Graphics2D, image: BufferedImage) {

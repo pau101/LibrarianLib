@@ -51,8 +51,6 @@ class BitmapFont(val spec: FontSpecification, val font: Font, val antiAlias: Boo
 
     override fun getAdvance(c: Int) =  metrics.charWidth(c)
 
-    override fun isWhitespace(c: Int) = font.createGlyphVector(g.fontRenderContext, asStr(c)).getGlyphMetrics(0).isWhitespace
-
     override fun drawToGraphcs(c: Int, g: Graphics2D, image: BufferedImage) {
         val str = asStr(c)
 

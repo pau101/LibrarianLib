@@ -126,14 +126,15 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
             str += String(Character.toChars(i))
         }
 //"§[ol]¡™£ §[ro]¡™£ §[rl]¡™£")//
-            sr.addText("Here's some GNU Unifont and §{font=Arial}Here's some arial. §{style=bold}This is §{underline=pink}bold§{underline=off} §{style=italic}This is §{strike=F0F}italy§{strike=off}italic §{font=Unifont}Now we're back to §{style=plain}unifont, but §{shadow=on}with a §{7fff80bf}shadow§{ff80bf}, and now we're §{red}§{shadow=blue}opposite colo§{strike=orange}u§{strike=off}rs!")//"Hello world! I'm §4four-matted! Section §[mo]symbol§[r4nl]sign§[r4]! §rI'm not formatted! I'm §[ol]REALLY§r important.")//"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ac condimentum ex. Donec cursus rutrum tortor. Nullam tincidunt elit consectetur justo accumsan blandit. Cras porta mi nulla, rutrum hendrerit ex hendrerit in. Integer rutrum diam nec massa tincidunt maximus. Quisque ac diam purus. Integer consequat pretium augue, sed congue enim interdum in. Suspendisse pretium scelerisque nunc, a vulputate quam egestas eu. Vivamus hendrerit sodales aliquet. Nulla non libero in turpis laoreet aliquet non vel augue. Praesent pellentesque ante ut turpis hendrerit, et tempor nisl venenatis. Curabitur urna nunc, interdum at lectus ut, blandit consectetur dui. Nam varius rutrum mi, quis condimentum nulla convallis sed. In dapibus magna ut elit ornare, at ornare erat fringilla. Donec in mauris tincidunt nisi tincidunt sodales vel eget odio.")
+        sr.fontSize = 8
+        sr.addText("Here's some GNU Unifont and §{font=Arial}Here's some arial. §{style=bold}This is §{underline=pink}bold§{underline=off} §{style=italic}This is §{strike=F0F}italy\n\n§{strike=off}italic §{font=Unifont}Now we're back to §{style=plain}unifont, but §{shadow=on}with a §{7fff80bf}shadow§{ff80bf}, and now we're §{red}§{shadow=blue}opposite colo§{strike=orange}u§{strike=off}rs!")//"Hello world! I'm §4four-matted! Section §[mo]symbol§[r4nl]sign§[r4]! §rI'm not formatted! I'm §[ol]REALLY§r important.")//"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ac condimentum ex. Donec cursus rutrum tortor. Nullam tincidunt elit consectetur justo accumsan blandit. Cras porta mi nulla, rutrum hendrerit ex hendrerit in. Integer rutrum diam nec massa tincidunt maximus. Quisque ac diam purus. Integer consequat pretium augue, sed congue enim interdum in. Suspendisse pretium scelerisque nunc, a vulputate quam egestas eu. Vivamus hendrerit sodales aliquet. Nulla non libero in turpis laoreet aliquet non vel augue. Praesent pellentesque ante ut turpis hendrerit, et tempor nisl venenatis. Curabitur urna nunc, interdum at lectus ut, blandit consectetur dui. Nam varius rutrum mi, quis condimentum nulla convallis sed. In dapibus magna ut elit ornare, at ornare erat fringilla. Donec in mauris tincidunt nisi tincidunt sodales vel eget odio.")
         sr.wrap = 200
 
         sidebarInfo.BUS.hook(GuiComponent.PostDrawEvent::class.java) { event ->
             GlStateManager.blendFunc(GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA)
-            sr.render(30, 30)
+            sr.render(0, 30)
             Minecraft.getMinecraft().fontRendererObj.unicodeFlag = true
-            Minecraft.getMinecraft().fontRendererObj.drawString("Hello world! I'm §4four-matted! Section §m§osymbol§r§4§n§lsign§r§4! §rI'm not formatted! I'm §o§lREALLY§r important.", 30, 30, 0)
+            Minecraft.getMinecraft().fontRendererObj.drawString("Hello world! I'm §4four-matted! Section §m§osymbol§r§4§n§lsign§r§4! §rI'm not formatted! I'm §o§lREALLY§r important.", 30, 80, 0)
             Minecraft.getMinecraft().fontRendererObj.unicodeFlag = false
         }
 

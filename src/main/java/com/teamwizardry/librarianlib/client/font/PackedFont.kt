@@ -20,9 +20,28 @@ import java.awt.image.BufferedImage
 abstract class PackedFont : BasicFont() {
 
     abstract protected fun getAdvance(c: Int): Int
-    abstract protected fun isWhitespace(c: Int): Boolean
     abstract protected fun drawToGraphcs(c: Int, g: Graphics2D, image: BufferedImage)
     abstract protected fun fontMapExportLoc(): String
+
+    private val whitespace = intArrayOf(
+            0x0009, 0x000A, 0x000B, 0x000C, 0x000D,
+            0x0020, 0x0085, 0x00A0, 0x1680, 0x2000,
+            0x2001, 0x2002, 0x2003, 0x2004, 0x2005,
+            0x2006, 0x2007, 0x2008, 0x2009, 0x200A,
+            0x2028, 0x2029, 0x202F, 0x205F, 0x3000
+    )
+    open protected fun isWhitespace(c: Int): Boolean {
+        return c in whitespace
+    }
+
+    open protected fun canBreakAfter(c: Int): Boolean {
+        return c.toChar() in "({[<$#&@*+^/\\="
+    }
+
+    open protected fun canBreakBefore(c: Int): Boolean {
+        return c.toChar() in ")}]>!?,\"`%&@*+^/\\=-:;"
+    }
+
 
     protected val glyphs = mutableMapOf<Int, Glyph>()
     protected val glyphMetrics = mutableMapOf<Int, GlyphMetrics>()
@@ -91,7 +110,7 @@ abstract class PackedFont : BasicFont() {
             val advance = getAdvance(c)
 
             if (isWhitespace(c)) {
-                val info = GlyphMetrics(this, c.toChar(), 0, 0, 0, 0, advance)
+                val info = GlyphMetrics(this, c.toChar(), 0, 0, 0, 0, advance, true, false, true)
                 return@getOrPut Glyph(texture, c.toChar(), 0, 0, 0, 0, info)
             }
 
@@ -116,7 +135,7 @@ abstract class PackedFont : BasicFont() {
             val width = rect.width
             val height = rect.height
 
-            val glyphInfo = GlyphMetrics(this, c.toChar(), bearingX, bearingY, width, height, advance)
+            val glyphInfo = GlyphMetrics(this, c.toChar(), bearingX, bearingY, width, height, advance, false, canBreakBefore(c), canBreakAfter(c))
 
             this.glyphMetrics.put(c, glyphInfo)
 

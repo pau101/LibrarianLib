@@ -16,6 +16,7 @@ import net.minecraftforge.client.event.GuiScreenEvent
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.opengl.GL11
+import scala.annotation.meta.field
 import sun.security.provider.certpath.Vertex
 import java.awt.Color
 import java.awt.Font
@@ -39,16 +40,39 @@ class StringRenderer {
     }
 
     private var glyphLayout = GlyphLayout()
+    private var cachedScreenScale = -1
+
+
+    private val formatting = TextFormatting("Unifont", Font.PLAIN, 16)
+    private var fontStyle = Font.PLAIN
+    var textColor: Color
+        set(value) { formatting.text = value; dirty = true }
+        get() = formatting.text
+    var shadowColor: Color?
+        set(value) { formatting.shadow = value; dirty = true }
+        get() = formatting.shadow
+    var strikeColor: Color?
+        set(value) { formatting.strikethrough = value; dirty = true }
+        get() = formatting.strikethrough
+    var underlineColor: Color?
+        set(value) { formatting.underline = value; dirty = true }
+        get() = formatting.underline
+
+    var bold: Boolean
+        set(value) { fontStyle = if(value) fontStyle or Font.BOLD else fontStyle and Font.BOLD.inv(); dirty = true}
+        get() = (fontStyle and Font.BOLD) != 0
+    var italic: Boolean
+        set(value) { fontStyle = if(value) fontStyle or Font.ITALIC else fontStyle and Font.ITALIC.inv(); dirty = true}
+        get() = (fontStyle and Font.ITALIC) != 0
+
+    var fontName: String = "Unifont"
+        set(value) { field = value; dirty = true }
+    var fontSize: Int
+        set(value) { formatting.targetSize = value; dirty = true }
+        get() = formatting.targetSize
 
     var wrap = 0
         set(value) { field = value; dirty = true }
-    var textColor = Color.BLACK
-        set(value) { field = value; dirty = true }
-    var shadowColor = Color(0, 0, 0, 0)
-        set(value) { field = value; dirty = true }
-    var font = FontLoader.defaultFont
-        set(value) { field = value; dirty = true }
-
     var text = ""
         set(value) { field = value; dirty = true }
     private var dirty = false
@@ -62,8 +86,16 @@ class StringRenderer {
     private var strikeCache: VboCache? = null
 
     fun buildText() {
+        cachedScreenScale = screenScale
 
-        val list = glyphLayout.layout(text, TextFormatting("Unifont", Font.PLAIN, 16))
+        glyphLayout.wrap = wrap
+        glyphLayout.text = text
+        glyphLayout.format = formatting.clone()
+        glyphLayout.fontSize = fontSize * screenScale
+        glyphLayout.fontName = fontName
+        glyphLayout.fontStyle = fontStyle
+
+        val list = glyphLayout.layoutGlyphs()
 
         buildGlyphBuffer(list)
         dirty = false
@@ -173,15 +205,13 @@ class StringRenderer {
 
     fun render(posX: Int, posY: Int) {
 
-        if(dirty) {
+        if(dirty || cachedScreenScale != screenScale) {
             buildText()
         }
 
-        val scale = 1.0/ screenScale
-
         GlStateManager.pushMatrix()
         GlStateManager.translate(posX.toDouble(), posY.toDouble(), 0.0)
-        GlStateManager.scale(scale, scale, 1.0)
+        GlStateManager.scale(1.0/ screenScale, 1.0/ screenScale, 1.0)
         GlStateManager.enableBlend()
         GlStateManager.color(1f, 1f, 1f, 1f)
 
@@ -193,7 +223,7 @@ class StringRenderer {
         if(c2 != null && c3 != null) {
             GlStateManager.disableTexture2D()
 
-            GlStateManager.glLineWidth(2f)
+            GlStateManager.glLineWidth(screenScale.toFloat())
             PosColorFormat.start(VertexBuffer.INSTANCE)
             PosColorFormat.addCache(c2)
             PosColorFormat.draw(GL11.GL_LINES)
