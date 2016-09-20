@@ -60,8 +60,8 @@ class GlyphLayout() {
 
             val glyph = format.font.getGlyph(c.toInt())
             val advance = ( glyph.metrics.advance * format.scale ).toInt()
-            
-            if(wrap >= 0 && x + advance > wrap) { // all the wrapping code. That's it. :D
+
+            if(wrap >= 0 && ( x + advance > wrap && !glyph.metrics.isWhitespace)) { // all the wrapping code. That's it. :D
                 var breakPos = -1 // the glyph at this index and any after it will be moved down a line.
                 if(lastWordBreak >= 0) {
                     breakPos = lastWordBreak+1
@@ -110,6 +110,13 @@ class GlyphLayout() {
 
             list.add(GlyphDrawInfo(x, y, glyph, format, i))
             x += advance
+
+            if(glyph.metrics.isLineBreak) {
+                lastWordBreak = -1
+                lastBreakOpportunity = -1
+                x = 0f
+                y += lineHeight
+            }
 
             i++
         }

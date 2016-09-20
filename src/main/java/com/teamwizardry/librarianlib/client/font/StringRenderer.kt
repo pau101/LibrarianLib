@@ -172,7 +172,7 @@ class StringRenderer {
                 underlinePos = Vec2d(info.x, info.y)
             }
 
-            prevEnd = Vec2d(info.x + info.glyph.metrics.advance, info.y)
+            prevEnd = Vec2d(info.x + if(info.glyph.metrics.isWhitespace) 0f else info.glyph.metrics.advance*info.formatting.scale, info.y)
         }
 
         underlineCache = PosColorFormat.cache()
@@ -188,6 +188,8 @@ class StringRenderer {
         PosColorFormat.start(VertexBuffer.INSTANCE)
         for(info in list) {
 
+//            newLine = newLine || info.y != strikePos.yf
+
             if(strikeColor != info.formatting.strikethrough || info.y != strikePos.yf) {
                 if(strikeColor != null) {
                     PosColorFormat.pos(strikePos.x, strikePos.y-strikeHeight, 0).color(strikeColor.red/255f, strikeColor.green/255f, strikeColor.blue/255f, 1).endVertex()
@@ -197,7 +199,7 @@ class StringRenderer {
                 strikePos = Vec2d(info.x, info.y)
             }
 
-            prevEnd = Vec2d(info.x + info.glyph.metrics.advance, info.y)
+            prevEnd = Vec2d(info.x + if(info.glyph.metrics.isWhitespace) 0f else info.glyph.metrics.advance*info.formatting.scale, info.y)
         }
 
         strikeCache = PosColorFormat.cache()

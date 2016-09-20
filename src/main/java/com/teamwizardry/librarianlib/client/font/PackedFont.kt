@@ -42,6 +42,9 @@ abstract class PackedFont : BasicFont() {
         return c.toChar() in ")}]>!?,\"`%&@*+^/\\=-:;"
     }
 
+    open protected fun isLinebreak(c: Int): Boolean {
+        return c.toChar() in "\u000D\u000A\u0085\u000B\u000C\u2028\u2029"
+    }
 
     protected val glyphs = mutableMapOf<Int, Glyph>()
     protected val glyphMetrics = mutableMapOf<Int, GlyphMetrics>()
@@ -110,7 +113,7 @@ abstract class PackedFont : BasicFont() {
             val advance = getAdvance(c)
 
             if (isWhitespace(c)) {
-                val info = GlyphMetrics(this, c.toChar(), 0, 0, 0, 0, advance, true, false, true)
+                val info = GlyphMetrics(this, c.toChar(), 0, 0, 0, 0, advance, true, false, true, isLinebreak(c))
                 return@getOrPut Glyph(texture, c.toChar(), 0, 0, 0, 0, info)
             }
 
@@ -135,7 +138,7 @@ abstract class PackedFont : BasicFont() {
             val width = rect.width
             val height = rect.height
 
-            val glyphInfo = GlyphMetrics(this, c.toChar(), bearingX, bearingY, width, height, advance, false, canBreakBefore(c), canBreakAfter(c))
+            val glyphInfo = GlyphMetrics(this, c.toChar(), bearingX, bearingY, width, height, advance, false, canBreakBefore(c), canBreakAfter(c), isLinebreak(c))
 
             this.glyphMetrics.put(c, glyphInfo)
 
