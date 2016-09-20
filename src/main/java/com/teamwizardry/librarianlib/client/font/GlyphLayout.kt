@@ -43,6 +43,7 @@ class GlyphLayout() {
 
         while(i < str.length) {
             val c = str[i]
+            val index = i
 
             if(c == '§') {
                 val len = validFormatLength(str, i+1)
@@ -108,7 +109,7 @@ class GlyphLayout() {
                 lastBreakOpportunity = list.size+1
             }
 
-            list.add(GlyphDrawInfo(x, y, glyph, format, i))
+            list.add(GlyphDrawInfo(x, y, glyph, format, index))
             x += advance
 
             if(glyph.metrics.isLineBreak) {

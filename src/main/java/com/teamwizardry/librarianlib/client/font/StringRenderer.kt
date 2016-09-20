@@ -27,8 +27,8 @@ import java.awt.Font
 class StringRenderer {
     companion object {
 //        private val textBuffer = VertexBuffer(50000)
-        private var screenScale = 1
-
+        public var screenScale = 1
+            private set
         init {
             MinecraftForge.EVENT_BUS.register(this)
         }
@@ -84,6 +84,7 @@ class StringRenderer {
     private var caches = mutableMapOf<Texture, VboCache>()
     private var underlineCache: VboCache? = null
     private var strikeCache: VboCache? = null
+    private var glyphList: List<GlyphDrawInfo> = listOf()
 
     fun buildText() {
         cachedScreenScale = screenScale
@@ -95,9 +96,9 @@ class StringRenderer {
         glyphLayout.fontName = fontName
         glyphLayout.fontStyle = fontStyle
 
-        val list = glyphLayout.layoutGlyphs()
+        glyphList = glyphLayout.layoutGlyphs()
 
-        buildGlyphBuffer(list)
+        buildGlyphBuffer(glyphList)
         dirty = false
     }
 
@@ -188,8 +189,6 @@ class StringRenderer {
         PosColorFormat.start(VertexBuffer.INSTANCE)
         for(info in list) {
 
-//            newLine = newLine || info.y != strikePos.yf
-
             if(strikeColor != info.formatting.strikethrough || info.y != strikePos.yf) {
                 if(strikeColor != null) {
                     PosColorFormat.pos(strikePos.x, strikePos.y-strikeHeight, 0).color(strikeColor.red/255f, strikeColor.green/255f, strikeColor.blue/255f, 1).endVertex()
@@ -259,5 +258,55 @@ class StringRenderer {
         GlStateManager.popMatrix()
     }
 
+    // logic functions
+
+    fun getGlyphFor(index: Int): GlyphDrawInfo? {
+        for(info in glyphList) {
+            if(info.stringIndex == index)
+                return info
+        }
+        if(glyphList.size > 0 && index == glyphList.last().stringIndex + 1) {
+            val info = glyphList.last()
+            return GlyphDrawInfo(if(info.glyph.metrics.isLineBreak) 0f else info.x+info.glyph.metrics.advance*info.formatting.scale, info.y + if(info.glyph.metrics.isLineBreak) fontSize*screenScale else 0, info.glyph, info.formatting, info.stringIndex+1)
+        }
+        return null
+    }
+
+    /**
+     * Gets the closest glyph to the position (glyph is the one with the left edge the closest)
+     */
+    fun getGlyphForClickPos(posX: Int, posY: Int): GlyphDrawInfo? {
+        var closestVertical = Float.POSITIVE_INFINITY
+        var closestHorizontal = Float.POSITIVE_INFINITY
+        var closest: GlyphDrawInfo? = null
+
+        for(info in glyphList) {
+            val verticalDistance = Math.abs( ( info.y + fontSize/2 ) - posY )
+            val horizontalDistance = Math.abs( info.x - posX )
+
+            if(verticalDistance <= closestVertical && horizontalDistance < closestHorizontal) {
+                closest = info
+                closestVertical = verticalDistance
+                closestHorizontal = horizontalDistance
+            }
+        }
+
+        if(glyphList.size > 0) {
+            val lastinfo = glyphList.last()
+            val afterX = lastinfo.x + lastinfo.glyph.metrics.advance*lastinfo.formatting.scale
+            val info = GlyphDrawInfo(if(lastinfo.glyph.metrics.isLineBreak) 0f else afterX, lastinfo.y + if(lastinfo.glyph.metrics.isLineBreak) fontSize*screenScale else 0, lastinfo.glyph, lastinfo.formatting, lastinfo.stringIndex+1)
+
+            val verticalDistance = Math.abs( ( info.y + fontSize/2 ) - posY )
+            val horizontalDistance = Math.abs( info.x - posX )
+
+            if(verticalDistance <= closestVertical && horizontalDistance < closestHorizontal) {
+                closest = info
+                closestVertical = verticalDistance
+                closestHorizontal = horizontalDistance
+            }
+        }
+
+        return closest
+    }
 
 }

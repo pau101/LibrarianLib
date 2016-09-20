@@ -1,5 +1,6 @@
 package com.teamwizardry.librarianlib.client.gui.components
 
+import com.teamwizardry.librarianlib.client.font.StringRenderer
 import com.teamwizardry.librarianlib.client.gui.*
 import com.teamwizardry.librarianlib.common.util.event.EventCancelable
 import com.teamwizardry.librarianlib.common.util.math.Vec2d
@@ -10,6 +11,7 @@ import net.minecraft.client.gui.GuiScreen
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.client.renderer.Tessellator
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
+import org.apache.commons.lang3.StringUtils
 import org.lwjgl.input.Keyboard
 import org.lwjgl.opengl.GL11
 import java.awt.Color
@@ -25,58 +27,64 @@ class ComponentTextInput(posX: Int, posY: Int, width: Int, height: Int) : GuiCom
         set(value) {
             val value_ = value.filter { !isControlCharacter(it) }
             val event = BUS.fire(TextChangeEvent(thiz(), field, value_))
-            if(!event.isCanceled())
+            if(!event.isCanceled()) {
                 field = event.newText
+                stringRenderer.text = event.newText
+            }
         }
     var cursor = 0
         set(value) {
             if(value < 0)
                 field = 0
-            else if(value > text.length-1)
-                field = text.length-1
+            else if(value > text.length)
+                field = if(text.length == 0) 0 else text.length-1
             else
                 field = value
         }
     var selection = 0
-    val wrapManager = WrappedStringManager(text, size.xi)
+    val stringRenderer = StringRenderer()
 
     override fun drawComponent(mousePos: Vec2d, partialTicks: Float) {
-        wrapManager.draw(pos.xi, pos.yi, Color.BLACK)
-        var cursorPos = pos + wrapManager.getPosFromIndex(cursor) - Vec2d.X
-        if(cursorPos.x < 0)
-            cursorPos = cursorPos.setX(0.0)
-        val cursorSize = Vec2d(1, 9)
+        stringRenderer.render(pos.xi, pos.yi+stringRenderer.fontSize)
+        var cursorGlyph = stringRenderer.getGlyphFor(cursor)
+        if(cursorGlyph != null) {
+            val cursorPos = Vec2d(cursorGlyph.x/StringRenderer.screenScale+pos.xi, cursorGlyph.y/StringRenderer.screenScale+pos.yi)
+            val cursorSize = Vec2d(1, 9)
 
-        val shear = 0
+            val shear = 0
 
-        val tessellator = Tessellator.getInstance()
-        val vertexbuffer = tessellator.buffer
+            val tessellator = Tessellator.getInstance()
+            val vertexbuffer = tessellator.buffer
 
-        GlStateManager.disableTexture2D()
-        GlStateManager.color(0f, 0f, 0f, 1f)
-        vertexbuffer.begin(7, DefaultVertexFormats.POSITION)
+            GlStateManager.disableTexture2D()
+            GlStateManager.color(0f, 0f, 0f, 1f)
+            vertexbuffer.begin(7, DefaultVertexFormats.POSITION)
 
-        vertexbuffer.pos(cursorPos.x                - shear, cursorPos.y + cursorSize.y, 0.0).endVertex()
-        vertexbuffer.pos(cursorPos.x + cursorSize.x - shear, cursorPos.y + cursorSize.y, 0.0).endVertex()
-        vertexbuffer.pos(cursorPos.x + cursorSize.x + shear, cursorPos.y               , 0.0).endVertex()
-        vertexbuffer.pos(cursorPos.x                + shear, cursorPos.y               , 0.0).endVertex()
+            vertexbuffer.pos(cursorPos.x                - shear, cursorPos.y + cursorSize.y, 0.0).endVertex()
+            vertexbuffer.pos(cursorPos.x + cursorSize.x - shear, cursorPos.y + cursorSize.y, 0.0).endVertex()
+            vertexbuffer.pos(cursorPos.x + cursorSize.x + shear, cursorPos.y               , 0.0).endVertex()
+            vertexbuffer.pos(cursorPos.x                + shear, cursorPos.y               , 0.0).endVertex()
 
-        tessellator.draw()
+            tessellator.draw()
 
-        GlStateManager.enableTexture2D()
+            GlStateManager.enableTexture2D()
+        }
     }
 
     init {
 
+        stringRenderer.fontSize = 8
+        stringRenderer.wrap = size.xi
+
         BUS.hook(SetSizeEvent::class.java) { event ->
-            wrapManager.width = event.size.xi
+            stringRenderer.wrap = event.size.xi
         }
 
         BUS.hook(MouseClickEvent::class.java) { event ->
             if(mouseOver) {
                 this.focused = true
 
-                cursor = wrapManager.getIndexFromPos(event.mousePos.xi, event.mousePos.yi)
+                cursor = stringRenderer.getGlyphForClickPos(event.mousePos.xi*StringRenderer.screenScale, event.mousePos.yi*StringRenderer.screenScale)?.stringIndex ?: 0
             }
         }
 
@@ -116,15 +124,21 @@ class ComponentTextInput(posX: Int, posY: Int, width: Int, height: Int) : GuiCom
             Keyboard.KEY_RIGHT -> { cursor++; handled = true; }
 
             Keyboard.KEY_UP -> {
-                val cursorPos = wrapManager.getPosFromIndex(cursor) - Vec2d(0, wrapManager.fontHeight)
-                val newIndex = wrapManager.getIndexFromPos(cursorPos.xi, cursorPos.yi)
-                cursor = newIndex
+                val cursorGlyph = stringRenderer.getGlyphFor(cursor)
+                if(cursorGlyph == null) {
+                    cursor = 0
+                } else {
+                    cursor = stringRenderer.getGlyphForClickPos(cursorGlyph.x.toInt(), cursorGlyph.y.toInt()-stringRenderer.fontSize)?.stringIndex ?: 0
+                }
                 handled = true
             }
             Keyboard.KEY_DOWN -> {
-                val cursorPos = wrapManager.getPosFromIndex(cursor) + Vec2d(0, wrapManager.fontHeight)
-                val newIndex = wrapManager.getIndexFromPos(cursorPos.xi, cursorPos.yi)
-                cursor = newIndex
+                val cursorGlyph = stringRenderer.getGlyphFor(cursor)
+                if(cursorGlyph == null) {
+                    cursor = 0
+                } else {
+                    cursor = stringRenderer.getGlyphForClickPos(cursorGlyph.x.toInt(), cursorGlyph.y.toInt()+stringRenderer.fontSize)?.stringIndex ?: 0
+                }
                 handled = true
             }
 
@@ -139,10 +153,11 @@ class ComponentTextInput(posX: Int, posY: Int, width: Int, height: Int) : GuiCom
      * Deletes a string ahead (length > 0) or behind (length < 0) the cursor
      */
     fun deleteString(length: Int) {
+        var length = length
         if(length < 0) {
-            // + length because length is < 0
-            deleteAt(cursor+length, -length)
-            cursor += length
+            length *= -1
+            deleteAt(cursor-length, length)
+            cursor -= length
         } else {
             deleteAt(cursor, length)
         }
