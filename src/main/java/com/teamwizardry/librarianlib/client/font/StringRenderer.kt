@@ -46,35 +46,39 @@ class StringRenderer {
     private val formatting = TextFormatting("Unifont", Font.PLAIN, 16)
     private var fontStyle = Font.PLAIN
     var textColor: Color
-        set(value) { formatting.text = value; dirty = true }
+        set(value) { dirty = dirty || textColor != value;  formatting.text = value }
         get() = formatting.text
     var shadowColor: Color?
-        set(value) { formatting.shadow = value; dirty = true }
+        set(value) { dirty = dirty || shadowColor != value;  formatting.shadow = value }
         get() = formatting.shadow
     var strikeColor: Color?
-        set(value) { formatting.strikethrough = value; dirty = true }
+        set(value) { dirty = dirty || strikeColor != value;  formatting.strikethrough = value }
         get() = formatting.strikethrough
     var underlineColor: Color?
-        set(value) { formatting.underline = value; dirty = true }
+        set(value) { dirty = dirty || underlineColor != value; formatting.underline = value }
         get() = formatting.underline
 
     var bold: Boolean
-        set(value) { fontStyle = if(value) fontStyle or Font.BOLD else fontStyle and Font.BOLD.inv(); dirty = true}
+        set(value) { dirty = dirty || bold != value; fontStyle = if(value) fontStyle or Font.BOLD else fontStyle and Font.BOLD.inv()}
         get() = (fontStyle and Font.BOLD) != 0
     var italic: Boolean
-        set(value) { fontStyle = if(value) fontStyle or Font.ITALIC else fontStyle and Font.ITALIC.inv(); dirty = true}
+        set(value) { dirty = dirty || italic != value; fontStyle = if(value) fontStyle or Font.ITALIC else fontStyle and Font.ITALIC.inv()}
         get() = (fontStyle and Font.ITALIC) != 0
 
     var fontName: String = "Unifont"
-        set(value) { field = value; dirty = true }
+        set(value) { dirty = dirty || field != value; field = value }
     var fontSize: Int
-        set(value) { formatting.targetSize = value; dirty = true }
+        set(value) { dirty = dirty || formatting.targetSize != value; formatting.targetSize = value }
         get() = formatting.targetSize
 
-    var wrap = 0
-        set(value) { field = value; dirty = true }
+    var wrap = -1
+        set(value) { dirty = dirty || field != value; field = value }
     var text = ""
-        set(value) { field = value; dirty = true }
+        set(value) { dirty = dirty || field != value; field = value }
+    var enableFormatCodes: Boolean
+        set(value) { dirty = dirty || glyphLayout.enableFormatting != value; glyphLayout.enableFormatting = value }
+        get() = glyphLayout.enableFormatting
+
     private var dirty = false
 
     fun addText(str: String) {
@@ -118,16 +122,16 @@ class StringRenderer {
 
                 val glyph = info.glyph
 
-                if(glyph.metrics.width == 0 || glyph.metrics.height == 0)
+                if(glyph.metrics.width == 0 || glyph.metrics.height == 0 || glyph.metrics.isWhitespace || !info.shouldRender)
                     continue
 
-                val minX: Float = info.x + ( glyph.metrics.bearingX * info.formatting.scale ).toInt()
-                val minY: Float = info.y - ( glyph.metrics.bearingY * info.formatting.scale ).toInt()
-                val maxX: Float = minX + ( glyph.metrics.width * info.formatting.scale ).toInt()
-                val maxY: Float = minY + ( glyph.metrics.height * info.formatting.scale ).toInt()
+                val minX: Float = info.x + info.bearingX.toInt()
+                val minY: Float = info.y - info.bearingY.toInt()
+                val maxX: Float = minX + info.width.toInt()
+                val maxY: Float = minY + info.height.toInt()
 
-                val shearTop: Float = ( glyph.metrics.bearingY * info.formatting.font.getShear() ) * info.formatting.scale
-                val shearBottom: Float = ( (glyph.metrics.bearingY - glyph.metrics.height) * info.formatting.font.getShear() ) * info.formatting.scale
+                val shearTop: Float = info.bearingX * info.formatting.font.getShear()
+                val shearBottom: Float = (info.bearingY - info.height) * info.formatting.font.getShear()
 
                 val minU: Float = (glyph.u ).toFloat()
                 val minV: Float = (glyph.v ).toFloat()
@@ -173,7 +177,7 @@ class StringRenderer {
                 underlinePos = Vec2d(info.x, info.y)
             }
 
-            prevEnd = Vec2d(info.x + if(info.glyph.metrics.isWhitespace) 0f else info.glyph.metrics.advance*info.formatting.scale, info.y)
+            prevEnd = Vec2d(info.x + if(info.glyph.metrics.isWhitespace) 0f else info.advance, info.y)
         }
 
         underlineCache = PosColorFormat.cache()
@@ -198,7 +202,7 @@ class StringRenderer {
                 strikePos = Vec2d(info.x, info.y)
             }
 
-            prevEnd = Vec2d(info.x + if(info.glyph.metrics.isWhitespace) 0f else info.glyph.metrics.advance*info.formatting.scale, info.y)
+            prevEnd = Vec2d(info.x + if(info.glyph.metrics.isWhitespace) 0f else info.advance, info.y)
         }
 
         strikeCache = PosColorFormat.cache()
@@ -265,9 +269,9 @@ class StringRenderer {
             if(info.stringIndex == index)
                 return info
         }
-        if(glyphList.size > 0 && index == glyphList.last().stringIndex + 1) {
+        if(glyphList.size > 0) {
             val info = glyphList.last()
-            return GlyphDrawInfo(if(info.glyph.metrics.isLineBreak) 0f else info.x+info.glyph.metrics.advance*info.formatting.scale, info.y + if(info.glyph.metrics.isLineBreak) fontSize*screenScale else 0, info.glyph, info.formatting, info.stringIndex+1)
+            return GlyphDrawInfo(if(info.glyph.metrics.isLineBreak) 0f else info.x+info.advance, info.y + if(info.glyph.metrics.isLineBreak) fontSize*screenScale else 0, info.glyph, info.formatting, info.stringIndex+1, false)
         }
         return null
     }
@@ -294,7 +298,7 @@ class StringRenderer {
         if(glyphList.size > 0) {
             val lastinfo = glyphList.last()
             val afterX = lastinfo.x + lastinfo.glyph.metrics.advance*lastinfo.formatting.scale
-            val info = GlyphDrawInfo(if(lastinfo.glyph.metrics.isLineBreak) 0f else afterX, lastinfo.y + if(lastinfo.glyph.metrics.isLineBreak) fontSize*screenScale else 0, lastinfo.glyph, lastinfo.formatting, lastinfo.stringIndex+1)
+            val info = GlyphDrawInfo(if(lastinfo.glyph.metrics.isLineBreak) 0f else afterX, lastinfo.y + if(lastinfo.glyph.metrics.isLineBreak) fontSize*screenScale else 0, lastinfo.glyph, lastinfo.formatting, lastinfo.stringIndex+1, false)
 
             val verticalDistance = Math.abs( ( info.y + fontSize/2 ) - posY )
             val horizontalDistance = Math.abs( info.x - posX )

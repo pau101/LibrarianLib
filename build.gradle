@@ -17,6 +17,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'kotlin'
 apply plugin: 'idea'
+apply plugin: 'maven'
 
 allprojects {
     tasks.withType(JavaCompile) {
@@ -56,10 +57,10 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     required "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
-    compile "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
-    compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
-    compile "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
-    compile "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
+    //compile "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
+    //compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    //compile "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+    //compile "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
 }
 
 jar {
@@ -111,3 +112,38 @@ processResources
                 exclude 'mcmod.info'
             }
         }
+
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			repository(url: "file://" + System.getenv("local_maven"))
+			pom {
+				groupId = project.group
+				version
+				artifactId = project.archivesBaseName
+				project {
+					name project.archivesBaseName
+					packaging 'jar'
+					description 'CraftTweaker'
+					url 'https://github.com/jaredlll08/CraftTweaker'
+					scm {
+						url 'https://github.com/jaredlll08/CraftTweaker.git'
+						connection 'scm:git:git@github.com:jaredlll08/CraftTweaker.git'
+						developerConnection 'scm:git:git@github.com:jaredlll08/CraftTweaker.git'
+					}
+					issueManagement {
+						system 'github'
+						url 'https://github.com/jaredlll08/CraftTweaker/issues'
+					}
+					developers {
+						developer {
+							id 'Jared'
+							name 'Jared'
+							roles { role 'developer' }
+						}
+					}
+				}
+			}
+		}
+	}
+}

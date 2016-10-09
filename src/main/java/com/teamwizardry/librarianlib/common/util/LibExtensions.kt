@@ -9,6 +9,8 @@ import net.minecraft.util.math.Vec3d
 import net.minecraft.util.text.TextFormatting
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty0
 
 /**
  * Created by TheCodeWarrior

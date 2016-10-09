@@ -1,5 +1,6 @@
 package com.teamwizardry.librarianlib.client.gui.components
 
+import com.teamwizardry.librarianlib.client.font.GlyphLayout
 import com.teamwizardry.librarianlib.client.font.StringRenderer
 import com.teamwizardry.librarianlib.client.gui.*
 import com.teamwizardry.librarianlib.common.util.event.EventCancelable
@@ -37,16 +38,20 @@ class ComponentTextInput(posX: Int, posY: Int, width: Int, height: Int) : GuiCom
             if(value < 0)
                 field = 0
             else if(value > text.length)
-                field = if(text.length == 0) 0 else text.length-1
+                field = if(text.length == 0) 0 else text.length
             else
                 field = value
         }
     var selection = 0
     val stringRenderer = StringRenderer()
+    val popupStringRenderer = StringRenderer()
+    var enableFormatting: Boolean
+        set(value) { stringRenderer.enableFormatCodes = value }
+        get() = stringRenderer.enableFormatCodes
 
     override fun drawComponent(mousePos: Vec2d, partialTicks: Float) {
         stringRenderer.render(pos.xi, pos.yi+stringRenderer.fontSize)
-        var cursorGlyph = stringRenderer.getGlyphFor(cursor)
+        val cursorGlyph = stringRenderer.getGlyphFor(cursor)
         if(cursorGlyph != null) {
             val cursorPos = Vec2d(cursorGlyph.x/StringRenderer.screenScale+pos.xi, cursorGlyph.y/StringRenderer.screenScale+pos.yi)
             val cursorSize = Vec2d(1, 9)
@@ -68,11 +73,55 @@ class ComponentTextInput(posX: Int, posY: Int, width: Int, height: Int) : GuiCom
             tessellator.draw()
 
             GlStateManager.enableTexture2D()
+
+            var sectionSymbolPos = cursor
+            while(sectionSymbolPos >= 0) {
+                if(sectionSymbolPos < text.length && text[sectionSymbolPos] == '§')
+                    break
+                sectionSymbolPos--
+            }
+
+            if(sectionSymbolPos > 0) {
+                val len = GlyphLayout.validFormatLength(text, sectionSymbolPos+1)
+                val cursorInsidePos = cursor-sectionSymbolPos+1
+
+                if(len > 0 && cursorGlyph.stringIndex in sectionSymbolPos..(sectionSymbolPos+len+1)) {
+
+                    val format = text.substring(sectionSymbolPos, Math.min(sectionSymbolPos+len+1, text.length))
+                    popupStringRenderer.text = format.replace("§", "§ ")
+
+                    val afterChar = stringRenderer.getGlyphFor(Math.min(sectionSymbolPos+len, text.length-1))
+                    if(afterChar != null) {
+                        val popupRenderPos = Vec2d(pos.xi+afterChar.x.toInt()/StringRenderer.screenScale, pos.yi+(afterChar.y.toInt() + stringRenderer.fontSize) / StringRenderer.screenScale)
+                        popupStringRenderer.render(popupRenderPos.xi, popupRenderPos.yi)
+
+                        val popupGlyph = popupStringRenderer.getGlyphFor(cursorInsidePos)
+                        if(popupGlyph != null) {
+                            val popupPos = Vec2d(popupRenderPos.xi + popupGlyph.x / StringRenderer.screenScale, popupRenderPos.yi + popupGlyph.y / StringRenderer.screenScale - popupStringRenderer.fontSize)
+
+                            GlStateManager.disableTexture2D()
+                            GlStateManager.color(0f, 0f, 0f, 1f)
+                            vertexbuffer.begin(7, DefaultVertexFormats.POSITION_COLOR)
+
+                            vertexbuffer.pos(popupPos.x - shear, popupPos.y + cursorSize.y, 0.0).color(0f, 0f, 0f, 1f).endVertex()
+                            vertexbuffer.pos(popupPos.x + cursorSize.x - shear, popupPos.y + cursorSize.y, 0.0).color(0f, 0f, 0f, 1f).endVertex()
+                            vertexbuffer.pos(popupPos.x + cursorSize.x + shear, popupPos.y, 0.0).color(0f, 0f, 0f, 1f).endVertex()
+                            vertexbuffer.pos(popupPos.x + shear, popupPos.y, 0.0).color(0f, 0f, 0f, 1f).endVertex()
+
+                            tessellator.draw()
+
+                            GlStateManager.enableTexture2D()
+                        }
+                    }
+                }
+            }
+
         }
     }
 
     init {
 
+        popupStringRenderer.fontSize = 8
         stringRenderer.fontSize = 8
         stringRenderer.wrap = size.xi
 
@@ -82,9 +131,10 @@ class ComponentTextInput(posX: Int, posY: Int, width: Int, height: Int) : GuiCom
 
         BUS.hook(MouseClickEvent::class.java) { event ->
             if(mouseOver) {
+                if(this.focused) {
+                    cursor = stringRenderer.getGlyphForClickPos(event.mousePos.xi*StringRenderer.screenScale, event.mousePos.yi*StringRenderer.screenScale)?.stringIndex ?: 0
+                }
                 this.focused = true
-
-                cursor = stringRenderer.getGlyphForClickPos(event.mousePos.xi*StringRenderer.screenScale, event.mousePos.yi*StringRenderer.screenScale)?.stringIndex ?: 0
             }
         }
 

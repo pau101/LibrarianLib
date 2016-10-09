@@ -5,6 +5,7 @@ import com.teamwizardry.librarianlib.client.gui.GuiComponent
 import com.teamwizardry.librarianlib.common.util.event.EventCancelable
 import com.teamwizardry.librarianlib.common.util.math.Vec2d
 import com.teamwizardry.librarianlib.common.util.plus
+import com.teamwizardry.librarianlib.common.util.times
 
 /**
  * Created by TheCodeWarrior
@@ -68,6 +69,14 @@ class ResizableMixin<T: GuiComponent<T>> constructor(component: T, edgeSize: Int
             if (mouseDown == event.button && !component.BUS.fire(DragMixin.DragDropEvent(event.component, event.mousePos, event.button)).isCanceled()) {
                 mouseDown = null
                 sideClicked = Vec2d.ZERO
+                if(component.size.x < 0) {
+                    component.size = component.size * Vec2d(-1, 1)
+                    component.pos = component.pos - Vec2d(component.size.x, 0)
+                }
+                if(component.size.y < 0) {
+                    component.size = component.size * Vec2d(1, -1)
+                    component.pos = component.pos - Vec2d(0, component.size.y)
+                }
                 event.cancel()
             }
         }

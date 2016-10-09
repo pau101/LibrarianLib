@@ -45,9 +45,14 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
     val sidebarInfo = ComponentRect(0, 0, 100, 0)
     val sprites = ComponentVoid(0, 0, 0, 0)
 
-    val sidebar_size: ComponentText
-    val sidebar_pos: ComponentText
-    val sidebar_zIndex: ComponentTextInput
+    val sidebar_uv: ComponentVoid
+    val sidebar_u: ComponentTextInput
+    val sidebar_v: ComponentTextInput
+
+    val sidebar_xy: ComponentVoid
+    val sidebar_x: ComponentTextInput
+    val sidebar_y: ComponentTextInput
+    val sidebar_z: ComponentTextInput
 
     init {
 
@@ -69,32 +74,77 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
         //region Sidebar stuff
         //==============================================================================================================
 
-        sidebar_pos = ComponentText(1, 1, ComponentText.TextAlignH.LEFT, ComponentText.TextAlignV.TOP)
-        sidebar_pos.text.func {
-            val sel = selected
-            if(sel == null)
-                "(N/A, N/A)"
-            else
-                "(${sel.pos.xi}, ${sel.pos.yi})"
+        sidebar_uv = ComponentVoid(0, 50, 100, 10)
+        sidebar_xy = ComponentVoid(0, 65, 100, 10)
+        sidebar_z = ComponentTextInput(0, 80, 50, 10)
+        sidebarInfo.add(ComponentRect(0, 80, 50, 10))
+
+        sidebar_u = ComponentTextInput(0, 0, 50, 10)
+        sidebar_v = ComponentTextInput(50, 0, 50, 10)
+
+        sidebar_x = ComponentTextInput(0, 0, 50, 10)
+        sidebar_y = ComponentTextInput(50, 0, 50, 10)
+
+        val numregex = "-?\\d*".toRegex()
+        val floatregex = "-?\\d*(?:\\.(?:\\d*)?)?".toRegex()
+
+        sidebar_u.BUS.hook(ComponentTextInput.TextChangeEvent::class.java) { event ->
+            if(!numregex.matches(event.newText))
+                event.cancel()
         }
-        sidebarInfo.add(sidebar_pos)
-
-        sidebar_size = ComponentText(1, 10, ComponentText.TextAlignH.LEFT, ComponentText.TextAlignV.TOP)
-        sidebar_size.text.func {
-            val sel = selected
-            if(sel == null)
-                "N/A x N/A"
-            else
-                "${sel.size.xi} x ${sel.size.yi}"
+        sidebar_v.BUS.hook(ComponentTextInput.TextChangeEvent::class.java) { event ->
+            if(!numregex.matches(event.newText))
+                event.cancel()
+        }
+        sidebar_x.BUS.hook(ComponentTextInput.TextChangeEvent::class.java) { event ->
+            if(!numregex.matches(event.newText))
+                event.cancel()
+            else {
+                try {
+                    val i = Integer.parseInt(event.newText)
+                    selected?.let {
+                        it.pos = it.pos.setX(i.toDouble())
+                    }
+                } catch (e: NumberFormatException) {}
+            }
+        }
+        sidebar_y.BUS.hook(ComponentTextInput.TextChangeEvent::class.java) { event ->
+            if(!numregex.matches(event.newText))
+                event.cancel()
+            else {
+                try {
+                    val i = Integer.parseInt(event.newText)
+                    selected?.let {
+                        it.pos = it.pos.setX(i.toDouble())
+                    }
+                } catch (e: NumberFormatException) {}
+            }
+        }
+        sidebar_z.BUS.hook(ComponentTextInput.TextChangeEvent::class.java) { event ->
+            if(!numregex.matches(event.newText))
+                event.cancel()
+            else {
+                try {
+                    val i = Integer.parseInt(event.newText)
+                    selected?.let {
+                        it.zIndex = i
+                    }
+                } catch (e: NumberFormatException) {}
+            }
         }
 
-        sidebarInfo.add(sidebar_size)
+        sidebar_uv.add(ComponentRect(0, 0, 100, 10))
+        sidebar_uv.add(sidebar_u)
+        sidebar_uv.add(sidebar_v)
+        sidebarInfo.add(sidebar_uv)
 
+        sidebar_xy.add(ComponentRect(0, 0, 100, 10))
+        sidebar_xy.add(sidebar_x)
+        sidebar_xy.add(sidebar_y)
+        sidebarInfo.add(sidebar_xy)
 
-        sidebar_zIndex = ComponentTextInput(0, 20, 100, 100)
+        sidebarInfo.add(sidebar_z)
 
-        sidebarInfo.add(ComponentRect(sidebar_zIndex.pos.xi, sidebar_zIndex.pos.yi, sidebar_zIndex.size.xi, sidebar_zIndex.size.yi))
-        sidebarInfo.add(sidebar_zIndex)
         //==============================================================================================================
         //endregion
 
@@ -117,7 +167,7 @@ class GuiBookLayoutEditor(val book: Book) : GuiBase(0, 0) {
         createRect()
         createRect()
 
-        selected = rect
+        select(rect)
 
 //        val sr = StringRenderer()
 //

@@ -19,6 +19,7 @@ class GlyphLayout() {
     var fontName: String = "Unifont"
     var fontSize: Int = 16
     var fontStyle: Int = Font.PLAIN
+    var enableFormatting: Boolean = true
 
     fun layoutGlyphs(): List<GlyphDrawInfo> {
         val format_ = TextFormatting(fontName, fontStyle, fontSize)
@@ -45,11 +46,17 @@ class GlyphLayout() {
             val c = str[i]
             val index = i
 
-            if(c == '§') {
+            if(c == '§' && enableFormatting) {
                 val len = validFormatLength(str, i+1)
                 if(len == 0) {
                     i++ // increase once so i is at the next char. at the end of the loop i is incremented past it
+                    if(i < str.length)
+                        list.add(GlyphDrawInfo(x, y, format.font.getGlyph(str[i].toInt()), format, i, false, 0f))
                 } else {
+                    for(j in i..(i+len+1)) {
+                        if(j < str.length)
+                            list.add(GlyphDrawInfo(x, y, format.font.getGlyph(str[j].toInt()), format, j, false, 0f))
+                    }
                     i++ // increase i so it's after the section sign
                     val formatStr = str.substring(i, i+len)
                     i += len
@@ -109,7 +116,7 @@ class GlyphLayout() {
                 lastBreakOpportunity = list.size+1
             }
 
-            list.add(GlyphDrawInfo(x, y, glyph, format, index))
+            list.add(GlyphDrawInfo(x, y, glyph, format, index, !glyph.metrics.isWhitespace))
             x += advance
 
             if(glyph.metrics.isLineBreak) {
@@ -252,22 +259,6 @@ class GlyphLayout() {
         }
     }
 
-    fun validFormatLength(str: String, i: Int): Int {
-        if(i >= str.length)
-            return 0
-        val c = str[i]
-        if(c in validOneCharFormats) {
-            return 1
-        }
-        val sub = str.substring(i)
-        val result = formatRegex.find(sub) ?: compoundRegex.find(sub)
-        if(result != null) {
-            return result.value.length
-        }
-
-        return 0
-    }
-
     companion object {
         val validOneCharFormats = "0123456789abcdefABCDEFlmnorLMNOR"
         val formatRegex = Regex("^\\{.*?\\}")
@@ -294,11 +285,38 @@ class GlyphLayout() {
             }
             return@lazy map
         }
+
+        fun validFormatLength(str: String, i: Int): Int {
+            if(i >= str.length)
+                return 0
+            val c = str[i]
+            if(c in validOneCharFormats) {
+                return 1
+            }
+            val sub = str.substring(i)
+            val result = formatRegex.find(sub) ?: compoundRegex.find(sub)
+            if(result != null) {
+                return result.value.length
+            }
+
+            return 0
+        }
     }
 
 }
 
-data class GlyphDrawInfo(var x: Float, var y: Float, val glyph: Glyph, val formatting: TextFormatting, val stringIndex: Int)
+data class GlyphDrawInfo(var x: Float, var y: Float, val glyph: Glyph, val formatting: TextFormatting, val stringIndex: Int, var shouldRender: Boolean, private var setWidth: Float = -1f) {
+    val width: Float
+        get() = if(setWidth > 0) setWidth else glyph.metrics.width * formatting.scale
+    val height: Float
+        get() = glyph.metrics.height * formatting.scale
+    val bearingX: Float
+        get() = glyph.metrics.bearingX * formatting.scale
+    val bearingY: Float
+        get() = glyph.metrics.bearingY * formatting.scale
+    val advance: Float
+        get() = glyph.metrics.advance * formatting.scale
+}
 
 class TextFormatting protected constructor(var font: BasicFont, var targetSize: Int, var scale: Float, text: Color, shadow: Color? = null, underline: Color? = null, strikethrough: Color? = null) {
     constructor(fontName: String, style: Int, targetSize: Int) : this(FontLoader.font(fontName, style, targetSize).first, targetSize, FontLoader.font(fontName, style, targetSize).second, Color.BLACK)
