@@ -25,8 +25,6 @@ fun vec(x: Number, y: Number, z: Number) = Vec3d(x.toDouble(), y.toDouble(), z.t
 internal var modIdOverride: String? = null
 
 val currentModId: String
-    get() = modIdOverride ?: Loader.instance().activeModContainer()?.modId ?: ""
+    get() = modIdOverride ?: Loader.instance().activeModContainer()?.modId ?: OwnershipHandler.getModId(Class.forName(Throwable().stackTrace[2].className)) ?: ""
 
-@JvmName("getModId")
-fun getCurrentModId() = if (currentModId == "") currentModId else OwnershipHandler.getModId(Class.forName(Throwable().stackTrace[2].className))
 
