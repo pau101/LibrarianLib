@@ -83,7 +83,7 @@ object LibrarianLib {
 
     const val MODID = "librarianlib"
     const val MODNAME = "LibrarianLib"
-    const val VERSION = "1.10.1"
+    const val VERSION = "1.10.2"
     const val CLIENT = "com.teamwizardry.librarianlib.client.core.LibClientProxy"
     const val SERVER = "com.teamwizardry.librarianlib.common.core.LibCommonProxy"
     const val DEPENDENCIES = "required-after:forgelin;required-after:Forge@[12.18.3.2185,)"
