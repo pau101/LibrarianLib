@@ -202,6 +202,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     var marginBottom: Double = 0.0
 
     var mouseOver = false
+
     var mousePosThisFrame = Vec2d.ZERO
     protected var tagStorage: MutableSet<Any> = HashSet<Any>()
     /**
@@ -410,10 +411,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     }
 
     protected fun addByTag(tag: Any, list: MutableList<GuiComponent<*>>) {
-        for (component in components) {
-            if (component.hasTag(tag))
-                list.add(component)
-        }
+        components.filterTo(list) { it.hasTag(tag) }
     }
 
     /**
@@ -441,10 +439,9 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
 
     @Suppress("UNCHECKED_CAST")
     protected fun <C : GuiComponent<*>> addByClass(clazz: Class<C>, list: MutableList<C>) {
-        for (component in components) {
-            if (clazz.isAssignableFrom(component.javaClass))
-                list.add(component as C)
-        }
+        components
+                .filter { clazz.isAssignableFrom(it.javaClass) }
+                .mapTo(list) { it as C }
     }
 
     //=============================================================================
@@ -480,7 +477,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     open fun calculateMouseOver(mousePos: Vec2d) {
         this.mouseOver = false
 
-        if (isVisible) {
+        if (isVisible && enabled) {
             components.asReversed().forEach { child ->
                 child.calculateMouseOver(transformChildPos(child, mousePos))
                 if (mouseOver) {
@@ -495,6 +492,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
             mouseOver = mouseOver || (calculateOwnHover &&
                     (mousePos.x >= 0 && mousePos.x <= size.x && mousePos.y >= 0 && mousePos.y <= size.y))
         }
+
         this.mouseOver = BUS.fire(MouseOverEvent(thiz(), mousePos, this.mouseOver)).isOver
     }
 
@@ -594,7 +592,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      * @param button
      */
     open fun mouseDown(mousePos: Vec2d, button: EnumMouseButton) {
-        if (!isVisible) return
+        if (!isVisible || !enabled) return
         if (BUS.fire(MouseDownEvent(thiz(), mousePos, button)).isCanceled())
             return
 
@@ -613,7 +611,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      * @param button
      */
     fun mouseUp(mousePos: Vec2d, button: EnumMouseButton) {
-        if (!isVisible) return
+        if (!isVisible || !enabled) return
         val wasDown = mouseButtonsDown[button.ordinal]
         mouseButtonsDown[button.ordinal] = false
 
@@ -637,7 +635,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      * @param button
      */
     fun mouseDrag(mousePos: Vec2d, button: EnumMouseButton) {
-        if (!isVisible) return
+        if (!isVisible || !enabled) return
         if (BUS.fire(MouseDragEvent(thiz(), mousePos, button)).isCanceled())
             return
 
@@ -651,7 +649,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      * @param mousePos
      */
     fun mouseWheel(mousePos: Vec2d, direction: MouseWheelDirection) {
-        if (!isVisible) return
+        if (!isVisible || !enabled) return
         if (BUS.fire(MouseWheelEvent(thiz(), mousePos, direction)).isCanceled())
             return
 
@@ -667,7 +665,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      * @param keyCode The key code, codes listed in [Keyboard]
      */
     fun keyPressed(key: Char, keyCode: Int) {
-        if (!isVisible) return
+        if (!isVisible || !enabled) return
         if (BUS.fire(KeyDownEvent(thiz(), key, keyCode)).isCanceled())
             return
 
@@ -685,8 +683,8 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      * @param keyCode The key code, codes listed in [Keyboard]
      */
     fun keyReleased(key: Char, keyCode: Int) {
-        if (!isVisible) return
-        keysDown.put(Key.get(key, keyCode), false) // do this before so we don't have lingering keyDown entries
+        if (!isVisible || !enabled) return
+        keysDown.put(Key[key, keyCode], false) // do this before so we don't have lingering keyDown entries
 
         if (BUS.fire(KeyUpEvent(thiz(), key, keyCode)).isCanceled())
             return
@@ -709,11 +707,11 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      */
     fun getLogicalSize(): BoundingBox2D? {
         var aabb = contentSize
-        for (child in components) {
-            if (!child.isVisible) continue
-            val childAABB = child.getLogicalSize()?.scale(childScale)?.offset(childTranslation)
-            aabb = childAABB?.union(aabb) ?: aabb
-        }
+        components
+                .asSequence()
+                .filter { it.isVisible && it.enabled }
+                .map { it.getLogicalSize()?.scale(childScale)?.offset(childTranslation) }
+                .forEach { aabb = it?.union(aabb) ?: aabb }
 
         aabb = BoundingBox2D(aabb.min + pos - vec(marginLeft, marginTop), aabb.max + pos + vec(marginRight, marginBottom))
 
