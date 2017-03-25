@@ -388,6 +388,14 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     }
 
     /**
+     * Iterates over children while allowing children to be added or removed.
+     */
+    fun forEachChild(l: (GuiComponent<*>) -> Unit) {
+        val copy = components.toList()
+        copy.forEach(l)
+    }
+
+    /**
      * Returns a list of all children that have the tag [tag]
      */
     fun getByTag(tag: Any): List<GuiComponent<*>> {
@@ -439,7 +447,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
 
     @Suppress("UNCHECKED_CAST")
     protected fun <C : GuiComponent<*>> addByClass(clazz: Class<C>, list: MutableList<C>) {
-        components
+        components.toList()
                 .filter { clazz.isAssignableFrom(it.javaClass) }
                 .mapTo(list) { it as C }
     }
@@ -565,7 +573,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
 
         BUS.fire(PreChildrenDrawEvent(thiz(), mousePos, partialTicks))
 
-        for (component in components) {
+        forEachChild { component ->
             component.draw(transformChildPos(component, mousePos), partialTicks)
         }
 
@@ -580,7 +588,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     fun tick() {
         BUS.fire(ComponentTickEvent(thiz()))
         onTick()
-        for (child in components) {
+        forEachChild { child ->
             child.tick()
         }
     }
@@ -599,7 +607,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
         if (mouseOver)
             mouseButtonsDown[button.ordinal] = true
 
-        for (child in components) {
+        forEachChild { child ->
             child.mouseDown(transformChildPos(child, mousePos), button)
         }
     }
@@ -623,7 +631,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
             // don't return here, if a click was handled we should still handle the mouseUp
         }
 
-        for (child in components.toList()) {
+        forEachChild { child ->
             child.mouseUp(transformChildPos(child, mousePos), button)
         }
     }
@@ -639,7 +647,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
         if (BUS.fire(MouseDragEvent(thiz(), mousePos, button)).isCanceled())
             return
 
-        for (child in components) {
+        forEachChild { child ->
             child.mouseDrag(transformChildPos(child, mousePos), button)
         }
     }
@@ -653,7 +661,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
         if (BUS.fire(MouseWheelEvent(thiz(), mousePos, direction)).isCanceled())
             return
 
-        for (child in components) {
+        forEachChild { child ->
             child.mouseWheel(transformChildPos(child, mousePos), direction)
         }
     }
@@ -671,7 +679,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
 
         keysDown.put(Key.get(key, keyCode), true)
 
-        for (child in components) {
+        forEachChild { child ->
             child.keyPressed(key, keyCode)
         }
     }
@@ -689,7 +697,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
         if (BUS.fire(KeyUpEvent(thiz(), key, keyCode)).isCanceled())
             return
 
-        for (child in components) {
+        forEachChild { child ->
             child.keyReleased(key, keyCode)
         }
     }
@@ -707,7 +715,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      */
     fun getLogicalSize(): BoundingBox2D? {
         var aabb = contentSize
-        components
+        components.toList()
                 .asSequence()
                 .filter { it.isVisible && it.enabled }
                 .map { it.getLogicalSize()?.scale(childScale)?.offset(childTranslation) }
@@ -772,7 +780,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
                 }
             }
             if (message.rippleType == EnumRippleType.DOWN || message.rippleType == EnumRippleType.ALL) {
-                children.forEach {
+                forEachChild {
                     if (it != from) {
                         it.handleMessage(this, message)
                     }
