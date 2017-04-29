@@ -34,7 +34,7 @@ object ParticleSpawner {
         if (event.phase == TickEvent.Phase.END) {
             val mc = Minecraft.getMinecraft()
             val gui = mc.currentScreen
-            if (gui == null || !gui.doesGuiPauseGame()) {
+            if (gui == null || !gui.doesGuiPauseGame() || !mc.isGamePaused) {
                 tick()
             }
         }

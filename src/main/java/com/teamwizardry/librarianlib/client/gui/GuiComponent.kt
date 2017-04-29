@@ -202,6 +202,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     var marginBottom: Double = 0.0
 
     var mouseOver = false
+
     var mousePosThisFrame = Vec2d.ZERO
     protected var tagStorage: MutableSet<Any> = HashSet<Any>()
     /**
@@ -387,6 +388,14 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     }
 
     /**
+     * Iterates over children while allowing children to be added or removed.
+     */
+    fun forEachChild(l: (GuiComponent<*>) -> Unit) {
+        val copy = components.toList()
+        copy.forEach(l)
+    }
+
+    /**
      * Returns a list of all children that have the tag [tag]
      */
     fun getByTag(tag: Any): List<GuiComponent<*>> {
@@ -410,10 +419,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     }
 
     protected fun addByTag(tag: Any, list: MutableList<GuiComponent<*>>) {
-        for (component in components) {
-            if (component.hasTag(tag))
-                list.add(component)
-        }
+        components.filterTo(list) { it.hasTag(tag) }
     }
 
     /**
@@ -441,10 +447,9 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
 
     @Suppress("UNCHECKED_CAST")
     protected fun <C : GuiComponent<*>> addByClass(clazz: Class<C>, list: MutableList<C>) {
-        for (component in components) {
-            if (clazz.isAssignableFrom(component.javaClass))
-                list.add(component as C)
-        }
+        components.toList()
+                .filter { clazz.isAssignableFrom(it.javaClass) }
+                .mapTo(list) { it as C }
     }
 
     //=============================================================================
@@ -480,7 +485,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     open fun calculateMouseOver(mousePos: Vec2d) {
         this.mouseOver = false
 
-        if (isVisible) {
+        if (isVisible && enabled) {
             components.asReversed().forEach { child ->
                 child.calculateMouseOver(transformChildPos(child, mousePos))
                 if (mouseOver) {
@@ -495,6 +500,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
             mouseOver = mouseOver || (calculateOwnHover &&
                     (mousePos.x >= 0 && mousePos.x <= size.x && mousePos.y >= 0 && mousePos.y <= size.y))
         }
+
         this.mouseOver = BUS.fire(MouseOverEvent(thiz(), mousePos, this.mouseOver)).isOver
     }
 
@@ -567,7 +573,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
 
         BUS.fire(PreChildrenDrawEvent(thiz(), mousePos, partialTicks))
 
-        for (component in components) {
+        forEachChild { component ->
             component.draw(transformChildPos(component, mousePos), partialTicks)
         }
 
@@ -582,7 +588,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
     fun tick() {
         BUS.fire(ComponentTickEvent(thiz()))
         onTick()
-        for (child in components) {
+        forEachChild { child ->
             child.tick()
         }
     }
@@ -594,14 +600,14 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      * @param button
      */
     open fun mouseDown(mousePos: Vec2d, button: EnumMouseButton) {
-        if (!isVisible) return
+        if (!isVisible || !enabled) return
         if (BUS.fire(MouseDownEvent(thiz(), mousePos, button)).isCanceled())
             return
 
         if (mouseOver)
             mouseButtonsDown[button.ordinal] = true
 
-        for (child in components) {
+        forEachChild { child ->
             child.mouseDown(transformChildPos(child, mousePos), button)
         }
     }
@@ -613,7 +619,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      * @param button
      */
     fun mouseUp(mousePos: Vec2d, button: EnumMouseButton) {
-        if (!isVisible) return
+        if (!isVisible || !enabled) return
         val wasDown = mouseButtonsDown[button.ordinal]
         mouseButtonsDown[button.ordinal] = false
 
@@ -625,7 +631,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
             // don't return here, if a click was handled we should still handle the mouseUp
         }
 
-        for (child in components.toList()) {
+        forEachChild { child ->
             child.mouseUp(transformChildPos(child, mousePos), button)
         }
     }
@@ -637,11 +643,11 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      * @param button
      */
     fun mouseDrag(mousePos: Vec2d, button: EnumMouseButton) {
-        if (!isVisible) return
+        if (!isVisible || !enabled) return
         if (BUS.fire(MouseDragEvent(thiz(), mousePos, button)).isCanceled())
             return
 
-        for (child in components) {
+        forEachChild { child ->
             child.mouseDrag(transformChildPos(child, mousePos), button)
         }
     }
@@ -651,11 +657,11 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      * @param mousePos
      */
     fun mouseWheel(mousePos: Vec2d, direction: MouseWheelDirection) {
-        if (!isVisible) return
+        if (!isVisible || !enabled) return
         if (BUS.fire(MouseWheelEvent(thiz(), mousePos, direction)).isCanceled())
             return
 
-        for (child in components) {
+        forEachChild { child ->
             child.mouseWheel(transformChildPos(child, mousePos), direction)
         }
     }
@@ -667,13 +673,13 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      * @param keyCode The key code, codes listed in [Keyboard]
      */
     fun keyPressed(key: Char, keyCode: Int) {
-        if (!isVisible) return
+        if (!isVisible || !enabled) return
         if (BUS.fire(KeyDownEvent(thiz(), key, keyCode)).isCanceled())
             return
 
         keysDown.put(Key.get(key, keyCode), true)
 
-        for (child in components) {
+        forEachChild { child ->
             child.keyPressed(key, keyCode)
         }
     }
@@ -685,13 +691,13 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      * @param keyCode The key code, codes listed in [Keyboard]
      */
     fun keyReleased(key: Char, keyCode: Int) {
-        if (!isVisible) return
-        keysDown.put(Key.get(key, keyCode), false) // do this before so we don't have lingering keyDown entries
+        if (!isVisible || !enabled) return
+        keysDown.put(Key[key, keyCode], false) // do this before so we don't have lingering keyDown entries
 
         if (BUS.fire(KeyUpEvent(thiz(), key, keyCode)).isCanceled())
             return
 
-        for (child in components) {
+        forEachChild { child ->
             child.keyReleased(key, keyCode)
         }
     }
@@ -709,11 +715,11 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
      */
     fun getLogicalSize(): BoundingBox2D? {
         var aabb = contentSize
-        for (child in components) {
-            if (!child.isVisible) continue
-            val childAABB = child.getLogicalSize()?.scale(childScale)?.offset(childTranslation)
-            aabb = childAABB?.union(aabb) ?: aabb
-        }
+        components.toList()
+                .asSequence()
+                .filter { it.isVisible && it.enabled }
+                .map { it.getLogicalSize()?.scale(childScale)?.offset(childTranslation) }
+                .forEach { aabb = it?.union(aabb) ?: aabb }
 
         aabb = BoundingBox2D(aabb.min + pos - vec(marginLeft, marginTop), aabb.max + pos + vec(marginRight, marginBottom))
 
@@ -774,7 +780,7 @@ abstract class GuiComponent<T : GuiComponent<T>> @JvmOverloads constructor(posX:
                 }
             }
             if (message.rippleType == EnumRippleType.DOWN || message.rippleType == EnumRippleType.ALL) {
-                children.forEach {
+                forEachChild {
                     if (it != from) {
                         it.handleMessage(this, message)
                     }

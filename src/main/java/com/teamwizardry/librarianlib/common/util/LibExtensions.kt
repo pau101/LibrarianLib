@@ -3,6 +3,8 @@
 package com.teamwizardry.librarianlib.common.util
 
 import com.teamwizardry.librarianlib.LibrarianLib
+import com.teamwizardry.librarianlib.common.network.PacketHandler
+import com.teamwizardry.librarianlib.common.network.PacketSpamlessMessage
 import com.teamwizardry.librarianlib.common.util.math.Vec2d
 import com.teamwizardry.librarianlib.common.util.math.Vec2i
 import io.netty.buffer.ByteBuf
@@ -97,7 +99,7 @@ operator fun Vec3d.unaryMinus(): Vec3d = this * -1.0
 
 infix fun Vec3d.dot(other: Vec3d) = this.dotProduct(other)
 
-infix fun Vec3d.cross(other: Vec3d) = this.crossProduct(other)
+infix fun Vec3d.cross(other: Vec3d): Vec3d = this.crossProduct(other)
 
 fun Vec3d.withX(other: Double) = Vec3d(other, this.yCoord, this.zCoord)
 fun Vec3d.withY(other: Double) = Vec3d(this.xCoord, other, this.zCoord)
@@ -127,6 +129,15 @@ operator fun Vec2d.div(other: Int) = this / other.toDouble()
 operator fun Vec2d.plus(other: Vec2d) = this.add(other)
 operator fun Vec2d.minus(other: Vec2d) = this.add(other)
 operator fun Vec2d.unaryMinus() = this * -1
+
+fun Vec2d.withX(other: Double) = Vec2d(other, this.y)
+fun Vec2d.withY(other: Double) = Vec2d(this.x, other)
+
+fun Vec2d.withX(other: Float) = this.withX(other.toDouble())
+fun Vec2d.withY(other: Float) = this.withY(other.toDouble())
+
+fun Vec2d.withX(other: Int) = this.withX(other.toDouble())
+fun Vec2d.withY(other: Int) = this.withY(other.toDouble())
 
 // BlockPos ============================================================================================================
 
@@ -377,11 +388,22 @@ operator fun NBTTagCompound.get(key: String): NBTBase = this.getTag(key)
 fun EntityPlayer.sendMessage(str: String)
         = sendStatusMessage(str.toComponent())
 
+fun EntityPlayer.sendSpamlessMessage(str: String, channelName: String)
+        = sendSpamlessMessage(str, channelName.hashCode())
+
+fun EntityPlayer.sendSpamlessMessage(comp: ITextComponent, channelName: String)
+    = sendSpamlessMessage(comp, channelName.hashCode())
+
 fun EntityPlayer.sendSpamlessMessage(str: String, uniqueId: Int)
         = sendSpamlessMessage(str.toComponent(), uniqueId)
 
-fun EntityPlayer.sendSpamlessMessage(comp: ITextComponent, uniqueId: Int)
-        = LibrarianLib.PROXY.sendSpamlessMessage(this, comp, uniqueId)
+fun EntityPlayer.sendSpamlessMessage(comp: ITextComponent, uniqueId: Int) {
+    val packet = PacketSpamlessMessage(comp, uniqueId)
+    if (this is EntityPlayerMP)
+        PacketHandler.NETWORK.sendTo(packet, this)
+    else
+        LibrarianLib.PROXY.runIfClient(packet)
+}
 
 fun Entity.setVelocityAndUpdate(vec: Vec3d) = setVelocityAndUpdate(vec.xCoord, vec.yCoord, vec.zCoord)
 fun Entity.setVelocityAndUpdate(x: Double = motionX, y: Double = motionY, z: Double = motionZ) {
