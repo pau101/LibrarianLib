@@ -4,6 +4,7 @@ package com.teamwizardry.librarianlib.common.util
 
 import com.teamwizardry.librarianlib.LibrarianLib
 import com.teamwizardry.librarianlib.common.util.math.Vec2d
+import com.teamwizardry.librarianlib.common.util.math.Vec2i
 import io.netty.buffer.ByteBuf
 import net.minecraft.block.Block
 import net.minecraft.entity.Entity
@@ -18,6 +19,7 @@ import net.minecraft.util.ResourceLocation
 import net.minecraft.util.math.AxisAlignedBB
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
+import net.minecraft.util.math.Vec3i
 import net.minecraft.util.text.ITextComponent
 import net.minecraft.util.text.TextComponentString
 import net.minecraft.util.text.TextFormatting
@@ -61,6 +63,9 @@ fun <K, V> MutableMap<K, V>.withRealDefault(default: (K) -> V): DefaultedMutable
     }
 }
 
+fun Triple<Int, Int, Int>.toVector() = Vec3i(first, second, third)
+fun Pair<Int, Int>.toVector() = Vec2i(first, second)
+
 interface DefaultedMutableMap<K, V> : MutableMap<K, V> {
     override fun get(key: K): V
 }
@@ -68,7 +73,9 @@ interface DefaultedMutableMap<K, V> : MutableMap<K, V> {
 private class RealDefaultImpl<K, V>(val map: MutableMap<K, V>, val default: (K) -> V) : DefaultedMutableMap<K, V>, MutableMap<K, V> by map {
     override fun get(key: K): V {
         //return map.getOrPut(key, { default(key) })
-        return map[key] ?: default(key)  //better
+        return map.getOrPut(key) {
+            default(key)
+        }  //better
     }
 }
 

@@ -18,7 +18,9 @@ public class LiblibCorePlugin implements IFMLLoadingPlugin {
 
     @Override
     public String[] getASMTransformerClass() {
-        return new String[0];
+        return new String[]{
+                "com.teamwizardry.librarianlib.core.AsmTransformer"
+        };
     }
 
     @Override
