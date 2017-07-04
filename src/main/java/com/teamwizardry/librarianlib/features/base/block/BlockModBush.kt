@@ -78,8 +78,17 @@ open class BlockModBush(name: String, materialIn: Material, color: MapColor, var
     override fun generateMissingItem(variant: String): Boolean {
         val item = itemForm as? IModItemProvider ?: return false
         ModelHandler.generateItemJson(item) {
-            mapOf(JsonGenerationUtils.getPathForItemModel(item as Item, variant) to
-                    JsonGenerationUtils.generateRegularItemModel(item, variant))
+            mapOf(JsonGenerationUtils.getPathForItemModel(item as Item, variant) to {
+                val registryName = item.registryName
+                json {
+                    obj(
+                            "parent" to "item/generated",
+                            "textures" to obj(
+                                    "layer0" to "${registryName!!.resourceDomain}:blocks/$variant"
+                            )
+                    )
+                }
+            }())
         }
         return true
     }
