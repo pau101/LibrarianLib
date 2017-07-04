@@ -1,38 +1,23 @@
 package com.teamwizardry.librarianlib.features.base.block
 
-import com.teamwizardry.librarianlib.core.client.ModelHandler
 import com.teamwizardry.librarianlib.core.common.LibLibConfig
-import com.teamwizardry.librarianlib.features.base.IModelGenerator
-import com.teamwizardry.librarianlib.features.base.item.IModItemProvider
-import com.teamwizardry.librarianlib.features.kotlin.json
-import com.teamwizardry.librarianlib.features.utilities.JsonGenerationUtils
 import net.minecraft.block.Block
 import net.minecraft.block.IGrowable
-import net.minecraft.block.SoundType
-import net.minecraft.block.material.Material
 import net.minecraft.block.properties.IProperty
 import net.minecraft.block.properties.PropertyInteger
 import net.minecraft.block.state.BlockStateContainer
 import net.minecraft.block.state.IBlockState
-import net.minecraft.client.renderer.block.model.ModelResourceLocation
 import net.minecraft.init.Blocks
-import net.minecraft.item.Item
 import net.minecraft.item.ItemBlock
 import net.minecraft.item.ItemStack
-import net.minecraft.util.BlockRenderLayer
-import net.minecraft.util.EnumFacing
 import net.minecraft.util.math.AxisAlignedBB
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.IBlockAccess
 import net.minecraft.world.World
 import net.minecraft.world.gen.feature.WorldGenTrees
-import net.minecraftforge.common.EnumPlantType
-import net.minecraftforge.common.IPlantable
 import net.minecraftforge.event.terraingen.TerrainGen
 import net.minecraftforge.fml.common.IFuelHandler
 import net.minecraftforge.fml.common.registry.GameRegistry
-import net.minecraftforge.fml.relauncher.Side
-import net.minecraftforge.fml.relauncher.SideOnly
 import net.minecraftforge.oredict.OreDictionary
 import java.util.*
 
@@ -72,6 +57,12 @@ abstract class BlockModSapling(name: String, vararg variants: String) : BlockMod
         if (itemForm != null)
             for (variant in this.variants.indices)
                 OreDictionary.registerOre("treeSapling", ItemStack(this, 1, variant))
+    }
+
+    val SAPLING_AABB = AxisAlignedBB(0.1, 0.0, 0.1, 0.9, 0.9, 0.9)
+
+    override fun getBoundingBox(state: IBlockState?, source: IBlockAccess?, pos: BlockPos?): AxisAlignedBB {
+        return SAPLING_AABB
     }
 
     override fun onNeighborChange(worldIn: IBlockAccess, pos: BlockPos, neighborBlock: BlockPos) {
