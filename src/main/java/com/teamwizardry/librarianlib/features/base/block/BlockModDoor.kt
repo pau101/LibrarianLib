@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.block.model.ModelResourceLocation
 import net.minecraft.entity.Entity
 import net.minecraft.item.Item
 import net.minecraft.item.ItemBlock
+import net.minecraft.item.ItemDoor
 import net.minecraft.util.ResourceLocation
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.Explosion
@@ -35,10 +36,7 @@ open class BlockModDoor(name: String, val parent: IBlockState) : BlockDoor(paren
 
     val itemForm: ItemBlock? by lazy { createItemForm() }
 
-    val doorItemForm: Item?
-
     init {
-        doorItemForm = createDoorItemForm()
         this.variants = VariantHelper.beginSetupBlock(name, arrayOf())
         VariantHelper.finishSetupBlock(this, bareName, itemForm, this::creativeTab)
     }
@@ -53,11 +51,7 @@ open class BlockModDoor(name: String, val parent: IBlockState) : BlockDoor(paren
      * Override this to have a custom ItemBlock implementation.
      */
     open fun createItemForm(): ItemBlock? {
-        return null
-    }
-
-    open fun createDoorItemForm(): Item? {
-        return ItemModDoor(this, bareName)
+        return ItemModDoor(this)
     }
 
     /**
@@ -67,10 +61,10 @@ open class BlockModDoor(name: String, val parent: IBlockState) : BlockDoor(paren
         get() = ModCreativeTab.defaultTabs[modId]
 
     override fun getItemDropped(state: IBlockState, rand: Random, fortune: Int): Item? {
-        return if (state.getValue(HALF) == BlockDoor.EnumDoorHalf.UPPER) null else this.doorItemForm
+        return if (state.getValue(HALF) == BlockDoor.EnumDoorHalf.UPPER) null else this.itemForm
     }
 
-    override fun getExplosionResistance(world: World, pos: BlockPos, exploder: Entity, explosion: Explosion) = parent.block.getExplosionResistance(world, pos, exploder, explosion)
+    override fun getExplosionResistance(world: World, pos: BlockPos, exploder: Entity?, explosion: Explosion) = parent.block.getExplosionResistance(world, pos, exploder, explosion)
     override fun getBlockHardness(blockState: IBlockState, worldIn: World, pos: BlockPos) = parent.getBlockHardness(worldIn, pos)
     override fun isToolEffective(type: String?, state: IBlockState) = parent.block.isToolEffective(type, parent)
     override fun getHarvestTool(state: IBlockState): String? = parent.block.getHarvestTool(parent)
