@@ -10,10 +10,9 @@ import net.minecraft.client.renderer.block.model.ModelResourceLocation
 import net.minecraft.client.renderer.block.statemap.DefaultStateMapper
 import net.minecraft.item.Item
 import net.minecraft.item.ItemBlock
-import net.minecraftforge.registries.IForgeRegistryEntry
+import net.minecraftforge.fml.common.registry.IForgeRegistryEntry
 import java.io.File
 import java.nio.file.Paths
-
 
 /**
  * Created by WireSegal on 9/27/2016.
@@ -45,7 +44,7 @@ object JsonGenerationUtils {
 
     fun getPathForBaseBlockstate(block: IForgeRegistryEntry<*>): String {
         val registryName = block.registryName
-        return getAssetPath(registryName!!.resourceDomain) + +"/blockstates/${registryName!!.resourcePath}.json"
+        return getAssetPath(registryName!!.resourceDomain) + +"/blockstates/${registryName.resourcePath}.json"
     }
 
     fun getPathsForBlockstate(block: Block, stateMapper: ((block: Block) -> Map<IBlockState, ModelResourceLocation>)? = null): Array<String> {
