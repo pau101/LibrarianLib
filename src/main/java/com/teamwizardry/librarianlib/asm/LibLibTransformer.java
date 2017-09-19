@@ -25,10 +25,6 @@ import java.util.function.Predicate;
 
 public class LibLibTransformer implements IClassTransformer, Opcodes {
 
-    private static final String ASM_HOOKS = "com/teamwizardry/librarianlib/asm/LibLibAsmHooks";
-
-    private static final Map<String, Transformer> transformers = new HashMap<>();
-
     public static final ClassnameMap CLASS_MAPPINGS = new ClassnameMap(
             "net/minecraft/item/ItemStack", "ain",
             "net/minecraft/client/renderer/block/model/IBakedModel", "cfw",
@@ -46,7 +42,9 @@ public class LibLibTransformer implements IClassTransformer, Opcodes {
             "net/minecraft/client/particle/Particle", "btd",
             "net/minecraft/client/particle/ParticleSpell", "btm"
     );
-
+    private static final String ASM_HOOKS = "com/teamwizardry/librarianlib/asm/LibLibAsmHooks";
+    private static final Map<String, Transformer> transformers = new HashMap<>();
+    private static final boolean DO_ELADS_CRAP = false;
 
     static {
         transformers.put("net.minecraft.client.renderer.RenderItem", LibLibTransformer::transformRenderItem);
@@ -187,6 +185,9 @@ public class LibLibTransformer implements IClassTransformer, Opcodes {
                 }));
     }
 
+
+    // BOILERPLATE =====================================================================================================
+
     private static byte[] transformParticle(byte[] basicClass) {
         MethodSignature sig = new MethodSignature("getBrightnessForRender", "func_189214_a", "a",
                 "(F)I");
@@ -215,20 +216,6 @@ public class LibLibTransformer implements IClassTransformer, Opcodes {
         });
     }
 
-
-    // BOILERPLATE =====================================================================================================
-
-    @Override
-    public byte[] transform(String name, String transformedName, byte[] basicClass) {
-        if (transformers.containsKey(transformedName)) {
-            String[] arr = transformedName.split("\\.");
-            log("Transforming " + arr[arr.length - 1]);
-            return transformers.get(transformedName).apply(basicClass);
-        }
-
-        return basicClass;
-    }
-
     public static byte[] transform(byte[] basicClass, MethodSignature sig, String simpleDesc, MethodAction action) {
         ClassReader reader = new ClassReader(basicClass);
         ClassNode node = new ClassNode();
@@ -246,7 +233,6 @@ public class LibLibTransformer implements IClassTransformer, Opcodes {
 
         return basicClass;
     }
-
 
     public static boolean findMethodAndTransform(ClassNode node, MethodSignature sig, MethodAction pred) {
         for (MethodNode method : node.methods) {
@@ -456,10 +442,72 @@ public class LibLibTransformer implements IClassTransformer, Opcodes {
         log(sw.toString());
     }
 
+    @Override
+    public byte[] transform(String name, String transformedName, byte[] basicClass) {
+        if (transformers.containsKey(transformedName)) {
+            String[] arr = transformedName.split("\\.");
+            log("Transforming " + arr[arr.length - 1]);
+            return transformers.get(transformedName).apply(basicClass);
+        }
+
+        // Elad's experiments
+        // Run at your own risk
+        // i'm serious, i wrote this code with wire when he was here in june.
+        // this, while not a significant slowdown, will HORRIFY developers
+        // it's not that bad and if i were by my own, i'd use it
+        // but DON'T USE IT PEOPLE NEED TO LIKE YOU
+        // don't remove, i'm sentimental af
+        if (DO_ELADS_CRAP && name.startsWith("net.minecraft.")) {
+            ClassReader reader = new ClassReader(basicClass);
+            ClassNode node = new ClassNode();
+            reader.accept(node, 0);
+            boolean didAnything = false;
+            for (MethodNode method : node.methods)
+                if (!method.name.startsWith("<") && (method.access & ACC_ABSTRACT) == 0) {
+                    InsnList list = new InsnList();
+                    if ((method.access & ACC_STATIC) == 0)
+                        list.add(new VarInsnNode(ALOAD, 0));
+                    else
+                        list.add(new InsnNode(ACONST_NULL));
+                    list.add(new LdcInsnNode(name + "." + method.name + method.desc));
+                    list.add(new MethodInsnNode(INVOKESTATIC, ASM_HOOKS, "methodHook",
+                            "(Ljava/lang/Object;Ljava/lang/String;)V", false));
+                    method.access |= ACC_PUBLIC;
+                    method.access &= ~(ACC_PROTECTED | ACC_PRIVATE | ACC_FINAL);
+                    method.instructions.insertBefore(method.instructions.getFirst(), list);
+                    didAnything = true;
+                }
+            if (didAnything) {
+                ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+                node.accept(writer);
+                return writer.toByteArray();
+            }
+        }
+        return basicClass;
+    }
+
+    public interface Transformer extends Function<byte[], byte[]> {
+        // NO-OP
+    }
+
+    public interface MethodAction extends Predicate<MethodNode> {
+        // NO-OP
+    }
+
+    // Basic interface aliases to not have to clutter up the code with generics over and over again
+
+    public interface NodeFilter extends Predicate<AbstractInsnNode> {
+        // NO-OP
+    }
+
+    public interface NodeAction extends BiPredicate<MethodNode, AbstractInsnNode> {
+        // NO-OP
+    }
+
     private static class InsnArrayIterator implements ListIterator<AbstractInsnNode> {
 
-        private int index;
         private final AbstractInsnNode[] array;
+        private int index;
 
         public InsnArrayIterator(AbstractInsnNode[] array) {
             this(array, 0);
@@ -531,17 +579,17 @@ public class LibLibTransformer implements IClassTransformer, Opcodes {
             this.obfDesc = obfuscate(funcDesc);
         }
 
-        @Override
-        public String toString() {
-            return "Names [" + funcName + ", " + srgName + ", " + obfName + "] Descriptor " + funcDesc + " / " + obfDesc;
-        }
-
         private static String obfuscate(String desc) {
             for (String s : CLASS_MAPPINGS.keySet())
                 if (desc.contains(s))
                     desc = desc.replaceAll(s, CLASS_MAPPINGS.get(s));
 
             return desc;
+        }
+
+        @Override
+        public String toString() {
+            return "Names [" + funcName + ", " + srgName + ", " + obfName + "] Descriptor " + funcDesc + " / " + obfDesc;
         }
 
         public boolean matches(String methodName, String methodDesc) {
@@ -557,24 +605,6 @@ public class LibLibTransformer implements IClassTransformer, Opcodes {
             return matches(method.name, method.desc);
         }
 
-    }
-
-    // Basic interface aliases to not have to clutter up the code with generics over and over again
-
-    public interface Transformer extends Function<byte[], byte[]> {
-        // NO-OP
-    }
-
-    public interface MethodAction extends Predicate<MethodNode> {
-        // NO-OP
-    }
-
-    public interface NodeFilter extends Predicate<AbstractInsnNode> {
-        // NO-OP
-    }
-
-    public interface NodeAction extends BiPredicate<MethodNode, AbstractInsnNode> {
-        // NO-OP
     }
 
     // Utility class to not have to manually put

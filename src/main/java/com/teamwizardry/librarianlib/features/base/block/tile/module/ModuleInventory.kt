@@ -1,6 +1,7 @@
 package com.teamwizardry.librarianlib.features.base.block.tile.module
 
 import com.teamwizardry.librarianlib.features.base.block.tile.TileMod
+import com.teamwizardry.librarianlib.features.kotlin.isNotEmpty
 import net.minecraft.inventory.InventoryHelper
 import net.minecraft.item.ItemStack
 import net.minecraft.util.NonNullList
@@ -19,7 +20,7 @@ class ModuleInventory(handler: ItemStackHandler) : ModuleCapability<ItemStackHan
     override fun onBreak(tile: TileMod) {
         (0 until handler.slots)
                 .map { handler.getStackInSlot(it) }
-                .filterNot { it.isEmpty }
+                .filter { it.isNotEmpty }
                 .forEach { InventoryHelper.spawnItemStack(tile.world, tile.pos.x.toDouble(), tile.pos.y.toDouble(), tile.pos.z.toDouble(), it) }
     }
 }

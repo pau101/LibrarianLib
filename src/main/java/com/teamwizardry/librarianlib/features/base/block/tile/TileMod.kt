@@ -1,9 +1,8 @@
 package com.teamwizardry.librarianlib.features.base.block.tile
 
 import com.teamwizardry.librarianlib.features.base.block.tile.module.ITileModule
-import com.teamwizardry.librarianlib.features.kotlin.NBT.comp
+import com.teamwizardry.librarianlib.features.kotlin.comp
 import com.teamwizardry.librarianlib.features.kotlin.forEach
-import com.teamwizardry.librarianlib.features.kotlin.nbt
 import com.teamwizardry.librarianlib.features.network.PacketHandler
 import com.teamwizardry.librarianlib.features.network.PacketModuleSync
 import com.teamwizardry.librarianlib.features.network.PacketTileSynchronization
@@ -23,12 +22,6 @@ import net.minecraft.world.WorldServer
 import net.minecraftforge.common.capabilities.Capability
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.filter
-import kotlin.collections.filterIsInstance
-import kotlin.collections.forEach
-import kotlin.collections.iterator
-import kotlin.collections.map
-import kotlin.collections.toTypedArray
 
 /**
  * @author WireSegal
@@ -79,13 +72,11 @@ abstract class TileMod : TileEntity() {
 
     fun writeModuleNBT(sync: Boolean): NBTTagCompound {
         createModules()
-        return nbt {
-            comp(
+        return comp(
                     *modules.map {
                         it.key to it.value.writeToNBT(sync)
                     }.toTypedArray()
             )
-        } as NBTTagCompound
     }
 
     fun readModuleNBT(nbt: NBTTagCompound) {
