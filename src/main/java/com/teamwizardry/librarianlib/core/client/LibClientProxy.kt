@@ -5,7 +5,9 @@ import com.teamwizardry.librarianlib.core.common.LibCommonProxy
 import com.teamwizardry.librarianlib.features.forgeevents.CustomWorldRenderEvent
 import com.teamwizardry.librarianlib.features.helpers.VariantHelper
 import com.teamwizardry.librarianlib.features.helpers.vec
-import com.teamwizardry.librarianlib.features.kotlin.*
+import com.teamwizardry.librarianlib.features.kotlin.minus
+import com.teamwizardry.librarianlib.features.kotlin.times
+import com.teamwizardry.librarianlib.features.kotlin.unaryMinus
 import com.teamwizardry.librarianlib.features.methodhandles.MethodHandleHelper
 import com.teamwizardry.librarianlib.features.shader.LibShaders
 import com.teamwizardry.librarianlib.features.shader.ShaderHelper
@@ -14,6 +16,7 @@ import com.teamwizardry.librarianlib.features.sprite.SpritesMetadataSectionSeria
 import com.teamwizardry.librarianlib.features.sprite.Texture
 import com.teamwizardry.librarianlib.features.utilities.client.ClientRunnable
 import com.teamwizardry.librarianlib.features.utilities.client.F3Handler
+import com.teamwizardry.librarianlib.features.utilities.client.GlContextHelper
 import com.teamwizardry.librarianlib.features.utilities.client.ScissorUtil
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GlStateManager
@@ -70,7 +73,7 @@ class LibClientProxy : LibCommonProxy(), IResourceManagerReloadListener {
         super.latePre(e)
 
         GlowingHandler.init()
-
+        GlContextHelper
         (Minecraft.getMinecraft().resourceManager as IReloadableResourceManager).registerReloadListener(this)
         onResourceManagerReload(Minecraft.getMinecraft().resourceManager)
     }

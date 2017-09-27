@@ -1,9 +1,8 @@
 package com.teamwizardry.librarianlib.test.testcore
 
-import com.teamwizardry.librarianlib.core.LibrarianLib
 import com.teamwizardry.librarianlib.features.base.ModCreativeTab
 import com.teamwizardry.librarianlib.features.base.item.ItemMod
-import com.teamwizardry.librarianlib.features.config.*
+import com.teamwizardry.librarianlib.features.config.ConfigProperty
 import com.teamwizardry.librarianlib.features.utilities.LoggerBase
 import com.teamwizardry.librarianlib.test.cap.CapabilityTest
 import com.teamwizardry.librarianlib.test.chunkdata.ChunkDataEntryPoint
@@ -51,6 +50,8 @@ class TestMod {
                 return super.onItemUse(playerIn, worldIn, pos, hand, facing, hitX, hitY, hitZ)
             }
         }
+
+
         //CapabilityTest.init()
 //        Class.forName("com.teamwizardry.librarianlib.test.items.ModItems")
     }

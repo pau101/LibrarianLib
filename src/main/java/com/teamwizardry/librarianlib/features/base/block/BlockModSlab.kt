@@ -7,6 +7,7 @@ import com.teamwizardry.librarianlib.features.base.item.IModItemProvider
 import com.teamwizardry.librarianlib.features.helpers.VariantHelper
 import com.teamwizardry.librarianlib.features.helpers.currentModId
 import com.teamwizardry.librarianlib.features.kotlin.json
+import com.teamwizardry.librarianlib.features.kotlin.obj
 import com.teamwizardry.librarianlib.features.utilities.JsonGenerationUtils
 import com.teamwizardry.librarianlib.features.utilities.JsonGenerationUtils.getPathForBlockModel
 import net.minecraft.block.Block

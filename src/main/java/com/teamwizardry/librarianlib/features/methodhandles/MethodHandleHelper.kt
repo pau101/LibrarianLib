@@ -21,7 +21,7 @@ object MethodHandleHelper {
      * Methodhandles MUST be invoked from java code, due to the way [@PolymorphicSignature] works.
      */
     @JvmStatic
-    fun <T: Any> handleForMethod(clazz: Class<T>, methodNames: Array<String>, vararg methodClasses: Class<*>): MethodHandle {
+    fun <T : Any?> handleForMethod(clazz: Class<T>, methodNames: Array<String>, vararg methodClasses: Class<*>): MethodHandle {
         @Suppress("DEPRECATION")
         val m = ReflectionHelper.findMethod<T>(clazz, null, methodNames, *methodClasses)
         return publicLookup().unreflect(m)
@@ -154,7 +154,7 @@ object MethodHandleHelper {
      * Reflects a method from a class, and provides a wrapper for it.
      */
     @JvmStatic
-    fun <T : Any> wrapperForMethod(clazz: Class<T>, methodNames: Array<String>, vararg methodClasses: Class<*>): (T, Array<Any?>) -> Any? {
+    fun <T : Any?> wrapperForMethod(clazz: Class<T>, methodNames: Array<String>, vararg methodClasses: Class<*>): (T, Array<Any?>) -> Any? {
         val handle = handleForMethod(clazz, methodNames, *methodClasses)
         return wrapperForMethod(handle)
     }
@@ -163,7 +163,7 @@ object MethodHandleHelper {
      * Provides a wrapper for an existing MethodHandle method wrapper.
      */
     @JvmStatic
-    fun <T : Any> wrapperForMethod(handle: MethodHandle): (T, Array<Any?>) -> Any? {
+    fun <T : Any?> wrapperForMethod(handle: MethodHandle): (T, Array<Any?>) -> Any? {
         val type = handle.type()
         val count = type.parameterCount()
         var remapped = handle.asType(MethodType.genericMethodType(count))
@@ -178,7 +178,8 @@ object MethodHandleHelper {
         return { obj, args -> wrapper.invokeArity(arrayOf(obj, *args)) }
     }
 
-    @JvmStatic fun <T : Any> wrapperForMethod(method: Method): (T, Array<Any?>) -> Any? = wrapperForMethod(publicLookup().unreflect(method))
+    @JvmStatic
+    fun <T : Any?> wrapperForMethod(method: Method): (T, Array<Any?>) -> Any? = wrapperForMethod(publicLookup().unreflect(method))
 
     /**
      * Reflects a static method from a class, and provides a wrapper for it.

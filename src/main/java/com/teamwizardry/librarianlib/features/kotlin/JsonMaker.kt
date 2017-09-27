@@ -15,6 +15,21 @@ import java.io.StringWriter
  */
 
 
+object JSON {
+
+    fun array(vararg args: Any?): JsonArray {
+        val arr = JsonArray()
+        args.forEach { arr.add(convertJSON(it)) }
+        return arr
+    }
+
+    fun obj(vararg args: Pair<String, *>): JsonObject {
+        val obj = JsonObject()
+        args.forEach { obj.add(it.first, convertJSON(it.second)) }
+        return obj
+    }
+}
+
 fun array(vararg args: Any?): JsonArray {
     val arr = JsonArray()
     args.forEach { arr.add(convertJSON(it)) }

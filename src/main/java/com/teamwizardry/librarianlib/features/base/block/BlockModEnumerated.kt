@@ -5,6 +5,7 @@ import com.teamwizardry.librarianlib.features.base.IModelGenerator
 import com.teamwizardry.librarianlib.features.helpers.VariantHelper
 import com.teamwizardry.librarianlib.features.helpers.threadLocal
 import com.teamwizardry.librarianlib.features.kotlin.json
+import com.teamwizardry.librarianlib.features.kotlin.obj
 import com.teamwizardry.librarianlib.features.utilities.JsonGenerationUtils
 import jline.console.internal.ConsoleRunner.property
 import net.minecraft.block.Block

@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import com.teamwizardry.librarianlib.features.helpers.VariantHelper.toSnakeCase
 import com.teamwizardry.librarianlib.features.helpers.currentModId
 import com.teamwizardry.librarianlib.features.kotlin.json
+import com.teamwizardry.librarianlib.features.kotlin.obj
 import net.minecraft.block.Block
 import net.minecraft.block.state.IBlockState
 import net.minecraft.client.Minecraft
@@ -126,7 +127,7 @@ object JsonGenerationUtils {
         }
     }
 
-    inline fun generateBlockStates(block: Block, noinline stateMapper: ((block: Block) -> Map<IBlockState, ModelResourceLocation>)?, makeVariant: (variant: String) -> JsonElement): Map<String, JsonElement> {
+    inline fun generateBlockStates(block: Block, noinline stateMapper: ((block: Block) -> Map<IBlockState, ModelResourceLocation>)?, crossinline makeVariant: (variant: String) -> JsonElement): Map<String, JsonElement> {
         val mapped = (stateMapper ?: { DefaultStateMapper().putStateModelLocations(it) })(block)
         val files = getPathsForBlockstate(block, stateMapper)
         return files.associate { file ->
