@@ -3,7 +3,7 @@ package com.teamwizardry.librarianlib.test.cap
 import com.teamwizardry.librarianlib.features.autoregister.TileRegister
 import com.teamwizardry.librarianlib.features.base.block.BlockMod
 import com.teamwizardry.librarianlib.features.base.block.tile.TileMod
-import com.teamwizardry.librarianlib.features.base.capability.CapabilityMod
+import com.teamwizardry.librarianlib.features.base.capability.CapabilityModV1
 import com.teamwizardry.librarianlib.features.base.capability.ICapabilityObjectProvider
 import com.teamwizardry.librarianlib.features.kotlin.toComponent
 import com.teamwizardry.librarianlib.features.kotlin.toRl
@@ -27,19 +27,19 @@ import net.minecraftforge.common.capabilities.CapabilityInject
 /**
  * Created by Elad on 1/22/2017.
  */
-class CapabilityTest : CapabilityMod("${TestMod.MODID}:CapTest".toRl()) {
+class CapabilityTestV1 : CapabilityModV1("${TestMod.MODID}:CapTest".toRl()) {
 
     companion object {
         @JvmStatic
-        @CapabilityInject(CapabilityTest::class)
-        lateinit var cap: Capability<CapabilityTest>
+        @CapabilityInject(CapabilityTestV1::class)
+        lateinit var cap: Capability<CapabilityTestV1>
 
-        fun init() {
+        init {
             println("Init")
-            register(CapabilityTest::class.java, ICapabilityObjectProvider {
+            register(CapabilityTestV1::class.java, ICapabilityObjectProvider {
                 cap
             })
-            MinecraftForge.EVENT_BUS.register(CapabilityTest::class.java)
+            MinecraftForge.EVENT_BUS.register(CapabilityTestV1::class.java)
             BlockCapTest()
         }
     }
@@ -75,5 +75,5 @@ class BlockCapTest : BlockMod("hi", Material.ROCK), ITileEntityProvider {
 @TileRegister("hi")
 class TileEntityCapTest : TileMod() {
     @CapabilityProvide(EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.EAST, EnumFacing.WEST, EnumFacing.UP, EnumFacing.DOWN)
-    val cap: CapabilityTest = CapabilityTest()
+    val cap: CapabilityTestV1 = CapabilityTestV1()
 }

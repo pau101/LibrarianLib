@@ -82,7 +82,7 @@ object SavingFieldCache {
             return null
         method.isAccessible = true
         val handle = MethodHandleHelper.wrapperForMethod<Any>(method)
-        return { obj -> handle(obj, arrayOf()) }
+        return { obj -> handle(obj, arrayOf<Any?>()) }
     }
 
     fun getJavaFieldGetter(field: Field) = MethodHandleHelper.wrapperForGetter<Any>(field)

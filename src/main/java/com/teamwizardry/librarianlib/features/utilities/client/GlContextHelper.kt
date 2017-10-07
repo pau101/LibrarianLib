@@ -4,7 +4,7 @@ import com.teamwizardry.librarianlib.features.forgeevents.CustomWorldRenderEvent
 import com.teamwizardry.librarianlib.features.methodhandles.MethodHandleHelper
 import com.teamwizardry.librarianlib.features.utilities.AnnotationHelper
 import net.minecraftforge.common.MinecraftForge
-import net.minecraftforge.fml.common.Mod
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.relauncher.Side
 import net.minecraftforge.fml.relauncher.SideOnly
 import java.io.InvalidClassException
@@ -31,7 +31,7 @@ object GlContextHelper {
         })
     }
 
-    @Mod.EventHandler
+    @SubscribeEvent
     fun worldRenderEvent(customWorldRenderEvent: CustomWorldRenderEvent) {
         functions.forEach { it(customWorldRenderEvent) }
     }

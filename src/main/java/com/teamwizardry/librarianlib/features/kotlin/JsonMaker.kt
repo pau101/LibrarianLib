@@ -74,7 +74,7 @@ fun convertJSON(value: Any?): JsonElement = when (value) {
 }
 
 // Not inline because hot reloading fails on inline obfuscated classes under some circumstances
-fun json(lambda: Json.() -> JsonElement) = Json().lambda()
+fun json(lambda: Json.() -> JsonElement): JsonElement = Json().lambda()
 
 fun JsonElement.serialize(): String {
     val stringWriter = StringWriter()

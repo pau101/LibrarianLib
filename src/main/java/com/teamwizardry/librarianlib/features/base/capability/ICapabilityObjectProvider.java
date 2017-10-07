@@ -5,8 +5,12 @@ import net.minecraftforge.common.capabilities.Capability;
 /**
  * Usage:
  * As lambda: ()->cap
- * As anon class: new ICapabilityObjectProvider() {
- * return cap;
+ * As anon class:
+ * new ICapabilityObjectProvider() {
+ *     {@literal @}Override
+ *     public Capability<T> invoke() {
+ *         return cap;
+ *     }
  * }
  * As method reference: Foo::getCap
  * As constructor reference: CapabilityFoo::new

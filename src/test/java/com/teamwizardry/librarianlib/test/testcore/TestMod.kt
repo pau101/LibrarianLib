@@ -4,7 +4,8 @@ import com.teamwizardry.librarianlib.features.base.ModCreativeTab
 import com.teamwizardry.librarianlib.features.base.item.ItemMod
 import com.teamwizardry.librarianlib.features.config.ConfigProperty
 import com.teamwizardry.librarianlib.features.utilities.LoggerBase
-import com.teamwizardry.librarianlib.test.cap.CapabilityTest
+import com.teamwizardry.librarianlib.test.cap.CapabilityTestV1
+import com.teamwizardry.librarianlib.test.cap.CapabilityTestV2
 import com.teamwizardry.librarianlib.test.chunkdata.ChunkDataEntryPoint
 import com.teamwizardry.librarianlib.test.container.ContainerEntryPoint
 import com.teamwizardry.librarianlib.test.fx.FXEntryPoint
@@ -41,18 +42,19 @@ class TestMod {
         object : ItemMod("test") {
             override fun onItemRightClick(worldIn: World?, playerIn: EntityPlayer, hand: EnumHand?): ActionResult<ItemStack> {
                 //ModItems.test(playerIn)
-                //println(playerIn.getCapability(CapabilityTest.cap, null))
+                //println(playerIn.getCapability(CapabilityTestV1.cap, null))
                 return super.onItemRightClick(worldIn, playerIn, hand)
             }
 
             override fun onItemUse(playerIn: EntityPlayer?, worldIn: World?, pos: BlockPos?, hand: EnumHand?, facing: EnumFacing?, hitX: Float, hitY: Float, hitZ: Float): EnumActionResult {
-                println(worldIn?.getTileEntity(pos)?.getCapability(CapabilityTest.cap, null))
+                println(worldIn?.getTileEntity(pos)?.getCapability(CapabilityTestV1.cap, null))
                 return super.onItemUse(playerIn, worldIn, pos, hand, facing, hitX, hitY, hitZ)
             }
         }
+        CapabilityTestV2.Companion
 
 
-        //CapabilityTest.init()
+        //CapabilityTestV1.init()
 //        Class.forName("com.teamwizardry.librarianlib.test.items.ModItems")
     }
 

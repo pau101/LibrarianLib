@@ -3,7 +3,7 @@ package com.teamwizardry.librarianlib.core
 import com.teamwizardry.librarianlib.core.common.LibCommonProxy
 import com.teamwizardry.librarianlib.core.common.OwnershipHandler
 import com.teamwizardry.librarianlib.features.autoregister.TileRegister
-import com.teamwizardry.librarianlib.features.base.capability.CapabilityMod
+import com.teamwizardry.librarianlib.features.base.capability.CapabilityModV1
 import com.teamwizardry.librarianlib.features.base.item.ItemMod
 import com.teamwizardry.librarianlib.features.config.EasyConfigHandler
 import com.teamwizardry.librarianlib.features.container.ContainerBase
@@ -56,7 +56,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent
  * ~~- Multipart API [PartMod]~~
  * - An easy F3+key handler [F3Handler]
  * - A simple event bus implementation [Event] [EventBus]
- * - Capability which uses the [Save] scheme to save and sync fields [CapabilityMod]
+ * - Capability which uses the [Save] scheme to save and sync fields [CapabilityModV1]
  */
 @Mod(modid = LibrarianLib.MODID, version = LibrarianLib.VERSION, name = LibrarianLib.MODNAME, dependencies = LibrarianLib.DEPENDENCIES, modLanguageAdapter = LibrarianLib.ADAPTER, acceptedMinecraftVersions = LibrarianLib.ALLOWED)
 object LibrarianLib {

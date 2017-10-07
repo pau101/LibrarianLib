@@ -6,6 +6,7 @@ import com.teamwizardry.librarianlib.core.LibrarianLib
 import com.teamwizardry.librarianlib.core.LibrarianLog
 import com.teamwizardry.librarianlib.features.autoregister.AnnotationMarkersHandler
 import com.teamwizardry.librarianlib.features.base.ModCreativeTab
+import com.teamwizardry.librarianlib.features.base.capability.CapabilityMod
 import com.teamwizardry.librarianlib.features.base.item.IShieldItem
 import com.teamwizardry.librarianlib.features.config.EasyConfigHandler
 import com.teamwizardry.librarianlib.features.container.GuiHandler
@@ -59,7 +60,7 @@ open class LibCommonProxy {
     }
 
     open fun lateInit(e: FMLInitializationEvent) {
-        // NO-OP
+        CapabilityMod.registerCapabilities()
     }
 
     open fun post(e: FMLPostInitializationEvent) {

@@ -78,7 +78,7 @@ object MethodHandleHelper {
         return { wrapper(it) }
     }
 
-    @JvmStatic fun <T: Any> wrapperForGetter(field: Field): (T) -> Any? = wrapperForGetter(publicLookup().unreflectGetter(field))
+    @JvmStatic fun <T: Any> wrapperForGetter(field: Field): (T) -> Any? = wrapperForGetter(publicLookup().unreflectGetter(field.apply { isAccessible = true }))
 
     /**
      * Reflects a static getter from a class, and provides a wrapper for it.

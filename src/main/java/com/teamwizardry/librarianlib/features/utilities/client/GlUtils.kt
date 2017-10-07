@@ -5,13 +5,13 @@ import net.minecraft.client.renderer.OpenGlHelper
 import net.minecraftforge.fml.relauncher.Side
 import net.minecraftforge.fml.relauncher.SideOnly
 import org.lwjgl.opengl.GL11
-import scala.inline
 
 /**
  * Created by Elad on 2/7/2017.
  */
 @SideOnly(Side.CLIENT)
 object GlUtils {
+
     inline fun pushAttrib(lambda: () -> Unit) {
         GlStateManager.pushAttrib()
         lambda()

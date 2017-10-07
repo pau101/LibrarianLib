@@ -40,11 +40,11 @@ public class LibLibAsmHooks {
             methods.get(name).forEach(it -> it.accept(instance));
     }
 
-    // End Elad's stuff
-
     public static void hook(String name, Consumer<Object> callback) {
         methods.put(name, callback);
     }
+
+    // End Elad's stuff
 
     @SideOnly(Side.CLIENT)
     public static void renderHook(ItemStack stack, IBakedModel model) {

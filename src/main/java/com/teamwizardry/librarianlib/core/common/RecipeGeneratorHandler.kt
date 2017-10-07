@@ -7,7 +7,7 @@ import com.teamwizardry.librarianlib.core.LibrarianLib
 import com.teamwizardry.librarianlib.core.LibrarianLog
 import com.teamwizardry.librarianlib.features.helpers.currentModId
 import com.teamwizardry.librarianlib.features.helpers.modIdOverride
-import com.teamwizardry.librarianlib.features.kotlin.JSON
+import com.teamwizardry.librarianlib.features.kotlin.obj
 import com.teamwizardry.librarianlib.features.kotlin.serialize
 import com.teamwizardry.librarianlib.features.utilities.JsonGenerationUtils
 import com.teamwizardry.librarianlib.features.utilities.JsonGenerationUtils.generatedFiles
@@ -15,7 +15,6 @@ import net.minecraft.block.Block
 import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
-import net.minecraftforge.fml.common.FMLCommonHandler
 import net.minecraftforge.fml.common.Loader
 import net.minecraftforge.fml.common.LoaderState
 import java.io.File
@@ -58,7 +57,7 @@ object RecipeGeneratorHandler {
         val file = File(basePath)
         file.parentFile.mkdirs()
         if (file.createNewFile()) {
-            val obj = JSON.obj(
+            val obj = obj(
                         "type" to "forge:ore_shapeless",
                         "ingredients" to createJsonFromList(inputs),
                         "result" to createJsonFromStackOutput(output)
@@ -87,7 +86,7 @@ object RecipeGeneratorHandler {
         val file = File(basePath)
         file.parentFile.mkdirs()
         if (file.createNewFile()) {
-            val obj = JSON.obj(
+            val obj = obj(
                     "type" to "forge:ore_shaped",
                     "pattern" to pattern,
                     "key" to mapping,
@@ -148,7 +147,7 @@ object RecipeGeneratorHandler {
             = if (LibLibConfig.prettyJsonSerialization) el.serialize() else el.toString() + "\n"
 
     fun createJsonFromStackOutput(stack: ItemStack): JsonObject {
-        val obj = JSON.obj("item" to stack.item.registryName)
+        val obj = obj("item" to stack.item.registryName)
 
         if (stack.hasSubtypes)
             obj.addProperty("data", stack.itemDamage)
@@ -174,7 +173,7 @@ object RecipeGeneratorHandler {
             return obj
         }
 
-        val obj = JSON.obj("item" to stack.item.registryName)
+        val obj = obj("item" to stack.item.registryName)
 
         if (stack.hasSubtypes)
             obj.addProperty("data", stack.itemDamage)
@@ -198,7 +197,7 @@ object RecipeGeneratorHandler {
         throw IllegalArgumentException("$obj isn't parsable as an ingredient!")
     }
 
-    fun createJsonFromString(string: String) = JSON.obj("type" to "forge:ore_dict", "ore" to string)
+    fun createJsonFromString(string: String) = obj("type" to "forge:ore_dict", "ore" to string)
 
     fun createJsonFromList(l: Array<*>): JsonArray = createJsonFromList(l.toList())
     fun createJsonFromList(l: List<*>): JsonArray {
