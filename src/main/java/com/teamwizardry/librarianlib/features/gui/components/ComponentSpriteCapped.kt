@@ -4,7 +4,9 @@ import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.math.Vec2d
 import com.teamwizardry.librarianlib.features.sprite.DrawingUtil
 import com.teamwizardry.librarianlib.features.sprite.Sprite
+import net.minecraft.client.renderer.GlStateManager
 
+@Deprecated("Use the `nineSlice` in the .mcmeta instead")
 class ComponentSpriteCapped(internal var topLeft:
 
                             Sprite, internal var middle: Sprite, internal var bottomRight: Sprite, internal var horizontal: Boolean, posX: Int, posY: Int, width: Int, height: Int) : GuiComponent(posX, posY, width, height) {

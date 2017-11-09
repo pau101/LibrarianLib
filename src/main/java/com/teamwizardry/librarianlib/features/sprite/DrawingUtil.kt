@@ -26,27 +26,27 @@ object DrawingUtil {
         isDrawing = false
     }
 
+    private fun draw(minX: Float, minY: Float, maxX: Float, maxY: Float,
+                     minU: Float, minV: Float, maxU: Float, maxV: Float) {
+        val vb = Tessellator.getInstance().buffer
+        vb.pos(minX.toDouble(), maxY.toDouble(), 0.0).tex(minU.toDouble(), maxV.toDouble()).endVertex()
+        vb.pos(maxX.toDouble(), maxY.toDouble(), 0.0).tex(maxU.toDouble(), maxV.toDouble()).endVertex()
+        vb.pos(maxX.toDouble(), minY.toDouble(), 0.0).tex(maxU.toDouble(), minV.toDouble()).endVertex()
+        vb.pos(minX.toDouble(), minY.toDouble(), 0.0).tex(minU.toDouble(), minV.toDouble()).endVertex()
+    }
+
     /**
      * **!!! Use [Sprite.draw] or [Sprite.draw] instead !!!**
 
      *
      * Draw a sprite at a location with the width and height specified.
      * @param sprite The sprite to draw
-     * *
      * @param x The x position to draw at
-     * *
      * @param y The y position to draw at
-     * *
      * @param width The width to draw the sprite
-     * *
      * @param height The height to draw the sprite
      */
     fun draw(sprite: ISprite, animFrames: Int, x: Float, y: Float, width: Float, height: Float) {
-
-        val minX = x
-        val minY = y
-        val maxX = x + width
-        val maxY = y + height
 
         val tessellator = Tessellator.getInstance()
         val vb = tessellator.buffer
@@ -54,10 +54,78 @@ object DrawingUtil {
         if (!isDrawing)
             vb.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX)
 
-        vb.pos(minX.toDouble(), maxY.toDouble(), 0.0).tex(sprite.minU(animFrames).toDouble(), sprite.maxV(animFrames).toDouble()).endVertex()
-        vb.pos(maxX.toDouble(), maxY.toDouble(), 0.0).tex(sprite.maxU(animFrames).toDouble(), sprite.maxV(animFrames).toDouble()).endVertex()
-        vb.pos(maxX.toDouble(), minY.toDouble(), 0.0).tex(sprite.maxU(animFrames).toDouble(), sprite.minV(animFrames).toDouble()).endVertex()
-        vb.pos(minX.toDouble(), minY.toDouble(), 0.0).tex(sprite.minU(animFrames).toDouble(), sprite.minV(animFrames).toDouble()).endVertex()
+        val minX = x
+        val minY = y
+        val maxX = x + width
+        val maxY = y + height
+
+        val minU = sprite.minU(animFrames)
+        val minV = sprite.minV(animFrames)
+        val maxU = sprite.maxU(animFrames)
+        val maxV = sprite.maxV(animFrames)
+
+        val sliceX = sprite.inWidth * sprite.nineSliceSizeW
+        val sliceY = sprite.inHeight * sprite.nineSliceSizeH
+
+        val sliceU = (maxU-minU) * sprite.nineSliceSizeW
+        val sliceV = (maxV-minV) * sprite.nineSliceSizeH
+
+
+        if(sprite.nineSliceSizeW != 0f || sprite.nineSliceSizeH != 0f) {
+            // top left
+            draw(
+                    minX, minY, minX + sliceX, minY + sliceY,
+                    minU, minV, minU + sliceU, minV + sliceV
+            )
+            // top right
+            draw(
+                    maxX - sliceX, minY, maxX, minY + sliceY,
+                    maxU - sliceU, minV, maxU, minV + sliceV
+            )
+            // bottom left
+            draw(
+                    minX, maxY - sliceY, minX + sliceX, maxY,
+                    minU, maxV - sliceV, minU + sliceU, maxV
+            )
+            // bottom right
+            draw(
+                    maxX - sliceX, maxY - sliceY, maxX, maxY,
+                    maxU - sliceU, maxV - sliceV, maxU, maxV
+            )
+
+
+            // top
+            draw(
+                    minX + sliceX, minY, maxX - sliceX, minY + sliceY,
+                    minU + sliceU, minV, maxU - sliceU, minV + sliceV
+            )
+            // bottom
+            draw(
+                    minX + sliceX, maxY - sliceY, maxX - sliceX, maxY,
+                    minU + sliceU, maxV - sliceV, maxU - sliceU, maxV
+            )
+            // left
+            draw(
+                    minX, minY + sliceY, minX + sliceX, maxY - sliceY,
+                    minU, minV + sliceV, minU + sliceU, maxV - sliceV
+            )
+            // right
+            draw(
+                    maxX - sliceX, minY + sliceY, maxX, maxY - sliceY,
+                    maxU - sliceU, minV + sliceV, maxU, maxV - sliceV
+            )
+
+            // center
+            draw(
+                    minX + sliceX, minY + sliceY, maxX - sliceX, maxY - sliceY,
+                    minU + sliceU, minV + sliceV, maxU - sliceU, maxV - sliceV
+            )
+        } else {
+            draw(
+                    minX, minY, maxX, maxY,
+                    minU, minV, maxU, maxV
+            )
+        }
 
         if (!isDrawing)
             tessellator.draw()
@@ -69,66 +137,164 @@ object DrawingUtil {
      *
      * Draw a sprite at a location with the width and height specified by clipping or tiling instead of stretching/squishing
      * @param sprite The sprite to draw
-     * *
      * @param x The x position to draw at
-     * *
      * @param y The y position to draw at
-     * *
      * @param width The width to draw the sprite
-     * *
      * @param height The height to draw the sprite
      */
-    fun drawClipped(sprite: ISprite, animTicks: Int, x: Float, y: Float, width: Int, height: Int, reverseX: Boolean, reverseY: Boolean) {
-        if (!isDrawing) {
-            val hor = Math.ceil((width) / sprite.width.toDouble()).toInt()
-            val vert = Math.ceil(height / sprite.height.toDouble()).toInt()
+    fun drawClipped(sprite: ISprite, animFrames: Int, x: Float, y: Float, width: Int, height: Int, reverseX: Boolean, reverseY: Boolean) {
+        val tessellator = Tessellator.getInstance()
+        val vb = tessellator.buffer
 
-            for (xIndex in 0 until hor) {
-                for (yIndex in 0 until vert) {
-                    val croppedX = (reverseX && xIndex == 0) || (!reverseX && xIndex == hor - 1)
-                    val croppedY = (reverseY && yIndex == 0) || (!reverseY && yIndex == vert - 1)
+        if (!isDrawing)
+            vb.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX)
 
-                    var cropW = if (croppedX) sprite.width - width % sprite.width else 0
-                    if (cropW == sprite.width) cropW = 0
-                    var cropH = if (croppedY) sprite.height - height % sprite.height else 0
-                    if (cropH == sprite.height) cropH = 0
+        val minX = x
+        val minY = y
+        val maxX = x + width
+        val maxY = y + height
 
-                    val sX = x + xIndex * sprite.width
-                    val sY = y + yIndex * sprite.height
+        val minU = sprite.minU(animFrames)
+        val minV = sprite.minV(animFrames)
+        val maxU = sprite.maxU(animFrames)
+        val maxV = sprite.maxV(animFrames)
 
-                    val realX = (if (reverseX) sX + cropW + sprite.inWidth - sprite.height * hor else sX).toDouble()
-                    val realY = (if (reverseY) sY + cropH + sprite.inHeight - sprite.height * vert else sY).toDouble()
+        val texW = sprite.inWidth.toFloat()
+        val texH = sprite.inHeight.toFloat()
 
-                    val maxX = realX + if (croppedX) sprite.width - cropW else sprite.width
-                    val maxY = realY + if (croppedY) sprite.height - cropH else sprite.height
+        val sliceX = sprite.inWidth * sprite.nineSliceSizeW
+        val sliceY = sprite.inHeight * sprite.nineSliceSizeH
 
-                    var minU = sprite.minU(animTicks).toDouble()
-                    var minV = sprite.minV(animTicks).toDouble()
+        val sliceU = (maxU-minU) * sprite.nineSliceSizeW
+        val sliceV = (maxV-minV) * sprite.nineSliceSizeH
 
-                    var maxU = sprite.maxU(animTicks).toDouble()
-                    var maxV = sprite.maxV(animTicks).toDouble()
+        val sliceW = texW * sprite.nineSliceSizeW
+        val sliceH = texH * sprite.nineSliceSizeH
 
-                    val uSpan = maxU - minU
-                    val vSpan = maxV - minV
+        if(sprite.nineSliceSizeW != 0f || sprite.nineSliceSizeH != 0f) {
+            // top left
+            draw(
+                    minX, minY, minX + sliceX, minY + sliceY,
+                    minU, minV, minU + sliceU, minV + sliceV
+            )
+            // top right
+            draw(
+                    maxX - sliceX, minY, maxX, minY + sliceY,
+                    maxU - sliceU, minV, maxU, minV + sliceV
+            )
+            // bottom left
+            draw(
+                    minX, maxY - sliceY, minX + sliceX, maxY,
+                    minU, maxV - sliceV, minU + sliceU, maxV
+            )
+            // bottom right
+            draw(
+                    maxX - sliceX, maxY - sliceY, maxX, maxY,
+                    maxU - sliceU, maxV - sliceV, maxU, maxV
+            )
 
-                    if (croppedX) {
-                        if (reverseX) minU += uSpan * (cropW / sprite.width.toDouble())
-                        else maxU -= uSpan * (cropW / sprite.width.toDouble())
-                    }
-                    if (croppedY) {
-                        if (reverseY) minV += vSpan * (cropH / sprite.height.toDouble())
-                        else maxV -= vSpan * (cropH / sprite.height.toDouble())
-                    }
 
-                    val vb1 = Tessellator.getInstance().buffer
-                    startDrawingSession()
-                    vb1.pos(realX, realY, 0.0).tex(minU, minV).endVertex()
-                    vb1.pos(realX, maxY, 0.0).tex(minU, maxV).endVertex()
-                    vb1.pos(maxX, maxY, 0.0).tex(maxU, maxV).endVertex()
-                    vb1.pos(maxX, realY, 0.0).tex(maxU, minV).endVertex()
-                    endDrawingSession()
-                }
+            // top
+            drawSegments(
+                    texW-sliceW*2, sliceH, reverseX, reverseY,
+
+                    minX + sliceX, minY, maxX - sliceX, minY + sliceY,
+                    minU + sliceU, minV, maxU - sliceU, minV + sliceV
+            )
+            // bottom
+            drawSegments(
+                    texW-sliceW*2, sliceH, reverseX, reverseY,
+
+                    minX + sliceX, maxY - sliceY, maxX - sliceX, maxY,
+                    minU + sliceU, maxV - sliceV, maxU - sliceU, maxV
+            )
+            // left
+            drawSegments(
+                    sliceW, texH-sliceH*2, reverseX, reverseY,
+
+                    minX, minY + sliceY, minX + sliceX, maxY - sliceY,
+                    minU, minV + sliceV, minU + sliceU, maxV - sliceV
+            )
+            // right
+            drawSegments(
+                    sliceW, texH-sliceH*2, reverseX, reverseY,
+
+                    maxX - sliceX, minY + sliceY, maxX, maxY - sliceY,
+                    maxU - sliceU, minV + sliceV, maxU, maxV - sliceV
+            )
+
+            // center
+            drawSegments(
+                    texW-sliceW*2, texH-sliceH*2, reverseX, reverseY,
+
+                    minX + sliceX, minY + sliceY, maxX - sliceX, maxY - sliceY,
+                    maxU + sliceU, minV + sliceV, maxU - sliceU, maxV - sliceV
+            )
+        } else {
+            drawSegments(
+                    texW, texH, reverseX, reverseY,
+
+                    minX, minY, maxX, maxY,
+                    minU, minV, maxU, maxV
+            )
+        }
+
+        if (!isDrawing)
+            tessellator.draw()
+    }
+
+    private fun drawSegments(texWidth: Float, texHeight: Float, reverseX: Boolean, reverseY: Boolean,
+                             minX: Float, minY: Float, maxX: Float, maxY: Float,
+                             minU: Float, minV: Float, maxU: Float, maxV: Float) {
+        val xSegments = segments(minX, texWidth, maxX-minX, reverseX)
+        val ySegments = segments(minY, texHeight, maxY-minY, reverseY)
+
+        xSegments.forEach { xSeg ->
+            val _minX = if(reverseX && xSeg.coord < minX) minX else xSeg.coord
+            val _maxX = _minX + (maxX-minX)*xSeg.sizeFraction
+            val _minU = if(reverseX && xSeg.coord < minX) maxU - (maxU-minU)*xSeg.sizeFraction else minU
+            val _maxU = if(reverseX && xSeg.coord > minX) minU + (maxU-minU)*xSeg.sizeFraction else maxU
+
+            ySegments.forEach { ySeg ->
+                val _minY = if(reverseY && ySeg.coord < minY) minY else ySeg.coord
+                val _maxY = _minY + (maxY-minY)*ySeg.sizeFraction
+                val _minV = if(reverseY && ySeg.coord < minY) maxV - (maxV-minV)*xSeg.sizeFraction else minV
+                val _maxV = if(reverseY && ySeg.coord > minY) minV + (maxV-minV)*xSeg.sizeFraction else maxV
+
+                draw(
+                        _minX, _minY, _maxX, _maxY,
+                        _minU, _minV, _maxU, _maxV
+                )
             }
         }
     }
+
+    /**
+     * Creates a number of segments of size [segmentSize] filling a space [finalSize] in length.
+     *
+     * When [reversed] is true, the partial segment will be located at the beginning of the list and will have a
+     * [Segment.coord] appropriately smaller than [start].
+     */
+    private fun segments(start: Float, segmentSize: Float, finalSize: Float, reversed: Boolean): List<Segment> {
+        val segments = mutableListOf<Segment>()
+
+        // add all the full segments
+        val fullSegmentCount = Math.floor(finalSize / segmentSize.toDouble()).toInt()
+        (0 until fullSegmentCount).forEach { i ->
+            segments.add(Segment(start + segmentSize * i, 1f))
+        }
+
+        val partialSegmentSize = finalSize - (segmentSize * fullSegmentCount)
+        if(partialSegmentSize != 0f) {
+            if(reversed) {
+                segments.add(0, Segment(start - segmentSize * (1-partialSegmentSize/segmentSize), partialSegmentSize/segmentSize))
+            } else {
+                segments.add(Segment(start - segmentSize * fullSegmentCount, partialSegmentSize/segmentSize))
+            }
+        }
+
+        return segments
+    }
+
+    private data class Segment(val coord: Float, val sizeFraction: Float)
 }

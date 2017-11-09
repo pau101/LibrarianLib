@@ -39,4 +39,14 @@ class LTextureAtlasSprite(private val tas: TextureAtlasSprite, override val inWi
 
     override val frameCount: Int
         get() = 0
+
+    /**
+     * The size in pixels of the nine slice border if a nine slice image. Zero otherwise.
+     */
+    var nineSliceSize: Int = 0
+
+    override val nineSliceSizeW: Float
+        get() = nineSliceSize / tas.iconWidth.toFloat()
+    override val nineSliceSizeH: Float
+        get() = nineSliceSize / tas.iconHeight.toFloat()
 }

@@ -60,7 +60,7 @@ class DragMixin(protected var component: GuiComponent, protected var constraints
             }
         }
 
-        component.BUS.hook(GuiComponentEvents.PreMouseOverEvent::class.java) { event ->
+        component.BUS.hook(GuiComponentEvents.PreLayoutEvent::class.java) { event ->
             val mouseButton = mouseDown
             if (mouseButton != null) {
                 val newPos = constraints(event.parentMousePos - dragOffset)

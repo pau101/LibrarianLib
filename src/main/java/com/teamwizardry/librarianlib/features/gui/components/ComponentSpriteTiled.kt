@@ -9,6 +9,7 @@ import com.teamwizardry.librarianlib.features.sprite.Sprite
 import org.lwjgl.opengl.GL11
 import java.awt.Color
 
+@Deprecated("Use the `nineSlice` in the .mcmeta instead")
 open class ComponentSpriteTiled @JvmOverloads constructor(protected var main: Sprite, borderSize: Int, x: Int, y: Int, width: Int = main.width, height: Int = main.height) : GuiComponent(x, y, width, height) {
 
     var depth = Option<ComponentSpriteTiled, Boolean>(true)

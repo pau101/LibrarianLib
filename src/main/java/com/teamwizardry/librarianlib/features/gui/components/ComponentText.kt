@@ -92,6 +92,7 @@ class ComponentText @JvmOverloads constructor(posX: Int, posY: Int, var horizont
             val textWidth = fr.getStringWidth(line)
             if (horizontal == TextAlignH.CENTER) {
                 lineX -= textWidth / 2
+                lineX += (this.size.x / 2).toInt()
             } else if (horizontal == TextAlignH.RIGHT) {
                 lineX -= textWidth
             }

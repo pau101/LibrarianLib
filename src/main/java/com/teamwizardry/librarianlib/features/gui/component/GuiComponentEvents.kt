@@ -4,13 +4,16 @@ import com.teamwizardry.librarianlib.features.eventbus.Event
 import com.teamwizardry.librarianlib.features.eventbus.EventCancelable
 import com.teamwizardry.librarianlib.features.gui.EnumMouseButton
 import com.teamwizardry.librarianlib.features.math.Vec2d
+import no.birkett.kiwi.Solver
 
 object GuiComponentEvents {
     /** Fired each tick while the component is a part of a screen */
     class ComponentTickEvent(@JvmField val component: GuiComponent) : Event()
+    /** Fired to add dynamic constraints to the given solver */
+    class AddConstraintsEvent(@JvmField val component: GuiComponent, val solver: Solver) : Event()
 
-    /** Fired each frame before applying OpenGL transforms */
-    class PreTransformEvent(@JvmField val component: GuiComponent, val mousePos: Vec2d, val partialTicks: Float) : Event()
+    /** Fired before layout is calculated */
+    class PreLayoutEvent(@JvmField val component: GuiComponent, val parentMousePos: Vec2d, val partialTicks: Float) : Event()
     /** Fired each frame before the component has been drawn, but after most computed properties update */
     class PreDrawEvent(@JvmField val component: GuiComponent, val mousePos: Vec2d, val partialTicks: Float) : Event()
     /** Fired each frame after the component has been drawn but before children have been drawn */

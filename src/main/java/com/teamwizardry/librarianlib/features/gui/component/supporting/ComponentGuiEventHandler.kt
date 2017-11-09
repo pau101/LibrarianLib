@@ -12,12 +12,23 @@ import com.teamwizardry.librarianlib.features.math.Vec2d
  * Created by TheCodeWarrior
  */
 class ComponentGuiEventHandler(private val component: GuiComponent) {
-    internal var mouseButtonsDown = BooleanArray(EnumMouseButton.values().size)
-    internal var keysDown: MutableMap<Key, Boolean> = HashMap<Key, Boolean>().withDefault({ false })
+    private var mouseButtonsDown = BooleanArray(EnumMouseButton.values().size)
+    private var keysDown: MutableMap<Key, Boolean> = HashMap<Key, Boolean>().withDefault({ false })
 
     fun tick() {
         component.BUS.fire(GuiComponentEvents.ComponentTickEvent(component))
         component.relationships.forEachChild { it.guiEventHandler.tick() }
+    }
+
+    fun preLayout(mousePos: Vec2d, partialTicks: Float) {
+
+        component.BUS.fire(GuiComponentEvents.PreLayoutEvent(component, mousePos, partialTicks))
+
+        val mousePos = component.geometry.transformFromParentContext(mousePos)
+
+        component.relationships.children.forEach {
+            it.guiEventHandler.preLayout(mousePos, partialTicks)
+        }
     }
 
     /**

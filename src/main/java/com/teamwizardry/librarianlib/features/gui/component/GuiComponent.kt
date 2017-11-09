@@ -75,6 +75,8 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int, posY: Int, widt
     @Suppress("LeakingThis") @JvmField val guiEventHandler = ComponentGuiEventHandler(this)
     /** Use this to configure clipping */
     @Suppress("LeakingThis") @JvmField val clipping = ComponentClippingHandler(this)
+    /** Handles autolayout constraints */
+    @Suppress("LeakingThis") @JvmField val layout = ComponentLayoutHandler(this)
     //endregion
 
     //region - Base component stuff
@@ -141,7 +143,7 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int, posY: Int, widt
      * Transforms [pos] from `other`'s context (or the root context if null) to our context
      */
     fun otherPosToThisContext(other: GuiComponent?, pos: Vec2d)
-            = geometry.thisPosToOtherContext(other, pos)
+            = geometry.otherPosToThisContext(other, pos)
     //endregion
 
     //region - RelationshipHandler

@@ -46,6 +46,8 @@ class ComponentRenderHandler(private val component: GuiComponent) {
                 parent.render.cursor = value
         }
 
+    private var wasMouseOver = false
+
     /**
      * Sets the tooltip to be drawn, overriding the existing value. Pass null for the font to use the default font renderer.
      */
@@ -74,8 +76,6 @@ class ComponentRenderHandler(private val component: GuiComponent) {
 
     private var animatorStorage: Animator? = null
 
-    private var wasMouseOver = false
-
     /**
      * Adds animations to [animator]
      */
@@ -90,7 +90,7 @@ class ComponentRenderHandler(private val component: GuiComponent) {
      * @param partialTicks From 0-1 the additional fractional ticks, used for smooth animations that aren't dependant on wall-clock time
      */
     fun draw(mousePos: Vec2d, partialTicks: Float) {
-        val mousePos = component.geometry.transformFromParentContext(mousePos)
+
         val components = component.relationships.components
         components.sortBy { it.relationships.zIndex }
         if (!component.isVisible) return
@@ -115,11 +115,10 @@ class ComponentRenderHandler(private val component: GuiComponent) {
             }
         }
         wasMouseOver = component.mouseOver
+
         if(component.mouseOver && hoverCursor != null) {
             cursor = hoverCursor
         }
-
-        component.BUS.fire(GuiComponentEvents.PreTransformEvent(component, mousePos, partialTicks))
 
         GlStateManager.pushMatrix()
 

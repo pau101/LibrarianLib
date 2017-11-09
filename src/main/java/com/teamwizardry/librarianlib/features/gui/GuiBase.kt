@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.GlStateManager
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
+import no.birkett.kiwi.Solver
 import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
 import org.lwjgl.opengl.GL11
@@ -23,6 +24,7 @@ open class GuiBase(protected var guiWidth: Int, protected var guiHeight: Int) : 
     private val mainScaleWrapper: ComponentVoid = ComponentVoid(0, 0)
     private var isDebugMode = false
     private val debugger = ComponentDebugger()
+    private var solver = Solver()
 //    protected var top: Int = 0
 //    protected var left: Int = 0
 
@@ -94,6 +96,13 @@ open class GuiBase(protected var guiWidth: Int, protected var guiHeight: Int) : 
             GlStateManager.translate(-width / 2.0, -height / 2.0, 0.0)
         }
 
+        fullscreenComponents.guiEventHandler.preLayout(relPos, partialTicks)
+
+        fullscreenComponents.layout.addTo(solver)
+        solver.updateVariables()
+        fullscreenComponents.layout.update()
+        solver = Solver()
+
         fullscreenComponents.geometry.calculateMouseOver(relPos)
         fullscreenComponents.render.draw(relPos, partialTicks)
         fullscreenComponents.render.drawLate(relPos, partialTicks)
@@ -101,6 +110,13 @@ open class GuiBase(protected var guiWidth: Int, protected var guiHeight: Int) : 
         GlStateManager.popMatrix()
 
         if(isDebugMode) {
+            debugger.guiEventHandler.preLayout(relPos, partialTicks)
+
+            debugger.layout.addTo(solver)
+            solver.updateVariables()
+            debugger.layout.update()
+            solver = Solver()
+
             debugger.geometry.calculateMouseOver(relPos)
             debugger.render.draw(relPos, partialTicks)
             debugger.render.drawLate(relPos, partialTicks)

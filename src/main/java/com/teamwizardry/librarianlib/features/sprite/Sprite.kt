@@ -36,9 +36,13 @@ open class Sprite: ISprite {
      */
     var uvHeight: Int = 0
         protected set
+
     protected var frames: IntArray = IntArray(0)
     protected var offsetU: Int = 0
     protected var offsetV: Int = 0
+    protected var _nineSliceU: Int = 0
+    protected var _nineSliceV: Int = 0
+
     override val frameCount: Int
         get() = frames.size
 
@@ -56,9 +60,9 @@ open class Sprite: ISprite {
      */
     override var height = 1
 
-    constructor(tex: Texture, u: Int, v: Int, width: Int, height: Int, frames: IntArray, offsetU: Int, offsetV: Int) {
+    constructor(tex: Texture, u: Int, v: Int, width: Int, height: Int, frames: IntArray, offsetU: Int, offsetV: Int, nineSliceU: Int, nineSliceV: Int) {
         this.tex = tex
-        init(u, v, width, height, frames, offsetU, offsetV)
+        init(u, v, width, height, frames, offsetU, offsetV, nineSliceU, nineSliceV)
     }
 
     constructor(loc: ResourceLocation) {
@@ -70,6 +74,8 @@ open class Sprite: ISprite {
         this.width = 16
         this.height = 16
         this.frames = IntArray(0)
+        this._nineSliceU = 0
+        this._nineSliceV = 0
     }
 
     /**
@@ -77,7 +83,7 @@ open class Sprite: ISprite {
 
      * --Package private--
      */
-    internal fun init(u: Int, v: Int, width: Int, height: Int, frames: IntArray, offsetU: Int, offsetV: Int) {
+    internal fun init(u: Int, v: Int, width: Int, height: Int, frames: IntArray, offsetU: Int, offsetV: Int, nineSliceU: Int, nineSliceV: Int) {
         this.u = u
         this.v = v
         this.uvWidth = width
@@ -85,6 +91,8 @@ open class Sprite: ISprite {
         this.offsetU = offsetU
         this.offsetV = offsetV
         this.frames = frames
+        this._nineSliceU = nineSliceU
+        this._nineSliceV = nineSliceV
     }
 
     /**
@@ -115,10 +123,15 @@ open class Sprite: ISprite {
         return (v + uvHeight + offsetV * if (frames.isEmpty()) 0 else frames[animFrames % frames.size]).toFloat() / tex.height.toFloat()
     }
 
+    override val nineSliceSizeW: Float
+        get() = _nineSliceU / uvWidth.toFloat()
+    override val nineSliceSizeH: Float
+        get() = _nineSliceV / uvHeight.toFloat()
+
     fun getSubSprite(u: Int, v: Int, width: Int, height: Int): Sprite {
         val uScale = uvWidth.toFloat() / this.width.toFloat()
         val vScale = uvHeight.toFloat() / this.height.toFloat()
-        val s = Sprite(this.tex, this.u + (u * uScale).toInt(), this.v + (v * vScale).toInt(), (width * uScale).toInt(), (height * vScale).toInt(), frames, offsetU, offsetV)
+        val s = Sprite(this.tex, this.u + (u * uScale).toInt(), this.v + (v * vScale).toInt(), (width * uScale).toInt(), (height * vScale).toInt(), frames, offsetU, offsetV, 0, 0)
         s.width = width
         s.height = height
         return s

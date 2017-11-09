@@ -1,0 +1,12 @@
+{
+  "spritesheet": {
+    "textureWidth": 256,
+    "textureHeight": 256,
+    "sprites": {
+      "tab_background":{
+        "pos": [0, 0, 16, 13],
+        "nineSlice": [1, 1]
+      }
+    }
+  }
+}

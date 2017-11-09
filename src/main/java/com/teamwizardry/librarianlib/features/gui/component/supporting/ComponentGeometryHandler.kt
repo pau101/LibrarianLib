@@ -74,16 +74,12 @@ class ComponentGeometryHandler(private val component: GuiComponent) {
         return mat
     }
 
-    /**
-     * A shorthand to transform the passed pos in this component's context (coordinate space) to a pos in [other]'s context
-     *
-     * If [other] is null the returned value is in the root context
-     *
-     * [pos] defaults to (0, 0)
-     */
-    @JvmOverloads
-    fun thisPosToOtherContext(other: GuiComponent?, pos: Vec2d = Vec2d.ZERO): Vec2d {
+    fun thisPosToOtherContext(other: GuiComponent?, pos: Vec2d): Vec2d {
         return thisContextToOtherContext(other) * pos
+    }
+
+    fun otherPosToThisContext(other: GuiComponent?, pos: Vec2d): Vec2d {
+        return otherContextToThisContext(other) * pos
     }
 
     fun calculateMouseOver(mousePos: Vec2d) {

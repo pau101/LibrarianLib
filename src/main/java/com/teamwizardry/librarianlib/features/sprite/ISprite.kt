@@ -92,7 +92,6 @@ interface ISprite {
     fun drawClipped(animTicks: Int, x: Float, y: Float, width: Int, height: Int) =
             drawClipped(animTicks, x, y, width, height, false, false)
 
-
     /**
      * Width of this sprite.
      */
@@ -121,4 +120,14 @@ interface ISprite {
      * Frames for this sprite (if animated).
      */
     val frameCount: Int
+
+    /**
+     * Percentage of the height of the image taken up by the border if this is a nine slice sprite. Zero otherwise.
+     */
+    val nineSliceSizeW: Float
+
+    /**
+     * Percentage of the height of the image taken up by the border if this is a nine slice sprite. Zero otherwise.
+     */
+    val nineSliceSizeH: Float
 }

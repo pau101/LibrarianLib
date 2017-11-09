@@ -31,7 +31,7 @@ class SpritesMetadataSectionSerializer : BaseMetadataSectionSerializer<SpritesMe
             val h = JsonUtils.getInt(arr.get(3), "spritesheet{sprites{$name[3]")
 
             // create def
-            return SpriteDefinition(name, u, v, w, h, IntArray(0), 0, 0)
+            return SpriteDefinition(name, u, v, w, h, IntArray(0), 0, 0, 0, 0)
 
         } else if (element.isJsonObject) {
             val obj = JsonUtils.getJsonObject(element, "spritesheet{sprites{" + name)
@@ -47,16 +47,20 @@ class SpritesMetadataSectionSerializer : BaseMetadataSectionSerializer<SpritesMe
 
             // frames
             val frames_: IntArray
-            if (obj.get("frames").isJsonArray) {
-                arr = JsonUtils.getJsonArray(obj.get("frames"), "spritesheet{sprites{$name{frames")
-                frames_ = IntArray(arr.size())
-                for (i in frames_.indices) {
-                    frames_[i] = JsonUtils.getInt(arr.get(i), "spritesheet{sprites{$name{frames[$i]")
-                }
+            if (obj.get("frames") == null) {
+                frames_ = IntArray(0)
             } else {
-                frames_ = IntArray(JsonUtils.getInt(obj.get("frames"), "spritesheet{sprites{$name{frames"))
-                for (i in frames_.indices) {
-                    frames_[i] = i
+                if (obj.get("frames").isJsonArray) {
+                    arr = JsonUtils.getJsonArray(obj.get("frames"), "spritesheet{sprites{$name{frames")
+                    frames_ = IntArray(arr.size())
+                    for (i in frames_.indices) {
+                        frames_[i] = JsonUtils.getInt(arr.get(i), "spritesheet{sprites{$name{frames[$i]")
+                    }
+                } else {
+                    frames_ = IntArray(JsonUtils.getInt(obj.get("frames"), "spritesheet{sprites{$name{frames"))
+                    for (i in frames_.indices) {
+                        frames_[i] = i
+                    }
                 }
             }
 
@@ -76,15 +80,25 @@ class SpritesMetadataSectionSerializer : BaseMetadataSectionSerializer<SpritesMe
             var offsetU = 0
             var offsetV = h // default animates downward
             if (obj.get("offset") != null) {
-                arr = JsonUtils.getJsonArray(obj.get("offset"), "spritesheet{sprites{$name}{offset}")
+                arr = JsonUtils.getJsonArray(obj.get("offset"), "spritesheet{sprites{$name{offset")
                 if (arr.size() < 2)
                     throw JsonSyntaxException("expected spritesheet{sprites{" + name + "{offset to have a length of 2, was " + arr.toString())
                 offsetU = JsonUtils.getInt(arr.get(0), "spritesheet{sprites{$name{offset[0]")
                 offsetV = JsonUtils.getInt(arr.get(1), "spritesheet{sprites{$name{offset[1]")
             }
 
+            var nineSliceU = 0
+            var nineSliceV = 0
+            if (obj.get("nineSlice") != null) {
+                arr = JsonUtils.getJsonArray(obj.get("nineSlice"), "spritesheet{sprites{$name{nineSlice")
+                if (arr.size() < 2)
+                    throw JsonSyntaxException("expected spritesheet{sprites{" + name + "{nineSlice to have a length of 2, was " + arr.toString())
+                nineSliceU = JsonUtils.getInt(arr.get(0), "spritesheet{sprites{$name{nineSlice[0]")
+                nineSliceV = JsonUtils.getInt(arr.get(1), "spritesheet{sprites{$name{nineSlice[1]")
+            }
+
             // create def
-            return SpriteDefinition(name, u, v, w, h, frames, offsetU, offsetV)
+            return SpriteDefinition(name, u, v, w, h, frames, offsetU, offsetV, nineSliceU, nineSliceV)
 
         } else {
             throw JsonSyntaxException("expected spritesheet{sprites{$name to be either an object or array")
