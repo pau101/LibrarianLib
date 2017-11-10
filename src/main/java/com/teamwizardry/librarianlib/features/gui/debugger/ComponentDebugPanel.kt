@@ -38,10 +38,13 @@ class ComponentDebugPanel : GuiComponent(0, 0, 100, 100) {
 
         names.forEach { name ->
             val r = ComponentTab(name, 0, 0, 10, 13)
-            r.BUS.hook(GuiComponentEvents.MouseClickEvent::class.java) {
-                stack.relationships.remove(r)
-            }
+            r.name = "tab"
             stack.add(r)
         }
+    }
+
+    @Hook("tab")
+    fun fooClicked(e: GuiComponentEvents.MouseClickEvent) {
+        print(e.component.pos.x)
     }
 }

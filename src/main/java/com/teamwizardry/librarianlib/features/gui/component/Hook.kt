@@ -3,4 +3,4 @@ package com.teamwizardry.librarianlib.features.gui.component
 /**
  *
  */
-annotation class Hook
+annotation class Hook(val value: String = "")

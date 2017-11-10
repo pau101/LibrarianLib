@@ -7,7 +7,7 @@ import com.teamwizardry.librarianlib.features.gui.components.ComponentSpriteTile
 import com.teamwizardry.librarianlib.features.gui.components.ComponentText
 import no.birkett.kiwi.Strength
 
-class ComponentTab(val name: String, posX: Int, posY: Int, width: Int, height: Int) : GuiComponent(posX, posY, width, height) {
+class ComponentTab(val tabString: String, posX: Int, posY: Int, width: Int, height: Int) : GuiComponent(posX, posY, width, height) {
 
     private val background = ComponentSprite(TAB_BACKGROUND, 0, 0)
     private val text = ComponentText(0, 0, ComponentText.TextAlignH.CENTER)
@@ -15,7 +15,7 @@ class ComponentTab(val name: String, posX: Int, posY: Int, width: Int, height: I
     init {
         this.layout.width.strength = Strength.STRONG
         this.layout.height.strength = Strength.STRONG
-        text.text(name)
+        text.text(tabString)
         text.sizeToText()
 
         add(background, text)
@@ -28,6 +28,9 @@ class ComponentTab(val name: String, posX: Int, posY: Int, width: Int, height: I
         text.layout.left.equalTo(this.layout.left)
         text.layout.right.equalTo(this.layout.right)
         text.layout.centerY.equalTo(this.layout.centerY)
+
+        background.name = this.name
+        text.name = this.name
     }
 
     companion object {

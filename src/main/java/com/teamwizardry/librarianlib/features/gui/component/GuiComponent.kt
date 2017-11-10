@@ -60,24 +60,10 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int, posY: Int, widt
      */
     open fun drawComponent(mousePos: Vec2d, partialTicks: Float) {}
 
-    //region - Handlers
-    /** Use this for advanced data manipulation and querying */
-    @Suppress("LeakingThis") @JvmField val data = ComponentDataHandler(this)
-    /** Use this for advanced tag manipulation and querying */
-    @Suppress("LeakingThis") @JvmField val tags = ComponentTagHandler(this)
-    /** Use this for advanced geometry manipulation and querying */
-    @Suppress("LeakingThis") @JvmField val geometry = ComponentGeometryHandler(this)
-    /** Use this for advanced parent-child relationship manipulation and querying */
-    @Suppress("LeakingThis") @JvmField val relationships = ComponentRelationshipHandler(this)
-    /** Use this for advanced rendering manipulation and querying */
-    @Suppress("LeakingThis") @JvmField val render = ComponentRenderHandler(this)
-    /** Internal handler for GUI events (mouse click, key press, etc.) */
-    @Suppress("LeakingThis") @JvmField val guiEventHandler = ComponentGuiEventHandler(this)
-    /** Use this to configure clipping */
-    @Suppress("LeakingThis") @JvmField val clipping = ComponentClippingHandler(this)
-    /** Handles autolayout constraints */
-    @Suppress("LeakingThis") @JvmField val layout = ComponentLayoutHandler(this)
-    //endregion
+    /**
+     * The name of this component, used to ripple events up to parent @[Hook] annotated methods.
+     */
+    @JvmField var name: String = ""
 
     //region - Base component stuff
     @JvmField
@@ -99,6 +85,27 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int, posY: Int, widt
     fun invalidate() {
         this.isInvalid = true
     }
+    //endregion
+
+    //region - Handlers
+    /** Use this for advanced data manipulation and querying */
+    @Suppress("LeakingThis") @JvmField val data = ComponentDataHandler(this)
+    /** Use this for advanced tag manipulation and querying */
+    @Suppress("LeakingThis") @JvmField val tags = ComponentTagHandler(this)
+    /** Use this for advanced geometry manipulation and querying */
+    @Suppress("LeakingThis") @JvmField val geometry = ComponentGeometryHandler(this)
+    /** Use this for advanced parent-child relationship manipulation and querying */
+    @Suppress("LeakingThis") @JvmField val relationships = ComponentRelationshipHandler(this)
+    /** Use this for advanced rendering manipulation and querying */
+    @Suppress("LeakingThis") @JvmField val render = ComponentRenderHandler(this)
+    /** Internal handler for GUI events (mouse click, key press, etc.) */
+    @Suppress("LeakingThis") @JvmField val guiEventHandler = ComponentGuiEventHandler(this)
+    /** Use this to configure clipping */
+    @Suppress("LeakingThis") @JvmField val clipping = ComponentClippingHandler(this)
+    /** Handles autolayout constraints */
+    @Suppress("LeakingThis") @JvmField val layout = ComponentLayoutHandler(this)
+    /** Handles rippling and detecting events for @[Hook] annotations */
+    @Suppress("LeakingThis") @JvmField internal val eventHookMethodHandler = ComponentEventHookMethodHandler(this)
     //endregion
 
     //region - GeometryHandler
@@ -250,9 +257,6 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int, posY: Int, widt
     init {
         this.pos = vec(posX, posY)
         this.size = vec(width, height)
-
-        @Suppress("LeakingThis")
-        ComponentEventHookAnnotSearcher.search(this)
     }
     //endregion
 

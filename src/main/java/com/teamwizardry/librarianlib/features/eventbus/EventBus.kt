@@ -7,6 +7,8 @@ import java.util.function.Consumer
  */
 class EventBus {
     private val hooks = mutableMapOf<Class<*>, MutableList<Consumer<Event>>>()
+    internal var preEventHook: ((event: Event) -> Unit)? = null
+    internal var postEventHook: ((event: Event) -> Unit)? = null
 
     fun hasHooks(clazz: Class<*>): Boolean {
         return hooks[clazz]?.size ?: 0 > 0
@@ -14,16 +16,19 @@ class EventBus {
 
     fun <E : Event> fire(event: E): E {
         val clazz = event.javaClass
+        preEventHook?.invoke(event)
         if (clazz in hooks) {
-            if (event.reversed)
+            if (event.reversed) {
                 hooks[clazz]?.asReversed()?.forEach {
                     it.accept(event)
                 }
-            else
+            } else {
                 hooks[clazz]?.forEach {
                     it.accept(event)
                 }
+            }
         }
+        postEventHook?.invoke(event)
         return event
     }
 
