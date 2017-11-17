@@ -148,4 +148,40 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
         get() {
             return parent?.root ?: this.component
         }
+
+    /**
+     * The descriptive path to this component through the component tree
+     * Format:
+     *
+     * `Class:name[index].Class[index]...`
+     *
+     * - `.` separates parent from child
+     * - `Class` is replaced with the class of the component
+     * - `name` is the name of the component if it exists
+     * - `[index]` is the number of duplicates of this component identifier that occur before this one
+     */
+    fun guiPath(endAt: GuiComponent? = null): String {
+        val pathToParent = if(parent == endAt) "" else parent?.relationships?.guiPath()?.let { it + "." } ?: ""
+
+        var ourElement = ""
+
+        ourElement += component.javaClass.simpleName // Just the classname, no package
+
+        if(component.name != "")
+            ourElement += ":" + component.name
+
+        var occurances = 0
+        var dups = 0
+        parent?.relationships?.children?.forEach { child ->
+            if(child == this.component) {
+                dups = occurances
+            }
+            if(child.javaClass == this.javaClass && child.name == this.component.name)
+                occurances++
+        }
+        if(occurances > 1)
+            ourElement += "[$dups]"
+
+        return pathToParent + ourElement
+    }
 }

@@ -51,14 +51,14 @@ repositories {
         name = 'sponge'
         url = 'https://repo.spongepowered.org/maven/'
     }
-    flatDir {
-        dirs 'shade'
-    }
 }
 
 sourceSets.main {
     java.srcDirs += 'src/test/java'
     resources.srcDirs += 'src/test/resources'
+
+    java.srcDirs += 'src/shade/java'
+    resources.srcDirs += 'src/shade/resources'
 }
 
 minecraft {
@@ -105,7 +105,6 @@ dependencies {
 // todo once mcmultipart is 1.11
 //    deobfCompile "MCMultiPart:MCMultiPart:1.2.1:universal"
     compile "net.shadowfacts:Forgelin:1.5.1"
-    required name: "kiwi-java-1.0"
 }
 
 reobf {

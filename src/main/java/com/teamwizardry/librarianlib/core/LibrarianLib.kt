@@ -54,7 +54,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent
  * - Config Property system that is completely painless and only requires very minimal registration: [EasyConfigHandler]
  * - Container API [ContainerBase]
  * ~~- Multipart API [PartMod]~~
- * - An easy F3+key handler [F3Handler]
+ * - An easy F3+key handler [F3Handlerb
  * - A simple event bus implementation [Event] [EventBus]
  * - Capability which uses the [Save] scheme to save and sync fields [CapabilityMod]
  */
@@ -80,7 +80,7 @@ object LibrarianLib {
     const val MODNAME = "LibrarianLib"
     const val BUILD = "GRADLE:BUILD"
     const val PATCH = "GRADLE:VERSION"
-    const val VERSION = "$BUILD.$PATCH"
+    const val VERSION = "4.1"
     const val ALLOWED = "[1.12,)"
     const val CLIENT = "com.teamwizardry.librarianlib.core.client.LibClientProxy"
     const val SERVER = "com.teamwizardry.librarianlib.core.common.LibCommonProxy"

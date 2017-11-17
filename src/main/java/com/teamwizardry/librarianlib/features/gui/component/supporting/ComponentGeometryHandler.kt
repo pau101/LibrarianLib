@@ -3,6 +3,7 @@ package com.teamwizardry.librarianlib.features.gui.component.supporting
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.helpers.vec
+import com.teamwizardry.librarianlib.features.kotlin.times
 import com.teamwizardry.librarianlib.features.math.Matrix4
 import com.teamwizardry.librarianlib.features.math.Vec2d
 
@@ -30,6 +31,12 @@ class ComponentGeometryHandler(private val component: GuiComponent) {
      */
     var shouldCalculateOwnHover = true
 
+    /**
+     * Multiplies this component's scale by all of its parents' scales.
+     */
+    fun getScaleFactor(): Vec2d {
+        return this.transform.scale2D * (component.parent?.transform?.scale2D ?: vec(1,1))
+    }
 
     /**
      * Takes [pos], which is in our parent's context (coordinate space), and transforms it to our context

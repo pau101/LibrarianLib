@@ -5,111 +5,139 @@ import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.kotlin.minus
+import com.teamwizardry.librarianlib.features.kotlin.times
+import com.teamwizardry.librarianlib.features.math.Vec2d
 import no.birkett.kiwi.*
 import java.util.*
 
 @Suppress("LEAKING_THIS", "UNUSED")
 class ComponentLayoutHandler(val component: GuiComponent) {
-    /** Whether this component should be positioned with autolayout */
-    var enabled = false
-
     /** The anchor corresponding to the minimum x coordinate of the component's bounds */
-    val left = Anchor(this)
+    val left = Anchor(component, Vec2d.Axis.X)
     /** The anchor corresponding to the maximum x coordinate of the component's bounds */
-    val right = Anchor(this)
+    val right = Anchor(component, Vec2d.Axis.X)
     /** The anchor corresponding to the minimum y coordinate of the component's bounds */
-    val top = Anchor(this)
+    val top = Anchor(component, Vec2d.Axis.Y)
     /** The anchor corresponding to the maximum y coordinate of the component's bounds */
-    val bottom = Anchor(this)
+    val bottom = Anchor(component, Vec2d.Axis.Y)
     /** The anchor corresponding to the center x coordinate of the component's bounds */
-    val centerX = Anchor(this)
+    val centerX = Anchor(component, Vec2d.Axis.X)
     /** The anchor corresponding to the center y coordinate of the component's bounds */
-    val centerY = Anchor(this)
+    val centerY = Anchor(component, Vec2d.Axis.Y)
 
     /** The anchor corresponding to the width of the component's bounds */
-    val width = Anchor(this)
+    val width = Anchor(component, Vec2d.Axis.X)
     /** The anchor corresponding to the height of the component's bounds */
-    val height = Anchor(this)
+    val height = Anchor(component, Vec2d.Axis.Y)
+    /**
+     * If set to true, the width and height constraints will be set to the component's implicit size if it exists, rather
+     * than the component's size attribute
+     */
+    var useImplicitSize = true
+
     init {
         width.strength = Strength.MEDIUM
         height.strength = Strength.MEDIUM
+
+        width.relativeVariable = width.variable
+        height.relativeVariable = height.variable
     }
 
-    private var flipX = false
-    private var flipY = false
+    private val constraints = Sets.newSetFromMap(IdentityHashMap<LayoutConstraint, Boolean>())
 
-    private val constraints = Sets.newSetFromMap(IdentityHashMap<Constraint, Boolean>())
-
-    fun add(constraint: Constraint) {
+    fun add(constraint: LayoutConstraint) {
         constraints.add(constraint)
     }
 
-    fun remove(constraint: Constraint) {
+    fun remove(constraint: LayoutConstraint) {
         constraints.remove(constraint)
     }
 
-    internal fun addTo(solver: Solver) {
-        var rootMin = component.thisPosToOtherContext(null, vec(0, 0))
-        var rootMax = component.thisPosToOtherContext(null, component.geometry.size)
+    internal fun addBase(solver: Solver, parentScaleFactor: Vec2d, parentLeft: Variable?, parentTop: Variable?) {
+        val name = component.relationships.guiPath()
+        left.setName(name + "#left")
+        right.setName(name + "#right")
+        top.setName(name + "#top")
+        bottom.setName(name + "#bottom")
+        width.setName(name + "#width")
+        height.setName(name + "#height")
+        centerX.setName(name + "#centerX")
+        centerY.setName(name + "#centerY")
 
-        if (rootMin.x > rootMax.x)
-            flipX = true
-        if (rootMin.y > rootMax.y)
-            flipY = true
-        rootMin = vec(
-                if (flipX) rootMax.x else rootMin.x,
-                if (flipY) rootMax.y else rootMin.y
-        )
-        rootMax = vec(
-                if (flipX) rootMin.x else rootMax.x,
-                if (flipY) rootMin.y else rootMax.y
-        )
+        val implicitSize = component.getImplicitSize()
+        val scaleFactor = parentScaleFactor * component.transform.scale2D
 
-        solver.addConstraint(Symbolics.equals(left, rootMin.x).setStrength(left.strength))
-        solver.addConstraint(Symbolics.equals(top, rootMin.y).setStrength(top.strength))
+        // absolute pos given parent pos and relative pos
+        if(parentLeft == null) {
+            solver.addConstraint(Symbolics.equals(left.variable, component.pos.x).setStrength(Strength.REQUIRED))
+        } else {
+            solver.addConstraint(Symbolics.equals(left.relativeVariable, component.pos.x * parentScaleFactor.x).setStrength(left.strength))
+            solver.addConstraint(Symbolics.equals(left.variable, Symbolics.add(parentLeft, left.relativeVariable)).setStrength(Strength.REQUIRED))
+        }
+        if(parentTop == null) {
+            solver.addConstraint(Symbolics.equals(top.variable, component.pos.y).setStrength(Strength.REQUIRED))
+        } else {
+            solver.addConstraint(Symbolics.equals(top.relativeVariable, component.pos.y * parentScaleFactor.y).setStrength(top.strength))
+            solver.addConstraint(Symbolics.equals(top.variable, Symbolics.add(parentTop, top.relativeVariable)).setStrength(Strength.REQUIRED))
+        }
 
-        solver.addConstraint(Symbolics.equals(right, rootMax.x).setStrength(right.strength))
-        solver.addConstraint(Symbolics.equals(bottom, rootMax.y).setStrength(bottom.strength))
+        if(useImplicitSize && implicitSize != null) {
+            // implicit width and height in global coord space
+            solver.addConstraint(Symbolics.equals(width.variable, implicitSize.x * scaleFactor.x).setStrength(Strength.STRONG))
+            solver.addConstraint(Symbolics.equals(height.variable, implicitSize.y * scaleFactor.y).setStrength(Strength.STRONG))
+        } else {
+            // width and height in global coord space
+            solver.addConstraint(Symbolics.equals(width.variable, component.size.x * scaleFactor.x).setStrength(width.strength))
+            solver.addConstraint(Symbolics.equals(height.variable, component.size.y * scaleFactor.y).setStrength(height.strength))
+        }
 
-        solver.addConstraint(Symbolics.equals(width, rootMax.x - rootMin.x).setStrength(width.strength))
-        solver.addConstraint(Symbolics.equals(height, rootMax.y - rootMin.y).setStrength(height.strength))
+        // limit width and height to be >= 0
+        solver.addConstraint(Symbolics.greaterThanOrEqualTo(width.variable, 0.0).setStrength(Strength.REQUIRED))
+        solver.addConstraint(Symbolics.greaterThanOrEqualTo(height.variable, 0.0).setStrength(Strength.REQUIRED))
 
-        solver.addConstraint(Symbolics.equals(centerX, (rootMax.x + rootMin.x) / 2).setStrength(centerX.strength))
-        solver.addConstraint(Symbolics.equals(centerY, (rootMax.y + rootMin.y) / 2).setStrength(centerY.strength))
+        // right and bottom based on top, left, width, and height
+        solver.addConstraint(Symbolics.equals(right.variable, Symbolics.add(left.variable, width.variable)).setStrength(Strength.REQUIRED))
+        solver.addConstraint(Symbolics.equals(bottom.variable, Symbolics.add(top.variable, height.variable)).setStrength(Strength.REQUIRED))
 
-        solver.addConstraint(Symbolics.greaterThanOrEqualTo(width, 0.0).setStrength(Strength.REQUIRED))
-        solver.addConstraint(Symbolics.greaterThanOrEqualTo(height, 0.0).setStrength(Strength.REQUIRED))
+        // right and bottom relative to parent, scaled to global coord space
+        solver.addConstraint(Symbolics.equals(right.relativeVariable, Symbolics.add(left.relativeVariable, width.variable)).setStrength(Strength.REQUIRED))
+        solver.addConstraint(Symbolics.equals(bottom.relativeVariable, Symbolics.add(top.relativeVariable, height.variable)).setStrength(Strength.REQUIRED))
 
-        solver.addConstraint(Symbolics.equals(width, Symbolics.subtract(right, left)).setStrength(Strength.REQUIRED))
-        solver.addConstraint(Symbolics.equals(height, Symbolics.subtract(bottom, top)).setStrength(Strength.REQUIRED))
+        // centerX/Y based on left and right
+        solver.addConstraint(Symbolics.equals(centerX.variable, Symbolics.divide(Symbolics.add(left.variable, right.variable), 2.0)).setStrength(Strength.REQUIRED))
+        solver.addConstraint(Symbolics.equals(centerY.variable, Symbolics.divide(Symbolics.add(top.variable, bottom.variable), 2.0)).setStrength(Strength.REQUIRED))
 
-        solver.addConstraint(Symbolics.equals(centerX, Symbolics.divide(Symbolics.add(left, right), 2.0)).setStrength(Strength.REQUIRED))
-        solver.addConstraint(Symbolics.equals(centerY, Symbolics.divide(Symbolics.add(top, bottom), 2.0)).setStrength(Strength.REQUIRED))
+        // centerX/Y relative to parent, scaled to global coord space
+        if(parentLeft != null)
+            solver.addConstraint(Symbolics.equals(centerX.relativeVariable, Symbolics.subtract(centerX.variable, parentLeft)).setStrength(Strength.REQUIRED))
+        else
+            solver.addConstraint(Symbolics.equals(centerX.relativeVariable, Symbolics.subtract(centerX.variable, 0.0)).setStrength(Strength.REQUIRED))
+        if(parentTop != null)
+            solver.addConstraint(Symbolics.equals(centerY.relativeVariable, Symbolics.subtract(centerY.variable, parentTop)).setStrength(Strength.REQUIRED))
+        else
+            solver.addConstraint(Symbolics.equals(centerY.relativeVariable, Symbolics.subtract(centerY.variable, 0.0)).setStrength(Strength.REQUIRED))
 
+        component.relationships.children.forEach {
+            it.layout.addBase(solver, scaleFactor, left.variable, top.variable)
+        }
+    }
+
+    internal fun addCustom(solver: Solver) {
         component.BUS.fire(GuiComponentEvents.AddConstraintsEvent(component, solver))
         constraints.forEach {
-            solver.addConstraint(it)
+            solver.addConstraint(it.makeConstraint())
         }
         component.relationships.children.forEach {
-            it.layout.addTo(solver)
+            it.layout.addCustom(solver)
         }
     }
 
     internal fun update() {
-        var rootMin = vec(left.value, top.value)
-        var rootMax = vec(right.value, bottom.value)
-
-        rootMin = vec(
-                if(flipX) rootMax.x else rootMin.x,
-                if(flipY) rootMax.y else rootMin.y
-        )
-        rootMax = vec(
-                if(flipX) rootMin.x else rootMax.x,
-                if(flipY) rootMin.y else rootMax.y
-        )
+        val rootMin = vec(left.variable.value, top.variable.value)
+        val rootMax = vec(right.variable.value, bottom.variable.value)
 
         val parent = component.relationships.parent
-        if(parent != null && enabled) {
+        if(parent != null) {
             val pos = parent.otherPosToThisContext(null, rootMin)
             component.pos = pos
 

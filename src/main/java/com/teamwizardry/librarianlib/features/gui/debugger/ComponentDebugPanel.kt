@@ -18,15 +18,15 @@ class ComponentDebugPanel : GuiComponent(0, 0, 100, 100) {
     val stack = ComponentStackView(true,  10, 10, 100, 30)
     init {
         add(rect)
-        rect.layout.top.equalTo(this.layout.top)
-        rect.layout.bottom.equalTo(this.layout.bottom)
-
-        rect.layout.left.equalTo(this.layout.left)
-        rect.layout.right.equalTo(this.layout.right)
-
-        stack.layout.top.equalTo(this.layout.top, 15.0)
-        stack.layout.left.equalTo(this.layout.left, 15.0)
-        stack.layout.right.equalTo(this.layout.right, -15.0)
+//        rect.layout.top.equalTo(this.layout.top)
+//        rect.layout.bottom.equalTo(this.layout.bottom)
+//
+//        rect.layout.left.equalTo(this.layout.left)
+//        rect.layout.right.equalTo(this.layout.right)
+//
+//        stack.layout.top.equalTo(this.layout.top + 15.0)
+//        stack.layout.left.equalTo(this.layout.left + 15.0)
+//        stack.layout.right.equalTo(this.layout.right - 15.0)
         add(stack)
 
         val names = arrayOf(

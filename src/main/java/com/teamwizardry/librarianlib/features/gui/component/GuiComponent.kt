@@ -59,13 +59,14 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int, posY: Int, widt
      * Draws the component, this is called between pre and post draw events.
      */
     open fun drawComponent(mousePos: Vec2d, partialTicks: Float) {}
+    open fun getImplicitSize(): Vec2d? = null
 
+    //region - Base component stuff
     /**
      * The name of this component, used to ripple events up to parent @[Hook] annotated methods.
      */
     @JvmField var name: String = ""
 
-    //region - Base component stuff
     @JvmField
     val BUS = EventBus()
 
@@ -85,6 +86,14 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int, posY: Int, widt
     fun invalidate() {
         this.isInvalid = true
     }
+
+    /**
+     * Sets the name of this component and returns `this`.
+     */
+    fun setName(name: String): GuiComponent {
+        this.name = name
+        return this
+    }
     //endregion
 
     //region - Handlers
@@ -102,8 +111,12 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int, posY: Int, widt
     @Suppress("LeakingThis") @JvmField val guiEventHandler = ComponentGuiEventHandler(this)
     /** Use this to configure clipping */
     @Suppress("LeakingThis") @JvmField val clipping = ComponentClippingHandler(this)
-    /** Handles autolayout constraints */
+    /** Handles autolayout constraints
+     * @see l
+     */
     @Suppress("LeakingThis") @JvmField val layout = ComponentLayoutHandler(this)
+    /** Shortcuts for autolayout anchors */
+    @Suppress("LeakingThis") @JvmField val l = ComponentLayoutShortcuts(this)
     /** Handles rippling and detecting events for @[Hook] annotations */
     @Suppress("LeakingThis") @JvmField internal val eventHookMethodHandler = ComponentEventHookMethodHandler(this)
     //endregion
@@ -259,5 +272,9 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int, posY: Int, widt
         this.size = vec(width, height)
     }
     //endregion
+}
 
+fun <T: GuiComponent> T.named(name: String): T {
+    this.name = name
+    return this
 }

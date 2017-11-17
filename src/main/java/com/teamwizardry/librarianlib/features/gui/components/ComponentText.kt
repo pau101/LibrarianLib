@@ -8,7 +8,28 @@ import com.teamwizardry.librarianlib.features.math.Vec2d
 import net.minecraft.client.Minecraft
 import java.awt.Color
 
-class ComponentText @JvmOverloads constructor(posX: Int, posY: Int, var horizontal: ComponentText.TextAlignH = ComponentText.TextAlignH.LEFT, var vertical: ComponentText.TextAlignV = ComponentText.TextAlignV.TOP) : GuiComponent(posX, posY) {
+class ComponentText @JvmOverloads constructor(posX: Int, posY: Int, horizontal: ComponentText.TextAlignH = ComponentText.TextAlignH.LEFT, vertical: ComponentText.TextAlignV = ComponentText.TextAlignV.TOP) : GuiComponent(posX, posY) {
+
+    /**
+     * Set to true to enable wrapping to bounds
+     */
+    var wrapText = false
+    /**
+     * Text alignment on the X axis.
+     *
+     * -1 = left, 0 = center, 1 = right (mnemonic: The direction on the X axis to align to)
+     */
+    var xAlign = horizontal.ordinal - 1
+    /**
+     * Shorthand for centering text horizontally
+     */
+    fun centerText() { xAlign = 0 }
+    /**
+     * Text alignment on the Y axis.
+     *
+     * -1 = top, 0 = middle, 1 = bottom (mnemonic: The direction on the Y axis to align to)
+     */
+    var yAlign = vertical.ordinal - 1
 
     /**
      * The text to draw
@@ -21,6 +42,7 @@ class ComponentText @JvmOverloads constructor(posX: Int, posY: Int, var horizont
     /**
      * The wrap width in pixels, -1 for no wrapping
      */
+    @Deprecated("Set `wrapText` to true and set the component's width")
     val wrap = Option<ComponentText, Int>(-1)
     /**
      * Whether to set the font renderer's unicode and bidi flags
@@ -79,9 +101,9 @@ class ComponentText @JvmOverloads constructor(posX: Int, posY: Int, var horizont
 
 
         val height = lines.size * fr.FONT_HEIGHT
-        if (vertical == TextAlignV.MIDDLE) {
+        if (yAlign == 0) {
             y -= height / 2
-        } else if (vertical == TextAlignV.BOTTOM) {
+        } else if (yAlign == 1) {
             y -= height
         }
 
@@ -90,10 +112,10 @@ class ComponentText @JvmOverloads constructor(posX: Int, posY: Int, var horizont
             val lineY = y + i * fr.FONT_HEIGHT
 
             val textWidth = fr.getStringWidth(line)
-            if (horizontal == TextAlignH.CENTER) {
+            if (xAlign == 0) {
                 lineX -= textWidth / 2
                 lineX += (this.size.x / 2).toInt()
-            } else if (horizontal == TextAlignH.RIGHT) {
+            } else if (xAlign == 1) {
                 lineX -= textWidth
             }
 
@@ -106,10 +128,47 @@ class ComponentText @JvmOverloads constructor(posX: Int, posY: Int, var horizont
         }
     }
 
+    override fun getImplicitSize() : Vec2d? {
+        var wrap = this.wrap.getValue(this)
+        if(wrapText) {
+            wrap = size.xi
+        }
+
+        var size: Vec2d
+
+        val fr = Minecraft.getMinecraft().fontRenderer
+
+        val enableFlags = unicode.getValue(this)
+
+        if (enableFlags) {
+            fr.unicodeFlag = true
+            fr.bidiFlag = true
+        }
+
+        if (wrap == -1) {
+            size = vec(fr.getStringWidth(text.getValue(this)), fr.FONT_HEIGHT)
+        } else {
+            val wrapped = fr.listFormattedStringToWidth(text.getValue(this), wrap)
+            size = vec(wrap, wrapped.size * fr.FONT_HEIGHT)
+        }
+
+        if (enableFlags) {
+            fr.unicodeFlag = false
+            fr.bidiFlag = false
+        }
+
+        if(wrapText) {
+            size = size.setX(this.size.xi.toDouble())
+        }
+        return size
+    }
+
+    @Deprecated("This is now automatic and on by default")
     fun sizeToText() {
         this.size = contentSize.size
     }
 
+    @Deprecated("Use `getImplicitSize()`")
     val contentSize: BoundingBox2D
         get() {
             val wrap = this.wrap.getValue(this)

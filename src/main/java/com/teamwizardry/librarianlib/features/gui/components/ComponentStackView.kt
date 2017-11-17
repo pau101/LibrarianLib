@@ -54,25 +54,25 @@ class ComponentStackView(val horizontal: Boolean, posX: Int, posY: Int, width: I
     private fun constraints(e: GuiComponentEvents.AddConstraintsEvent) {
         if(horizontal) {
             val last = this.children.fold(this.layout.left) { last, child ->
-                e.solver.addConstraint(Symbolics.equals(child.layout.left, last))
+                e.solver.addConstraint(Symbolics.equals(child.layout.left.variable, last.variable))
                 return@fold child.layout.right
             }
-            e.solver.addConstraint(Symbolics.equals(last, this.layout.right))
+            e.solver.addConstraint(Symbolics.equals(last.variable, this.layout.right.variable))
 
             this.children.forEach { child ->
-                e.solver.addConstraint(Symbolics.equals(child.layout.top, this.layout.top))
-                e.solver.addConstraint(Symbolics.equals(child.layout.bottom, this.layout.bottom))
+                e.solver.addConstraint(Symbolics.equals(child.layout.top.variable, this.layout.top.variable))
+                e.solver.addConstraint(Symbolics.equals(child.layout.bottom.variable, this.layout.bottom.variable))
             }
         } else {
             val last = this.children.fold(this.layout.top) { last, child ->
-                e.solver.addConstraint(Symbolics.equals(child.layout.top, last))
+                e.solver.addConstraint(Symbolics.equals(child.layout.top.variable, last.variable))
                 return@fold child.layout.bottom
             }
-            e.solver.addConstraint(Symbolics.equals(last, this.layout.bottom))
+            e.solver.addConstraint(Symbolics.equals(last.variable, this.layout.bottom.variable))
 
             this.children.forEach { child ->
-                e.solver.addConstraint(Symbolics.equals(child.layout.left, this.layout.left))
-                e.solver.addConstraint(Symbolics.equals(child.layout.right, this.layout.right))
+                e.solver.addConstraint(Symbolics.equals(child.layout.left.variable, this.layout.left.variable))
+                e.solver.addConstraint(Symbolics.equals(child.layout.right.variable, this.layout.right.variable))
             }
         }
     }

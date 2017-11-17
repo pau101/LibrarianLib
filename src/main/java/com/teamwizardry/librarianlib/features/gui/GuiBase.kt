@@ -98,7 +98,8 @@ open class GuiBase(protected var guiWidth: Int, protected var guiHeight: Int) : 
 
         fullscreenComponents.guiEventHandler.preLayout(relPos, partialTicks)
 
-        fullscreenComponents.layout.addTo(solver)
+        fullscreenComponents.layout.addBase(solver, vec(1,1), null, null)
+        fullscreenComponents.layout.addCustom(solver)
         solver.updateVariables()
         fullscreenComponents.layout.update()
         solver = Solver()
@@ -112,7 +113,8 @@ open class GuiBase(protected var guiWidth: Int, protected var guiHeight: Int) : 
         if(isDebugMode) {
             debugger.guiEventHandler.preLayout(relPos, partialTicks)
 
-            debugger.layout.addTo(solver)
+            debugger.layout.addBase(solver, vec(1,1), null, null)
+            debugger.layout.addCustom(solver)
             solver.updateVariables()
             debugger.layout.update()
             solver = Solver()

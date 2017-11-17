@@ -1,70 +1,99 @@
 package com.teamwizardry.librarianlib.features.gui.component.supporting
 
-import no.birkett.kiwi.Constraint
-import no.birkett.kiwi.Strength
-import no.birkett.kiwi.Symbolics
-import no.birkett.kiwi.Variable
+import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
+import com.teamwizardry.librarianlib.features.helpers.vec
+import com.teamwizardry.librarianlib.features.math.Vec2d
+import no.birkett.kiwi.*
 
-class Anchor(private val layout: ComponentLayoutHandler): Variable(0.0) {
+class Anchor(internal val component: GuiComponent, val axis: Vec2d.Axis, val multiplier: Double = 1.0, val constant: Double = 0.0,
+             internal var variable: Variable = Variable(0.0), internal var relativeVariable: Variable = Variable(0.0)) {
+
+    internal fun setName(name: String) {
+        variable.name = name
+        if(relativeVariable != variable)
+            relativeVariable.name = name + ".relative"
+    }
+
+    fun makeExpression(): Expression {
+        val parentScaleFactor = component.parent?.geometry?.getScaleFactor()?.getAxis(axis) ?: 1.0
+
+        if(relativeVariable !== variable && multiplier != 1.0) {
+            return Expression(
+                    listOf(Term(variable), Term(relativeVariable, multiplier - 1)),
+                    constant * parentScaleFactor
+            )
+        }
+        return Expression(
+                Term(variable, multiplier),
+                constant * parentScaleFactor
+        )
+    }
+
     /**
-     * How strongly this constraint should be held. Default: [Strength.WEAK]
+     * Return an anchor multiplied by [other]
+     *
+     * (value is in the parent's coordinate space)
+     */
+    operator fun times(other: Number): Anchor {
+        return Anchor(component, axis, multiplier * other.toDouble(), constant * other.toDouble(), variable, relativeVariable)
+    }
+
+    /**
+     * Return an anchor divided by [other]
+     *
+     * (value is in the parent's coordinate space)
+     */
+    operator fun div(other: Number): Anchor {
+        return Anchor(component, axis, multiplier / other.toDouble(), constant / other.toDouble(), variable, relativeVariable)
+    }
+
+    /**
+     * Return an anchor increased by [other]
+     *
+     * (value is in the parent's coordinate space)
+     */
+    operator fun plus(other: Number): Anchor {
+        return Anchor(component, axis, multiplier, constant + other.toDouble(), variable, relativeVariable)
+    }
+
+    /**
+     * Return an anchor reduced by [other]
+     *
+     * (value is in the parent's coordinate space)
+     */
+    operator fun minus(other: Number): Anchor {
+        return Anchor(component, axis, multiplier, constant - other.toDouble(), variable, relativeVariable)
+    }
+
+    /**
+     * Set this anchor to be equal to [other]
+     */
+    fun equalTo(other: Anchor): LayoutConstraint {
+        val c = LayoutConstraint(this, other, LayoutConstraint.LayoutOperator.EQUAL, Strength.REQUIRED)
+        component.layout.add(c)
+        return c
+    }
+
+    /**
+     * Set this anchor to be greater than or equal to [other]
+     */
+    fun gequalTo(other: Anchor): LayoutConstraint {
+        val c = LayoutConstraint(this, other, LayoutConstraint.LayoutOperator.EQUAL, Strength.REQUIRED)
+        component.layout.add(c)
+        return c
+    }
+
+    /**
+     * Set this anchor to be greater than or equal to [other]
+     */
+    fun lequalTo(other: Anchor): LayoutConstraint {
+        val c = LayoutConstraint(this, other, LayoutConstraint.LayoutOperator.EQUAL, Strength.REQUIRED)
+        component.layout.add(c)
+        return c
+    }
+
+    /**
+     * How strongly this constraint's existing value should be held. Default: [Strength.WEAK]
      */
     var strength = Strength.WEAK
-
-    /**
-     * Set this anchor to be equal to [other] + [constant] with [strength]
-     *
-     * [constant] is 0 by default
-     * [strength] is [Strength.REQUIRED] by default
-     */
-    @JvmOverloads
-    fun equalTo(other: Anchor, constant: Double = 0.0, strength: Double = Strength.REQUIRED): Constraint {
-        layout.enabled = true
-        other.layout.enabled = true
-        val c: Constraint = if(constant == 0.0) {
-            Symbolics.equals(this, other)
-        } else {
-            Symbolics.equals(this, Symbolics.add(other, constant))
-        }
-        layout.add(c)
-        return c
-    }
-
-    /**
-     * Set this anchor to be greater than or equal to [other] + [constant] with [strength]
-     *
-     * [constant] is 0 by default
-     * [strength] is [Strength.REQUIRED] by default
-     */
-    @JvmOverloads
-    fun greaterThanOrEqualTo(other: Anchor, constant: Double = 0.0, strength: Double = Strength.REQUIRED): Constraint {
-        layout.enabled = true
-        other.layout.enabled = true
-        val c: Constraint = if(constant == 0.0) {
-            Symbolics.greaterThanOrEqualTo(this, other)
-        } else {
-            Symbolics.greaterThanOrEqualTo(this, Symbolics.add(other, constant))
-        }
-        layout.add(c)
-        return c
-    }
-
-    /**
-     * Set this anchor to be less than or equal to [other] + [constant] with [strength]
-     *
-     * [constant] is 0 by default
-     * [strength] is [Strength.REQUIRED] by default
-     */
-    @JvmOverloads
-    fun lessThanOrEqualTo(other: Anchor, constant: Double = 0.0, strength: Double = Strength.REQUIRED): Constraint {
-        layout.enabled = true
-        other.layout.enabled = true
-        val c: Constraint = if(constant == 0.0) {
-            Symbolics.lessThanOrEqualTo(this, other)
-        } else {
-            Symbolics.lessThanOrEqualTo(this, Symbolics.add(other, constant))
-        }
-        layout.add(c)
-        return c
-    }
 }
