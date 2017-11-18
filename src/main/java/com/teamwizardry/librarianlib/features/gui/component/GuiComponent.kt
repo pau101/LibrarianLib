@@ -115,8 +115,6 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int, posY: Int, widt
      * @see l
      */
     @Suppress("LeakingThis") @JvmField val layout = ComponentLayoutHandler(this)
-    /** Shortcuts for autolayout anchors */
-    @Suppress("LeakingThis") @JvmField val l = ComponentLayoutShortcuts(this)
     /** Handles rippling and detecting events for @[Hook] annotations */
     @Suppress("LeakingThis") @JvmField internal val eventHookMethodHandler = ComponentEventHookMethodHandler(this)
     //endregion

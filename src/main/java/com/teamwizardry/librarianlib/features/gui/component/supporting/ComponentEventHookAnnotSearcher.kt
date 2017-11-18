@@ -7,15 +7,22 @@ import com.teamwizardry.librarianlib.features.kotlin.withRealDefault
 import com.teamwizardry.librarianlib.features.methodhandles.MethodHandleHelper
 import java.lang.reflect.Method
 
-internal class ComponentEventHookMethodHandler(val component: GuiComponent) {
+internal class ComponentEventHookMethodHandler(val holder: Any, val component: GuiComponent) {
+    constructor(component: GuiComponent) : this(component, component)
 
-    val methods = cache[component.javaClass]
+    init {
+        if(holder != component) {
+            component.eventHookMethodHandler.auxiluaryHandlers.add(this)
+        }
+    }
+    val auxiluaryHandlers = mutableListOf<ComponentEventHookMethodHandler>()
+    val methods = cache[holder.javaClass]
 
     init {
         methods.selfEvents.forEach {
             @Suppress("UNCHECKED_CAST")
             component.BUS.hook(it.key as Class<Event>) { event: Event ->
-                it.value(component, event)
+                it.value(holder, event)
             }
         }
         component.BUS.postEventHook = { event: Event ->
@@ -26,8 +33,9 @@ internal class ComponentEventHookMethodHandler(val component: GuiComponent) {
     }
 
     fun ripple(event: Event, name: String) {
-        methods.namedEvents[event.javaClass to name]?.invoke(component, event)
+        methods.namedEvents[event.javaClass to name]?.invoke(holder, event)
         component.parent?.eventHookMethodHandler?.ripple(event, name)
+        auxiluaryHandlers.forEach { it.ripple(event, name) }
     }
 
     companion object {

@@ -149,4 +149,24 @@ class ComponentLayoutHandler(val component: GuiComponent) {
             it.layout.update()
         }
     }
+
+    @JvmOverloads
+    fun boundsEqualTo(other: GuiComponent, topLeftPlus: Vec2d = Vec2d.ZERO, bottomRightPlus: Vec2d = Vec2d.ZERO) {
+        left.equalTo(other.layout.left + topLeftPlus.x)
+        top.equalTo(other.layout.top + topLeftPlus.y)
+        right.equalTo(other.layout.right + bottomRightPlus.x)
+        bottom.equalTo(other.layout.bottom + bottomRightPlus.y)
+    }
+
+    @JvmOverloads
+    fun posEqualTo(other: GuiComponent, plus: Vec2d = Vec2d.ZERO) {
+        left.equalTo(other.layout.left + plus.x)
+        top.equalTo(other.layout.top + plus.y)
+    }
+
+    @JvmOverloads
+    fun sizeEqualTo(other: GuiComponent, plus: Vec2d = Vec2d.ZERO) {
+        width.equalTo(other.layout.width + plus.x)
+        height.equalTo(other.layout.height + plus.y)
+    }
 }

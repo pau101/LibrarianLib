@@ -1,6 +1,7 @@
 package com.teamwizardry.librarianlib.features.gui
 
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
+import com.teamwizardry.librarianlib.features.gui.component.supporting.ComponentEventHookMethodHandler
 import com.teamwizardry.librarianlib.features.gui.components.ComponentVoid
 import com.teamwizardry.librarianlib.features.gui.debugger.ComponentDebugger
 import com.teamwizardry.librarianlib.features.helpers.vec
@@ -13,6 +14,7 @@ import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
 import no.birkett.kiwi.Solver
+import no.birkett.kiwi.Strength
 import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
 import org.lwjgl.opengl.GL11
@@ -25,6 +27,8 @@ open class GuiBase(protected var guiWidth: Int, protected var guiHeight: Int) : 
     private var isDebugMode = false
     private val debugger = ComponentDebugger()
     private var solver = Solver()
+
+    private val eventHookHandler = ComponentEventHookMethodHandler(this, fullscreenComponents)
 //    protected var top: Int = 0
 //    protected var left: Int = 0
 
@@ -36,6 +40,8 @@ open class GuiBase(protected var guiWidth: Int, protected var guiHeight: Int) : 
         mainScaleWrapper.add(mainComponents)
 
         mainComponents.size = vec(guiWidth, guiHeight)
+        mainComponents.layout.width.strength = Strength.REQUIRED
+        mainComponents.layout.height.strength = Strength.REQUIRED
         debugger.geometry.shouldCalculateOwnHover = false
     }
 

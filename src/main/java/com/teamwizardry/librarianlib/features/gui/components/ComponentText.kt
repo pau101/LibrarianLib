@@ -92,11 +92,18 @@ class ComponentText @JvmOverloads constructor(posX: Int, posY: Int, horizontal: 
 
         val lines: List<String>
 
-        val wrap = this.wrap.getValue(this)
+        var wrap = this.wrap.getValue(this)
+        if(wrap == -1 && wrapText) {
+            wrap = this.size.xi
+        }
         if (wrap == -1) {
             lines = listOf(fullText)
         } else {
-            lines = fr.listFormattedStringToWidth(fullText, wrap)
+            lines = try {
+                fr.listFormattedStringToWidth(fullText, wrap)
+            } catch(e: StackOverflowError) {
+                listOf(fullText)
+            }
         }
 
 
@@ -148,7 +155,11 @@ class ComponentText @JvmOverloads constructor(posX: Int, posY: Int, horizontal: 
         if (wrap == -1) {
             size = vec(fr.getStringWidth(text.getValue(this)), fr.FONT_HEIGHT)
         } else {
-            val wrapped = fr.listFormattedStringToWidth(text.getValue(this), wrap)
+            val wrapped = try {
+                fr.listFormattedStringToWidth(text.getValue(this), wrap)
+            } catch(e: StackOverflowError) {
+                listOf(text.getValue(this))
+            }
             size = vec(wrap, wrapped.size * fr.FONT_HEIGHT)
         }
 

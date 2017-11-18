@@ -96,4 +96,11 @@ class Anchor(internal val component: GuiComponent, val axis: Vec2d.Axis, val mul
      * How strongly this constraint's existing value should be held. Default: [Strength.WEAK]
      */
     var strength = Strength.WEAK
+
+    /** Kotlin infix shortcut for [equalTo] */
+    infix fun eq(other: Anchor) = equalTo(other)
+    /** Kotlin infix shortcut for [lequalTo] */
+    infix fun leq(other: Anchor) = lequalTo(other)
+    /** Kotlin infix shortcut for [gequalTo] */
+    infix fun geq(other: Anchor) = gequalTo(other)
 }
