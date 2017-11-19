@@ -13,22 +13,22 @@ import java.util.*
 @Suppress("LEAKING_THIS", "UNUSED")
 class ComponentLayoutHandler(val component: GuiComponent) {
     /** The anchor corresponding to the minimum x coordinate of the component's bounds */
-    val left = Anchor(component, Vec2d.Axis.X)
+    @JvmField val left = Anchor(component, Vec2d.Axis.X)
     /** The anchor corresponding to the maximum x coordinate of the component's bounds */
-    val right = Anchor(component, Vec2d.Axis.X)
+    @JvmField val right = Anchor(component, Vec2d.Axis.X)
     /** The anchor corresponding to the minimum y coordinate of the component's bounds */
-    val top = Anchor(component, Vec2d.Axis.Y)
+    @JvmField val top = Anchor(component, Vec2d.Axis.Y)
     /** The anchor corresponding to the maximum y coordinate of the component's bounds */
-    val bottom = Anchor(component, Vec2d.Axis.Y)
+    @JvmField val bottom = Anchor(component, Vec2d.Axis.Y)
     /** The anchor corresponding to the center x coordinate of the component's bounds */
-    val centerX = Anchor(component, Vec2d.Axis.X)
+    @JvmField val centerX = Anchor(component, Vec2d.Axis.X)
     /** The anchor corresponding to the center y coordinate of the component's bounds */
-    val centerY = Anchor(component, Vec2d.Axis.Y)
+    @JvmField val centerY = Anchor(component, Vec2d.Axis.Y)
 
     /** The anchor corresponding to the width of the component's bounds */
-    val width = Anchor(component, Vec2d.Axis.X)
+    @JvmField val width = Anchor(component, Vec2d.Axis.X)
     /** The anchor corresponding to the height of the component's bounds */
-    val height = Anchor(component, Vec2d.Axis.Y)
+    @JvmField val height = Anchor(component, Vec2d.Axis.Y)
     /**
      * If set to true, the width and height constraints will be set to the component's implicit size if it exists, rather
      * than the component's size attribute

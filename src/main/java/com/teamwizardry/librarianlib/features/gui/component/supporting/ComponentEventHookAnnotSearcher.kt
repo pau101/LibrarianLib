@@ -3,9 +3,11 @@ package com.teamwizardry.librarianlib.features.gui.component.supporting
 import com.teamwizardry.librarianlib.features.eventbus.Event
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.component.Hook
+import com.teamwizardry.librarianlib.features.gui.component.HookPriority
 import com.teamwizardry.librarianlib.features.kotlin.withRealDefault
 import com.teamwizardry.librarianlib.features.methodhandles.MethodHandleHelper
 import java.lang.reflect.Method
+import java.util.regex.Pattern
 
 internal class ComponentEventHookMethodHandler(val holder: Any, val component: GuiComponent) {
     constructor(component: GuiComponent) : this(component, component)
@@ -19,10 +21,12 @@ internal class ComponentEventHookMethodHandler(val holder: Any, val component: G
     val methods = cache[holder.javaClass]
 
     init {
-        methods.selfEvents.forEach {
+        methods.selfEvents.forEach { key, value ->
             @Suppress("UNCHECKED_CAST")
-            component.BUS.hook(it.key as Class<Event>) { event: Event ->
-                it.value(holder, event)
+            component.BUS.hook(key as Class<Event>) { event: Event ->
+                value.forEach {
+                    it.hook(holder, event)
+                }
             }
         }
         component.BUS.postEventHook = { event: Event ->
@@ -33,17 +37,22 @@ internal class ComponentEventHookMethodHandler(val holder: Any, val component: G
     }
 
     fun ripple(event: Event, name: String) {
-        methods.namedEvents[event.javaClass to name]?.invoke(holder, event)
+        methods.namedEvents[event.javaClass]?.forEach {
+            if(it.matches(name)) {
+                it.hook(holder, event)
+            }
+        }
         component.parent?.eventHookMethodHandler?.ripple(event, name)
         auxiluaryHandlers.forEach { it.ripple(event, name) }
     }
 
-    companion object {
+   companion object {
         val cache = mutableMapOf<Class<*>, EventCache>().withRealDefault { EventCache(it) }
 
         class EventCache(clazz: Class<*>) {
-            val selfEvents: Map<Class<*>, (Any, Event) -> Unit>
-            val namedEvents: Map<Pair<Class<*>, String>, (Any, Event) -> Unit>
+
+            val selfEvents: Map<Class<*>, List<DataEventHook>>
+            val namedEvents: Map<Class<*>, List<DataEventHook>>
 
             init {
                 val methods = mutableListOf<Method>()
@@ -57,17 +66,46 @@ internal class ComponentEventHookMethodHandler(val holder: Any, val component: G
                 val events = methods
                         .filter { it.isAnnotationPresent(Hook::class.java) }
                         .filter { it.parameterCount == 1 && Event::class.java.isAssignableFrom(it.parameterTypes[0]) }
-                        .associate {
+                        .map {
                             it.isAccessible = true
                             val annot = it.getAnnotation(Hook::class.java)
 
                             val mh = MethodHandleHelper.wrapperForMethod<Any>(it)
                             @Suppress("UNCHECKED_CAST")
-                            return@associate (it.parameterTypes[0] to annot.value) to { comp: Any, event: Event -> mh(comp, arrayOf(event)); Unit }
+                            return@map DataEventHook(
+                                    it.parameterTypes[0],
+                                    annot.value,
+                                    annot.priority,
+                                    { comp: Any, event: Event -> mh(comp, arrayOf(event)); Unit }
+                            )
                         }
 
-                selfEvents = events.filter { it.key.second == "" }.mapKeys { it.key.first }
-                namedEvents = events.filter { it.key.second != "" }
+                val selfEvents = mutableMapOf<Class<*>, MutableList<DataEventHook>>()
+                val namedEvents = mutableMapOf<Class<*>, MutableList<DataEventHook>>()
+                events.forEach { data ->
+                    if(data.name == "") {
+                        selfEvents.getOrPut(data.event, { mutableListOf() }).add(data)
+                    } else {
+                        namedEvents.getOrPut(data.event, { mutableListOf() }).add(data)
+                    }
+                }
+                this.selfEvents = selfEvents.mapValues { (_, value) -> value.sortedBy { it.priority } }
+                this.namedEvents = namedEvents.mapValues { (_, value) -> value.sortedBy { it.priority } }
+            }
+        }
+
+        data class DataEventHook(val event: Class<*>, val name: String, val priority: HookPriority, val hook: (Any, Event) -> Unit) {
+            val regex = if(name.startsWith("/") && name.endsWith("/")) {
+                Regex(name.substring(1 until name.length-1))
+            } else {
+                null
+            }
+
+            fun matches(name: String): Boolean {
+                if(regex == null)
+                    return name == this.name
+                else
+                    return regex.matches(name)
             }
         }
     }
