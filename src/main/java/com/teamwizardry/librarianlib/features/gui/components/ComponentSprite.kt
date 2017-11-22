@@ -5,6 +5,7 @@ import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.kotlin.glColor
 import com.teamwizardry.librarianlib.features.math.Vec2d
 import com.teamwizardry.librarianlib.features.sprite.ISprite
+import net.minecraft.client.renderer.GlStateManager
 import org.lwjgl.opengl.GL11
 import java.awt.Color
 
@@ -36,6 +37,7 @@ class ComponentSprite @JvmOverloads constructor(var sprite: ISprite?, x: Int, y:
         }
         lastAnim = animationTicks
         color.glColor()
+        GlStateManager.enableTexture2D()
         sp.bind()
         sp.draw(animationTicks, 0f, 0f, size.xi.toFloat(), size.yi.toFloat())
         if (alwaysTop)

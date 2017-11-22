@@ -33,15 +33,28 @@ class ComponentClippingHandler(val component: GuiComponent) {
      */
     var cornerPixelSize = 0
 
+    private var posCache = Vec2d.ZERO
+    private var sizeCache = Vec2d.ZERO
+    private var cornerRadiusCache = 0.0
+    private var cornerPixelSizeCache = 0
+    private var clipToBoundsCache = false
+
     internal fun pushEnable() {
         val en = Minecraft.getMinecraft().framebuffer.isStencilEnabled
-        if(clipToBounds) {
+
+        posCache = component.pos
+        sizeCache = component.size
+        cornerRadiusCache = cornerRadius
+        cornerPixelSizeCache = cornerPixelSize
+        clipToBoundsCache = clipToBounds
+
+        if(clipToBoundsCache) {
             StencilUtil.push { stencil() }
         }
     }
 
     internal fun popDisable() {
-        if(clipToBounds) {
+        if(clipToBoundsCache) {
             StencilUtil.pop { stencil() }
         }
     }
@@ -51,9 +64,9 @@ class ComponentClippingHandler(val component: GuiComponent) {
         GlStateManager.disableTexture2D()
         GlStateManager.color(1f, 0f, 1f, 0.5f)
         val vb = Tessellator.getInstance().buffer
-        val pos = component.pos
-        val size = component.size
-        val r = cornerRadius
+        val pos = posCache
+        val size = sizeCache
+        val r = cornerRadiusCache
 
         vb.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION)
 
@@ -74,8 +87,8 @@ class ComponentClippingHandler(val component: GuiComponent) {
 
         Tessellator.getInstance().draw()
 
-        if(cornerRadius > 0) {
-            if (cornerPixelSize <= 0) {
+        if(cornerRadiusCache > 0) {
+            if (cornerPixelSizeCache <= 0) {
                 arc(r, r, vec(-r, 0), vec(0, -r))
                 arc(size.x - r, size.y - r, vec(r, 0), vec(0, r))
                 arc(r, size.y - r, vec(0, r), vec(-r, 0))
@@ -114,9 +127,9 @@ class ComponentClippingHandler(val component: GuiComponent) {
 
     private fun pixelatedArc(x: Double, y: Double, vecA: Vec2d, vecB: Vec2d) {
         val v = vec(x, y, 0)
-        val a3 = vec(vecA.x, vecA.y, 0) * cornerPixelSize
-        val b3 = vec(vecB.x, vecB.y, 0) * cornerPixelSize
-        val r = cornerRadius / cornerPixelSize
+        val a3 = vec(vecA.x, vecA.y, 0) * cornerPixelSizeCache
+        val b3 = vec(vecB.x, vecB.y, 0) * cornerPixelSizeCache
+        val r = cornerRadiusCache / cornerPixelSizeCache
         var x = 0
         var y = r.toInt()
         var d: Int
