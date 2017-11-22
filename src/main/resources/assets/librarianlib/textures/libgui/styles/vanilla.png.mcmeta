@@ -1,0 +1,36 @@
+{
+  "spritesheet": {
+    "textureWidth": 256,
+    "textureHeight": 256,
+    "sprites": {
+      "button_off": {
+        "pos": [16, 0, 5, 5],
+        "nineSlice": [2, 2]
+      },
+      "button_on": {
+        "pos": [16, 8, 5, 5],
+        "nineSlice": [2, 2]
+      },
+      "button_hover": {
+        "pos": [16, 16, 5, 5],
+        "nineSlice": [2, 2]
+      },
+      "background": {
+        "pos": [0, 0, 12, 12],
+        "nineSlice": [4, 4]
+      },
+      "pane_separator_background_vertical": {
+        "pos": [24, 0, 3, 8]
+      },
+      "pane_separator_middle_vertical": {
+        "pos": [28, 0, 3, 8]
+      },
+      "pane_separator_background_horizontal": {
+        "pos": [32, 0, 8, 3]
+      },
+      "pane_separator_middle_horizontal": {
+        "pos": [32, 4, 8, 3]
+      }
+    }
+  }
+}

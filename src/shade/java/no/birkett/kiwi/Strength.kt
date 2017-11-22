@@ -5,21 +5,47 @@ package no.birkett.kiwi
  */
 object Strength {
 
-    val REQUIRED = create(1000.0, 1000.0, 1000.0)
+    /**
+     * Used for required constraints
+     */
+    val REQUIRED = create(0b11111)
 
-    val STRONG = create(1.0, 0.0, 0.0)
+    /**
+     * Used for optional user constraints
+     */
+    val STRONG = create(0b10000)
 
-    val MEDIUM = create(0.0, 1.0, 0.0)
+    /**
+     * Used for implicit constraints
+     */
+    val IMPLICIT = create(0b01000)
 
-    val WEAK = create(0.0, 0.0, 1.0)
+    /**
+     * Used for anything that should override existing defaults but not any manual constraints or implicit values
+     */
+    val PREFERRED = create(0b00100)
 
+    /**
+     * Used for width and height constraints so they will pull the left and bottom along with them
+     */
+    val MEDIUM = create(0b00010)
 
-    @JvmOverloads
-    fun create(a: Double, b: Double, c: Double, w: Double = 1.0): Double {
+    /**
+     * Used for constraints that keep anchors at their existing values
+     */
+    val WEAK = create(0b00001)
+
+    private fun create(bitmask: Int): Double {
+        var mask = bitmask
+        var factor = 1.0
         var result = 0.0
-        result += Math.max(0.0, Math.min(1000.0, a * w)) * 1000000.0
-        result += Math.max(0.0, Math.min(1000.0, b * w)) * 1000.0
-        result += Math.max(0.0, Math.min(1000.0, c * w))
+        while(mask > 0) {
+            if(mask and 1 == 1) {
+                result += factor
+            }
+            factor *= 1000
+            mask = mask shr 1
+        }
         return result
     }
 

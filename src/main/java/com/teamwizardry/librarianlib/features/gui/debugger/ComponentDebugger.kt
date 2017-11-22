@@ -34,7 +34,7 @@ class ComponentDebugger : GuiComponent(0, 0, 0, 0) {
 
         add(bottomAligned)
 
-        resizeBar.color.setValue(Color(0xA6A6A6))
+        resizeBar.color = Color(0xA6A6A6)
         bottomAligned.add(debugPanel)
         bottomAligned.add(resizeBar)
 

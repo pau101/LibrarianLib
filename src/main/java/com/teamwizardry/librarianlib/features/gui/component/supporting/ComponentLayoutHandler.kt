@@ -20,15 +20,20 @@ class ComponentLayoutHandler(val component: GuiComponent) {
     @JvmField val top = Anchor(component, Vec2d.Axis.Y)
     /** The anchor corresponding to the maximum y coordinate of the component's bounds */
     @JvmField val bottom = Anchor(component, Vec2d.Axis.Y)
-    /** The anchor corresponding to the center x coordinate of the component's bounds */
+    /** The anchor corresponding to the x coordinate of the center of the component's bounds */
     @JvmField val centerX = Anchor(component, Vec2d.Axis.X)
-    /** The anchor corresponding to the center y coordinate of the component's bounds */
+    /** The anchor corresponding to the y coordinate of the center of the component's bounds */
     @JvmField val centerY = Anchor(component, Vec2d.Axis.Y)
 
     /** The anchor corresponding to the width of the component's bounds */
     @JvmField val width = Anchor(component, Vec2d.Axis.X)
     /** The anchor corresponding to the height of the component's bounds */
     @JvmField val height = Anchor(component, Vec2d.Axis.Y)
+
+    /** An anchor always set to zero on the X axis */
+    @JvmField val zeroX = Anchor(component, Vec2d.Axis.X)
+    /** An anchor always set to zero on the Y axis */
+    @JvmField val zeroY = Anchor(component, Vec2d.Axis.Y)
     /**
      * If set to true, the width and height constraints will be set to the component's implicit size if it exists, rather
      * than the component's size attribute
@@ -53,6 +58,64 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         constraints.remove(constraint)
     }
 
+    /**
+     * Makes the size as defined by [GuiComponent.size] fixed by setting its constraint to be [Strength.REQUIRED]
+     */
+    fun fixedSize() {
+        width.strength = Strength.REQUIRED
+        height.strength = Strength.REQUIRED
+    }
+
+    /**
+     * Creates constraints to attach this component's top, left, bottom, and right anchors to the same anchors on
+     * [other], adding the respective values in [topLeftPlus] and [bottomRightPlus] to [other]'s constraints.
+     *
+     * Adds the resulting constraints to this component.
+     *
+     * @return An array of the constraints added in the order `left, top, right, bottom`
+     */
+    @JvmOverloads
+    fun boundsEqualTo(other: GuiComponent, topLeftPlus: Vec2d = Vec2d.ZERO, bottomRightPlus: Vec2d = Vec2d.ZERO): Array<LayoutConstraint> {
+        return arrayOf(
+                left.equalTo(other.layout.left + topLeftPlus.x),
+                top.equalTo(other.layout.top + topLeftPlus.y),
+                right.equalTo(other.layout.right + bottomRightPlus.x),
+                bottom.equalTo(other.layout.bottom + bottomRightPlus.y)
+        )
+    }
+
+    /**
+     * Creates constraints to attach this component's top and left anchors to the same anchors on
+     * [other], adding the respective values in [plus] to [other]'s constraints.
+     *
+     * Adds the resulting constraints to this component.
+     *
+     * @return An array of the constraints added in the order `left, top`
+     */
+    @JvmOverloads
+    fun posEqualTo(other: GuiComponent, plus: Vec2d = Vec2d.ZERO): Array<LayoutConstraint> {
+        return arrayOf(
+                left.equalTo(other.layout.left + plus.x),
+                top.equalTo(other.layout.top + plus.y)
+        )
+    }
+
+    /**
+     * Creates constraints to attach this component's width and height anchors to the same anchors on
+     * [other], adding the respective values in [plus] to [other]'s constraints.
+     *
+     * Adds the resulting constraints to this component.
+     *
+     * @return An array of the constraints added in the order `width, height`
+     */
+    @JvmOverloads
+    fun sizeEqualTo(other: GuiComponent, plus: Vec2d = Vec2d.ZERO): Array<LayoutConstraint> {
+        return arrayOf(
+                width.equalTo(other.layout.width + plus.x),
+                height.equalTo(other.layout.height + plus.y)
+        )
+    }
+
     internal fun addBase(solver: Solver, parentScaleFactor: Vec2d, parentLeft: Variable?, parentTop: Variable?) {
         val name = component.relationships.guiPath()
         left.setName(name + "#left")
@@ -66,6 +129,9 @@ class ComponentLayoutHandler(val component: GuiComponent) {
 
         val implicitSize = component.getImplicitSize()
         val scaleFactor = parentScaleFactor * component.transform.scale2D
+
+        solver.addConstraint(Symbolics.equals(zeroX.variable, 0.0).setStrength(Strength.REQUIRED))
+        solver.addConstraint(Symbolics.equals(zeroY.variable, 0.0).setStrength(Strength.REQUIRED))
 
         // absolute pos given parent pos and relative pos
         if(parentLeft == null) {
@@ -83,8 +149,8 @@ class ComponentLayoutHandler(val component: GuiComponent) {
 
         if(useImplicitSize && implicitSize != null) {
             // implicit width and height in global coord space
-            solver.addConstraint(Symbolics.equals(width.variable, implicitSize.x * scaleFactor.x).setStrength(Strength.STRONG))
-            solver.addConstraint(Symbolics.equals(height.variable, implicitSize.y * scaleFactor.y).setStrength(Strength.STRONG))
+            solver.addConstraint(Symbolics.equals(width.variable, implicitSize.x * scaleFactor.x).setStrength(Strength.IMPLICIT))
+            solver.addConstraint(Symbolics.equals(height.variable, implicitSize.y * scaleFactor.y).setStrength(Strength.IMPLICIT))
         } else {
             // width and height in global coord space
             solver.addConstraint(Symbolics.equals(width.variable, component.size.x * scaleFactor.x).setStrength(width.strength))
@@ -150,23 +216,4 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         }
     }
 
-    @JvmOverloads
-    fun boundsEqualTo(other: GuiComponent, topLeftPlus: Vec2d = Vec2d.ZERO, bottomRightPlus: Vec2d = Vec2d.ZERO) {
-        left.equalTo(other.layout.left + topLeftPlus.x)
-        top.equalTo(other.layout.top + topLeftPlus.y)
-        right.equalTo(other.layout.right + bottomRightPlus.x)
-        bottom.equalTo(other.layout.bottom + bottomRightPlus.y)
-    }
-
-    @JvmOverloads
-    fun posEqualTo(other: GuiComponent, plus: Vec2d = Vec2d.ZERO) {
-        left.equalTo(other.layout.left + plus.x)
-        top.equalTo(other.layout.top + plus.y)
-    }
-
-    @JvmOverloads
-    fun sizeEqualTo(other: GuiComponent, plus: Vec2d = Vec2d.ZERO) {
-        width.equalTo(other.layout.width + plus.x)
-        height.equalTo(other.layout.height + plus.y)
-    }
 }

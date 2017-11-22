@@ -8,6 +8,11 @@ import no.birkett.kiwi.*
 class Anchor(internal val component: GuiComponent, val axis: Vec2d.Axis, val multiplier: Double = 1.0, val constant: Double = 0.0,
              internal var variable: Variable = Variable(0.0), internal var relativeVariable: Variable = Variable(0.0)) {
 
+    /**
+     * Sets how strongly this anchor's existing value should be held. Default: [Strength.WEAK]
+     */
+    var strength = Strength.WEAK
+
     internal fun setName(name: String) {
         variable.name = name
         if(relativeVariable != variable)
@@ -66,7 +71,9 @@ class Anchor(internal val component: GuiComponent, val axis: Vec2d.Axis, val mul
     }
 
     /**
-     * Set this anchor to be equal to [other]
+     * Set this anchor to be equal to [other].
+     *
+     * Adds the resulting constraint to the component this anchor came from
      */
     fun equalTo(other: Anchor): LayoutConstraint {
         val c = LayoutConstraint(this, other, LayoutConstraint.LayoutOperator.EQUAL, Strength.REQUIRED)
@@ -76,26 +83,25 @@ class Anchor(internal val component: GuiComponent, val axis: Vec2d.Axis, val mul
 
     /**
      * Set this anchor to be greater than or equal to [other]
+     *
+     * Adds the resulting constraint to the component this anchor came from
      */
     fun gequalTo(other: Anchor): LayoutConstraint {
-        val c = LayoutConstraint(this, other, LayoutConstraint.LayoutOperator.EQUAL, Strength.REQUIRED)
+        val c = LayoutConstraint(this, other, LayoutConstraint.LayoutOperator.GEQUAL, Strength.REQUIRED)
         component.layout.add(c)
         return c
     }
 
     /**
      * Set this anchor to be greater than or equal to [other]
+     *
+     * Adds the resulting constraint to the component this anchor came from
      */
     fun lequalTo(other: Anchor): LayoutConstraint {
-        val c = LayoutConstraint(this, other, LayoutConstraint.LayoutOperator.EQUAL, Strength.REQUIRED)
+        val c = LayoutConstraint(this, other, LayoutConstraint.LayoutOperator.LEQUAL, Strength.REQUIRED)
         component.layout.add(c)
         return c
     }
-
-    /**
-     * How strongly this constraint's existing value should be held. Default: [Strength.WEAK]
-     */
-    var strength = Strength.WEAK
 
     /** Kotlin infix shortcut for [equalTo] */
     infix fun eq(other: Anchor) = equalTo(other)
@@ -103,4 +109,11 @@ class Anchor(internal val component: GuiComponent, val axis: Vec2d.Axis, val mul
     infix fun leq(other: Anchor) = lequalTo(other)
     /** Kotlin infix shortcut for [gequalTo] */
     infix fun geq(other: Anchor) = gequalTo(other)
+
+    /** Kotlin infix shortcut for [equalTo] */
+    infix fun eq(other: Number) = equalTo((if(axis == Vec2d.Axis.X) component.layout.zeroX else component.layout.zeroY) + other)
+    /** Kotlin infix shortcut for [lequalTo] */
+    infix fun leq(other: Number) = lequalTo((if(axis == Vec2d.Axis.X) component.layout.zeroX else component.layout.zeroY) + other)
+    /** Kotlin infix shortcut for [gequalTo] */
+    infix fun geq(other: Number) = gequalTo((if(axis == Vec2d.Axis.X) component.layout.zeroX else component.layout.zeroY) + other)
 }

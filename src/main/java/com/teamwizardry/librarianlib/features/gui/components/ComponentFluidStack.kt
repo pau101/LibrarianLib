@@ -7,7 +7,6 @@ package com.teamwizardry.librarianlib.features.gui.components
  */
 
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
-import com.teamwizardry.librarianlib.features.gui.Option
 import com.teamwizardry.librarianlib.features.math.Vec2d
 import com.teamwizardry.librarianlib.features.sprite.ISprite
 import com.teamwizardry.librarianlib.features.sprite.LTextureAtlasSprite
@@ -29,16 +28,14 @@ class ComponentFluidStack @JvmOverloads constructor(fgSprite: ISprite?, bgSprite
                                                     fgWidth: Int = fgSprite?.width ?: 16, fgHeight: Int = fgSprite?.height ?: 16,
                                                     bgWidth: Int = bgSprite?.width ?: 16, bgHeight: Int = bgSprite?.height ?: 16,
                                                     var fluidWidth: Int = bgWidth, var fluidHeight: Int = bgHeight,
-                                                    direction: Option<ComponentSpriteProgressBar, ComponentSpriteProgressBar.ProgressDirection> = Option(ComponentSpriteProgressBar.ProgressDirection.X_POS),
+                                                    direction: Vec2d.Direction = Vec2d.Direction.POSITIVE_X,
                                                     val tankProps: IFluidTankProperties)
     : GuiComponent(x, y, bgWidth, bgHeight) {
 
     private var lastFluid: Fluid? = null
 
     val progress = ComponentProgressBar(null, bgSprite, 0, 0, fgWidth = fluidWidth, fgHeight = fluidHeight, bgWidth = bgWidth, bgHeight = bgHeight,
-            direction = direction, progress = Option(0f, {
-        (tankProps.contents?.amount?.toFloat() ?: 0f) / Math.max(1f, tankProps.capacity.toFloat())
-    }))
+            direction = direction)
 
     override fun drawComponent(mousePos: Vec2d, partialTicks: Float) {
         val fs = tankProps.contents
@@ -49,6 +46,9 @@ class ComponentFluidStack @JvmOverloads constructor(fgSprite: ISprite?, bgSprite
     }
 
     init {
+        progress.progressFunc.set({
+            (tankProps.contents?.amount?.toFloat() ?: 0f) / Math.max(1f, tankProps.capacity.toFloat())
+        })
         this.add(progress)
         if (fgSprite != null) this.add(ComponentSprite(fgSprite, (bgWidth - fgWidth) / 2, (bgHeight - fgHeight) / 2, fgWidth, fgHeight))
         val fs = tankProps.contents

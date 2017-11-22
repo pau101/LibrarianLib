@@ -3,7 +3,7 @@ package com.teamwizardry.librarianlib.features.gui.component.supporting
 import com.teamwizardry.librarianlib.core.LibrarianLib
 import com.teamwizardry.librarianlib.features.animator.Animation
 import com.teamwizardry.librarianlib.features.animator.Animator
-import com.teamwizardry.librarianlib.features.gui.Option
+import com.teamwizardry.librarianlib.features.gui.CallbackValue
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.math.Vec2d
@@ -23,8 +23,10 @@ import org.lwjgl.opengl.GL11.GL_LINE_STRIP
  * Created by TheCodeWarrior
  */
 class ComponentRenderHandler(private val component: GuiComponent) {
-    var tooltip: Option<GuiComponent, List<String>?> = Option(null)
+    val tooltipFunc = CallbackValue<List<String>?>(null)
+    var tooltip by tooltipFunc.Delegate()
     var tooltipFont: FontRenderer? = null
+
     /**
      * If nonnull, the cursor will switch to this when hovering.
      */
@@ -52,14 +54,9 @@ class ComponentRenderHandler(private val component: GuiComponent) {
      * Sets the tooltip to be drawn, overriding the existing value. Pass null for the font to use the default font renderer.
      */
     fun setTooltip(text: List<String>, font: FontRenderer?) {
-        tooltip(text)
+        tooltip = text
         tooltipFont = font
     }
-
-    /**
-     * Sets the tooltip to be drawn, overriding the existing value and using the default font renderer.
-     */
-    fun setTooltip(text: List<String>) = setTooltip(text, null)
 
     var animator: Animator
         get() {
@@ -188,9 +185,8 @@ class ComponentRenderHandler(private val component: GuiComponent) {
      */
     fun drawLate(mousePos: Vec2d, partialTicks: Float) {
         if (component.mouseOver) {
-            val tt = tooltip(component)
-            if (tt?.isNotEmpty() == true) {
-                GuiUtils.drawHoveringText(tt, mousePos.xi, mousePos.yi, component.root.size.xi, component.root.size.yi, -1,
+            if (tooltip?.isNotEmpty() == true) {
+                GuiUtils.drawHoveringText(tooltip, mousePos.xi, mousePos.yi, component.root.size.xi, component.root.size.yi, -1,
                         tooltipFont ?: Minecraft.getMinecraft().fontRenderer)
             }
         }

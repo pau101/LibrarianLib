@@ -1,7 +1,7 @@
 package com.teamwizardry.librarianlib.features.gui.components
 
 import com.teamwizardry.librarianlib.features.eventbus.Event
-import com.teamwizardry.librarianlib.features.gui.Option
+import com.teamwizardry.librarianlib.features.gui.CallbackValue
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.kotlin.glColor
 import com.teamwizardry.librarianlib.features.math.Vec2d
@@ -12,17 +12,18 @@ import java.awt.Color
 class ComponentSpriteProgressBar @JvmOverloads constructor(var sprite: ISprite?, x: Int, y: Int, width: Int = sprite?.width ?: 16, height: Int = sprite?.height ?: 16) : GuiComponent(x, y, width, height) {
 
     class AnimationLoopEvent(val component: ComponentSpriteProgressBar) : Event()
-    enum class ProgressDirection { Y_POS, Y_NEG, X_POS, X_NEG }
 
-    var direction = Option<ComponentSpriteProgressBar, ProgressDirection>(ProgressDirection.Y_POS)
-    var progress = Option<ComponentSpriteProgressBar, Float>(1f)
-    var depth = Option<ComponentSpriteProgressBar, Boolean>(true)
-    var color = Option<ComponentSpriteProgressBar, Color>(Color.WHITE)
+
+    var direction = Vec2d.Direction.POSITIVE_X
+    var progressFunc = CallbackValue(1f)
+    var progress by progressFunc.Delegate()
+    var depth = true
+    var color = Color.WHITE
 
     var lastAnim: Int = 0
 
     override fun drawComponent(mousePos: Vec2d, partialTicks: Float) {
-        val alwaysTop = !depth.getValue(this)
+        val alwaysTop = !depth
         val sp = sprite ?: return
         val animationTicks = animator.time.toInt()
 
@@ -39,20 +40,20 @@ class ComponentSpriteProgressBar @JvmOverloads constructor(var sprite: ISprite?,
             BUS.fire(AnimationLoopEvent(this))
         }
         lastAnim = animationTicks
-        color.getValue(this).glColor()
+        color.glColor()
         sp.bind()
 
         var w = size.xi
         var h = size.yi
-        val dir = direction.getValue(this)
-        val progress = this.progress.getValue(this)
+        val dir = direction
+        val progress = this.progress
 
-        if (dir == ProgressDirection.Y_POS || dir == ProgressDirection.Y_NEG)
+        if (direction.axis == Vec2d.Axis.Y)
             h = (h * progress).toInt()
-        if (dir == ProgressDirection.X_POS || dir == ProgressDirection.X_NEG)
+        if (direction.axis == Vec2d.Axis.X)
             w = (w * progress).toInt()
 
-        sp.drawClipped(animationTicks, 0f, 0f, w, h, dir == ProgressDirection.X_NEG, dir == ProgressDirection.Y_NEG)
+        sp.drawClipped(animationTicks, 0f, 0f, w, h, dir == Vec2d.Direction.NEGATIVE_X, dir == Vec2d.Direction.NEGATIVE_Y)
         if (alwaysTop)
             GL11.glPopAttrib()
     }

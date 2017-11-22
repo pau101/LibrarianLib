@@ -1,8 +1,6 @@
 package com.teamwizardry.librarianlib.features.gui.components
 
-import com.teamwizardry.librarianlib.features.gui.Option
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
-import com.teamwizardry.librarianlib.features.gui.mixin.gl.GlMixin
 import com.teamwizardry.librarianlib.features.math.Vec2d
 import com.teamwizardry.librarianlib.features.structure.Structure
 import com.teamwizardry.librarianlib.features.structure.StructureRenderUtil
@@ -16,10 +14,9 @@ import java.awt.Color
 
 class ComponentStructure(posX: Int, posY: Int, var structure: Structure?) : GuiComponent(posX, posY) {
 
-    val color = Option<ComponentStructure, Color>(Color.WHITE)
+    val color = Color.WHITE
 
     init {
-        GlMixin.transform(this).func { Vec3d(this.pos.x, this.pos.y, 0.0) }
         initStructure()
     }
 
@@ -41,7 +38,7 @@ class ComponentStructure(posX: Int, posY: Int, var structure: Structure?) : GuiC
     fun initStructure() {
         bufferInts = null
         val tmp = structure ?: return
-        bufferInts = StructureRenderUtil.render(tmp, color.getValue(this), 1f)
+        bufferInts = StructureRenderUtil.render(tmp, color, 1f)
     }
 
     companion object {

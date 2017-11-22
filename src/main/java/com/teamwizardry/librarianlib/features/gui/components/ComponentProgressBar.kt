@@ -7,7 +7,6 @@ package com.teamwizardry.librarianlib.features.gui.components
  */
 
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
-import com.teamwizardry.librarianlib.features.gui.Option
 import com.teamwizardry.librarianlib.features.math.Vec2d
 import com.teamwizardry.librarianlib.features.sprite.ISprite
 import com.teamwizardry.librarianlib.features.sprite.Sprite
@@ -22,8 +21,8 @@ class ComponentProgressBar @JvmOverloads constructor(fgSprite: ISprite?, bgSprit
                                                      x: Int, y: Int,
                                                      fgWidth: Int = fgSprite?.width ?: 16, fgHeight: Int = fgSprite?.height ?: 16,
                                                      bgWidth: Int = bgSprite?.width ?: 16, bgHeight: Int = bgSprite?.height ?: 16,
-                                                     direction: Option<ComponentSpriteProgressBar, ComponentSpriteProgressBar.ProgressDirection> = Option(ComponentSpriteProgressBar.ProgressDirection.X_POS),
-                                                     progress: Option<ComponentSpriteProgressBar, Float> = Option(1.0F))
+                                                     direction: Vec2d.Direction = Vec2d.Direction.POSITIVE_X,
+                                                     progress: Float = 1.0F)
     : GuiComponent(x, y, bgWidth, bgHeight) {
 
     var backgroundComponent = ComponentSprite(bgSprite, 0, 0, bgWidth, bgHeight)
@@ -39,13 +38,14 @@ class ComponentProgressBar @JvmOverloads constructor(fgSprite: ISprite?, bgSprit
         // NOP
     }
 
-    var direction: Option<ComponentSpriteProgressBar, ComponentSpriteProgressBar.ProgressDirection>
+    var direction: Vec2d.Direction
         get() = progressComponent.direction
         set(value) {
             progressComponent.direction = value
         }
 
-    var progress: Option<ComponentSpriteProgressBar, Float>
+    val progressFunc = progressComponent.progressFunc
+    var progress: Float
         get() = progressComponent.progress
         set(value) {
             progressComponent.progress = value

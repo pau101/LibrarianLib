@@ -159,4 +159,12 @@ class Vec2d(val x: Double, val y: Double) {
     }
 
     enum class Axis { X, Y }
+    enum class Direction(val axis: Axis, val sign: Int, val screenRelativeName: String) {
+        POSITIVE_Y(Axis.Y, +1, "DOWN"),
+        NEGATIVE_Y(Axis.Y, -1, "UP"),
+        POSITIVE_X(Axis.X, +1, "RIGHT"),
+        NEGATIVE_X(Axis.X, -1, "LEFT");
+
+        val normal: Vec2d = Vec2d.ZERO.setAxis(sign.toDouble(), axis)
+    }
 }

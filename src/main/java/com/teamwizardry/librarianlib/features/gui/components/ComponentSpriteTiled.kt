@@ -1,6 +1,5 @@
 package com.teamwizardry.librarianlib.features.gui.components
 
-import com.teamwizardry.librarianlib.features.gui.Option
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.kotlin.glColor
 import com.teamwizardry.librarianlib.features.math.Vec2d
@@ -12,8 +11,8 @@ import java.awt.Color
 @Deprecated("Use the `nineSlice` in the .mcmeta instead")
 open class ComponentSpriteTiled @JvmOverloads constructor(protected var main: Sprite, borderSize: Int, x: Int, y: Int, width: Int = main.width, height: Int = main.height) : GuiComponent(x, y, width, height) {
 
-    var depth = Option<ComponentSpriteTiled, Boolean>(true)
-    var color = Option<ComponentSpriteTiled, Color>(Color.WHITE)
+    var depth = true
+    var color = Color.WHITE
 
     protected var borderSize = 3
 
@@ -49,7 +48,7 @@ open class ComponentSpriteTiled @JvmOverloads constructor(protected var main: Sp
     }
 
     override fun drawComponent(mousePos: Vec2d, partialTicks: Float) {
-        val alwaysTop = !depth.getValue(this)
+        val alwaysTop = !depth
 
         if (alwaysTop) {
             // store the current depth function
@@ -60,7 +59,7 @@ open class ComponentSpriteTiled @JvmOverloads constructor(protected var main: Sp
             // it's value to the depth buffer, cutting a hole down wherever it's drawn.
             GL11.glDepthFunc(GL11.GL_ALWAYS)
         }
-        color.getValue(this).glColor()
+        color.glColor()
         main.tex.bind()
         draw(0f, 0f, size.xi, size.yi)
 

@@ -6,7 +6,6 @@ package com.teamwizardry.librarianlib.test.gui.tests
  * (a copy of which can be found at the repo root)
  */
 
-import com.teamwizardry.librarianlib.features.gui.Option
 import com.teamwizardry.librarianlib.features.gui.components.ComponentFluidStack
 import com.teamwizardry.librarianlib.features.gui.components.ComponentSprite
 import com.teamwizardry.librarianlib.features.gui.components.ComponentSpriteProgressBar
@@ -15,6 +14,7 @@ import com.teamwizardry.librarianlib.features.guicontainer.ComponentSlot
 import com.teamwizardry.librarianlib.features.guicontainer.GuiContainerBase
 import com.teamwizardry.librarianlib.features.guicontainer.builtin.BaseLayouts
 import com.teamwizardry.librarianlib.features.helpers.vec
+import com.teamwizardry.librarianlib.features.math.Vec2d
 import com.teamwizardry.librarianlib.features.sprite.Texture
 import com.teamwizardry.librarianlib.test.container.FluidTankContainer
 import com.teamwizardry.librarianlib.test.container.TEFluidTank
@@ -47,13 +47,15 @@ open class GuiFluidTank(inventorySlotsIn: FluidTankContainer) : GuiContainerBase
         bg.add(output)
 
         val state = te.world.getBlockState(te.pos)
-        bg.add(ComponentText(88, 6, horizontal = ComponentText.TextAlignH.CENTER).`val`(I18n.format(ItemStack(state.block, 1, state.block.damageDropped(state)).displayName)))
+        val label = ComponentText(88, 6).centered()
+        label.text = I18n.format(ItemStack(state.block, 1, state.block.damageDropped(state)).displayName)
+        bg.add(label)
 
         val fluidBar = ComponentFluidStack(null, FLUID_BG, 15, 15,
                 bgWidth = 16,
-                direction = Option(ComponentSpriteProgressBar.ProgressDirection.Y_NEG),
+                direction = Vec2d.Direction.NEGATIVE_Y,
                 tankProps = te.fluidHandler.tankPropertiesImpl[0])
-        fluidBar.render.tooltip {
+        fluidBar.render.tooltipFunc {
             val f = te.fluidHandler.fluid
             listOf(if (f != null) I18n.format("llt:gui.fluid", f.localizedName, f.amount) else I18n.format("llt:gui.fluidEmpty"))
         }
