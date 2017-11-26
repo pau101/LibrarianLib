@@ -1,6 +1,8 @@
 language: java
 install:
   - ./gradlew setupCIWorkspace
+  - branch=$(git rev-parse --abbrev-ref HEAD)
+  - sed -i 's:^[ \t]*version[ \t]*=\([ \t]*.*\)$:version=\1-'"$branch"':' build.properties
   -  sed -i 's:^[ \t]*build_number[ \t]*=\([ \t]*.*\)$:build_number=\1-SNAPSHOT:' build.properties
 script:
   - ./gradlew build uploadArchives
