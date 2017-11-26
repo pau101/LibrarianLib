@@ -48,21 +48,23 @@ class ComponentClippingHandler(val component: GuiComponent) {
         cornerPixelSizeCache = cornerPixelSize
         clipToBoundsCache = clipToBounds
 
-        if(clipToBoundsCache) {
+        if(en && clipToBoundsCache) {
             StencilUtil.push { stencil() }
+            GlStateManager.pushMatrix()
         }
     }
 
     internal fun popDisable() {
-        if(clipToBoundsCache) {
+        val en = Minecraft.getMinecraft().framebuffer.isStencilEnabled
+        if(en && clipToBoundsCache) {
+            GlStateManager.popMatrix()
             StencilUtil.pop { stencil() }
         }
     }
 
     private fun stencil() {
-        GlStateManager.pushAttrib()
         GlStateManager.disableTexture2D()
-        GlStateManager.color(1f, 0f, 1f, 0.5f)
+        GlStateManager.color(1f, 0f, 1f, 0.25f)
         val vb = Tessellator.getInstance().buffer
         val pos = posCache
         val size = sizeCache
@@ -100,7 +102,6 @@ class ComponentClippingHandler(val component: GuiComponent) {
                 pixelatedArc(size.x - r, r, vec(1, 0), vec(0, -1))
             }
         }
-        GlStateManager.popAttrib()
     }
 
     private fun arc(x: Double, y: Double, vecA: Vec2d, vecB: Vec2d) {

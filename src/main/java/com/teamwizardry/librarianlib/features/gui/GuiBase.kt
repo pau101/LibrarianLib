@@ -90,8 +90,6 @@ open class GuiBase(protected var guiWidth: Int, protected var guiHeight: Int) : 
 
         super.drawScreen(mouseX, mouseY, partialTicks)
         GlStateManager.enableBlend()
-        StencilUtil.clear()
-        GL11.glEnable(GL11.GL_STENCIL_TEST)
         val relPos = vec(mouseX, mouseY)
         GlStateManager.pushMatrix()
 
@@ -102,6 +100,7 @@ open class GuiBase(protected var guiWidth: Int, protected var guiHeight: Int) : 
             GlStateManager.translate(-width / 2.0, -height / 2.0, 0.0)
         }
 
+        StencilUtil.start()
         fullscreenComponents.guiEventHandler.preLayout(relPos, partialTicks)
 
         fullscreenComponents.layout.addBase(solver, vec(1,1), null, null)
@@ -129,8 +128,8 @@ open class GuiBase(protected var guiWidth: Int, protected var guiHeight: Int) : 
             debugger.render.draw(relPos, partialTicks)
             debugger.render.drawLate(relPos, partialTicks)
         }
-        GL11.glDisable(GL11.GL_STENCIL_TEST)
 
+        StencilUtil.end()
         Mouse.setNativeCursor((debugger.render.cursor ?: fullscreenComponents.render.cursor)?.lwjglCursor)
         debugger.render.cursor = null
         fullscreenComponents.render.cursor = null

@@ -67,6 +67,8 @@ class PastrySplitPaneView @JvmOverloads constructor(val vertical: Boolean = fals
 
     init {
         separator.clipping.clipToBounds = true
+        _pane1.clipping.clipToBounds = true
+        _pane2.clipping.clipToBounds = true
         if(vertical) {
             separator.layout.height eq 3
             separator.layout.left eq this.layout.left

@@ -12,18 +12,20 @@ object StencilUtil {
     var currentStencil = 0
         private set
 
-    fun clear() {
+    fun start() {
         glEnable(GL_STENCIL_TEST)
         glStencilMask(0xFF)
         glClearStencil(0)
         glClear(GL_STENCIL_BUFFER_BIT)
-        glDisable(GL_STENCIL_TEST)
         currentStencil = 0
+    }
+
+    fun end() {
+        glDisable(GL_STENCIL_TEST)
     }
 
     @JvmStatic
     fun push(draw: Runnable) {
-        currentStencil += 1
 
         GlStateManager.depthMask(false)
         GlStateManager.colorMask(false, false, false, false)
@@ -37,13 +39,14 @@ object StencilUtil {
         GlStateManager.colorMask(true, true, true, true)
         GlStateManager.depthMask(true)
 
+        currentStencil += 1
+
         glStencilMask(0x00)
         glStencilFunc(GL_EQUAL, currentStencil, 0xFF)
     }
 
     @JvmStatic
     fun pop(draw: Runnable) {
-        currentStencil -= 1
 
         GlStateManager.depthMask(false)
         GlStateManager.colorMask(false, false, false, false)
@@ -56,6 +59,8 @@ object StencilUtil {
 
         GlStateManager.colorMask(true, true, true, true)
         GlStateManager.depthMask(true)
+
+        currentStencil -= 1
 
         glStencilMask(0x00)
         glStencilFunc(GL_EQUAL, currentStencil, 0xFF)

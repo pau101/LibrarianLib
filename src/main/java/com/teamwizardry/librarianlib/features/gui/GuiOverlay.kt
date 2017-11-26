@@ -69,10 +69,9 @@ object GuiOverlay {
         GlStateManager.enableBlend()
         mainComp.size = vec(res.scaledWidth, res.scaledHeight)
 
-        StencilUtil.clear()
-        GL11.glEnable(GL11.GL_STENCIL_TEST)
+        StencilUtil.start()
         mainComp.render.draw(mainComp.size / 2, ClientTickHandler.partialTicks)
-        GL11.glDisable(GL11.GL_STENCIL_TEST)
+        StencilUtil.end()
     }
 
     @SubscribeEvent
