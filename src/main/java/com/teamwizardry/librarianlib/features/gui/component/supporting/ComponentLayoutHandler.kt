@@ -39,6 +39,12 @@ class ComponentLayoutHandler(val component: GuiComponent) {
      * than the component's size attribute
      */
     var useImplicitSize = true
+    /**
+     * If set to true, this component will shrink as much as possible with a strength of [Strength.PREFERRED].
+     * The component's implicit size overrides this value, and this value overrides the strength of the
+     * [width] and [height] anchors.
+     */
+    var shrinkIfPossible = false
 
     init {
         width.strength = Strength.MEDIUM
@@ -59,11 +65,19 @@ class ComponentLayoutHandler(val component: GuiComponent) {
     }
 
     /**
-     * Makes the size as defined by [GuiComponent.size] fixed by setting its constraint to be [Strength.REQUIRED]
+     * Makes the size as defined by [GuiComponent.size] fixed by setting its constraints to be [Strength.REQUIRED]
      */
     fun fixedSize() {
         width.strength = Strength.REQUIRED
         height.strength = Strength.REQUIRED
+    }
+
+    /**
+     * Makes the position as defined by [GuiComponent.pos] fixed by setting its constraints to be [Strength.REQUIRED]
+     */
+    fun fixedPos() {
+        left.strength = Strength.REQUIRED
+        top.strength = Strength.REQUIRED
     }
 
     /**
@@ -151,6 +165,10 @@ class ComponentLayoutHandler(val component: GuiComponent) {
             // implicit width and height in global coord space
             solver.addConstraint(Symbolics.equals(width.variable, implicitSize.x * scaleFactor.x).setStrength(Strength.IMPLICIT))
             solver.addConstraint(Symbolics.equals(height.variable, implicitSize.y * scaleFactor.y).setStrength(Strength.IMPLICIT))
+        } else if(shrinkIfPossible) {
+            // try to shrink width and height to 0
+            solver.addConstraint(Symbolics.equals(width.variable, 0.0).setStrength(Strength.PREFERRED))
+            solver.addConstraint(Symbolics.equals(height.variable, 0.0).setStrength(Strength.PREFERRED))
         } else {
             // width and height in global coord space
             solver.addConstraint(Symbolics.equals(width.variable, component.size.x * scaleFactor.x).setStrength(width.strength))

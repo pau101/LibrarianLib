@@ -5,6 +5,7 @@ import com.teamwizardry.librarianlib.features.eventbus.Event
 import com.teamwizardry.librarianlib.features.eventbus.EventBus
 import com.teamwizardry.librarianlib.features.gui.component.supporting.*
 import com.teamwizardry.librarianlib.features.helpers.vec
+import com.teamwizardry.librarianlib.features.kotlin.delegate
 import com.teamwizardry.librarianlib.features.math.Vec2d
 import net.minecraftforge.fml.relauncher.Side
 import net.minecraftforge.fml.relauncher.SideOnly
@@ -54,7 +55,7 @@ import net.minecraftforge.fml.relauncher.SideOnly
  *
  */
 @SideOnly(Side.CLIENT)
-abstract class GuiComponent @JvmOverloads constructor(posX: Int, posY: Int, width: Int = 0, height: Int = 0) {
+abstract class GuiComponent @JvmOverloads constructor(posX: Int = 0, posY: Int = 0, width: Int = 0, height: Int = 0) {
     /**
      * Draws the component, this is called between pre and post draw events.
      */

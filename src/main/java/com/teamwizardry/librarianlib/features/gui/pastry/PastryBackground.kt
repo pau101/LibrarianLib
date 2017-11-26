@@ -9,18 +9,18 @@ import com.teamwizardry.librarianlib.features.math.Vec2d
 import com.teamwizardry.librarianlib.features.sprite.Sprite
 import java.util.*
 
-class PastryBackground() : GuiComponent(0, 0) {
+class PastryBackground : GuiComponent(0, 0) {
     private val background = ComponentSprite(getSprite(), 0, 0)
 
     init {
         this.add(background)
         background.zIndex = -1000
 
-        background.layout.boundsEqualTo(this, vec(-3, -3), vec(3, 3))
+        this.layout.boundsEqualTo(background, PastryStyle.currentStyle.backgroundMargins)
     }
 
     private fun getSprite(): Sprite {
-        val name = "background"
-        return PastryStyle.getSprite(name, 12, 12)
+        val spriteSize = PastryStyle.currentStyle.backgroundSize
+        return PastryStyle.getSprite("background", spriteSize.xi, spriteSize.yi)
     }
 }

@@ -70,7 +70,7 @@ class PastrySplitPaneView @JvmOverloads constructor(val vertical: Boolean = fals
         _pane1.clipping.clipToBounds = true
         _pane2.clipping.clipToBounds = true
         if(vertical) {
-            separator.layout.height eq 3
+            separator.layout.height eq PastryStyle.currentStyle.splitPaneDividerThickness
             separator.layout.left eq this.layout.left
             separator.layout.right eq this.layout.right
             separator.layout.top.strength = Strength.PREFERRED
@@ -79,8 +79,8 @@ class PastrySplitPaneView @JvmOverloads constructor(val vertical: Boolean = fals
             DragMixin(separator) { vec(it.x.toInt(), it.y.toInt()) }
             separator.render.hoverCursor = LibCursor.RESIZE_UPDOWN
 
-            val bgSprite = PastryStyle.getSprite("pane_separator_background_horizontal", 8, 3)
-            val middleSprite = PastryStyle.getSprite("pane_separator_middle_horizontal", 8, 3)
+            val bgSprite = PastryStyle.getSprite("pane_separator_background_horizontal", 1000, PastryStyle.currentStyle.splitPaneDividerThickness) // wide so small subdivisions work
+            val middleSprite = PastryStyle.getSprite("pane_separator_middle_horizontal", PastryStyle.currentStyle.splitPaneKnobHeight, PastryStyle.currentStyle.splitPaneDividerThickness)
 
             val bg = ComponentSprite(bgSprite, 0, 0)
             bg.layout.left eq separator.layout.left
@@ -107,7 +107,7 @@ class PastrySplitPaneView @JvmOverloads constructor(val vertical: Boolean = fals
             _pane2.layout.top eq separator.layout.bottom
 
         } else {
-            separator.layout.width eq 3
+            separator.layout.width eq PastryStyle.currentStyle.splitPaneDividerThickness
             separator.layout.top eq this.layout.top
             separator.layout.bottom eq this.layout.bottom
             separator.layout.left.strength = Strength.PREFERRED
@@ -116,8 +116,8 @@ class PastrySplitPaneView @JvmOverloads constructor(val vertical: Boolean = fals
             DragMixin(separator) { vec(it.x.toInt(), it.y.toInt()) }
             separator.render.hoverCursor = LibCursor.RESIZE_LEFTRIGHT
 
-            val bgSprite = PastryStyle.getSprite("pane_separator_background_vertical", 3, 8)
-            val middleSprite = PastryStyle.getSprite("pane_separator_middle_vertical", 3, 8)
+            val bgSprite = PastryStyle.getSprite("pane_separator_background_vertical", PastryStyle.currentStyle.splitPaneDividerThickness, 1000) // tall so small subdivisions work
+            val middleSprite = PastryStyle.getSprite("pane_separator_middle_vertical", PastryStyle.currentStyle.splitPaneDividerThickness, PastryStyle.currentStyle.splitPaneKnobHeight)
 
             val bg = ComponentSprite(bgSprite, 0, 0)
             bg.layout.top eq separator.layout.top

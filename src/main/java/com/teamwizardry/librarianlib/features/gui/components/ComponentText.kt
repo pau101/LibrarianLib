@@ -6,6 +6,7 @@ import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.math.BoundingBox2D
 import com.teamwizardry.librarianlib.features.math.Vec2d
 import net.minecraft.client.Minecraft
+import net.minecraft.client.renderer.GlStateManager
 import java.awt.Color
 
 class ComponentText constructor(posX: Int, posY: Int) : GuiComponent(posX, posY) {
@@ -43,6 +44,7 @@ class ComponentText constructor(posX: Int, posY: Int) : GuiComponent(posX, posY)
     private var yAlign = -1
 
     override fun drawComponent(mousePos: Vec2d, partialTicks: Float) {
+        GlStateManager.enableTexture2D()
         val fr = Minecraft.getMinecraft().fontRenderer
 
         val fullText = text

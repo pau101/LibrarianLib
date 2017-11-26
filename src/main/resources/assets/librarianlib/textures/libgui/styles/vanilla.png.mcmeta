@@ -30,6 +30,26 @@
       },
       "pane_separator_middle_horizontal": {
         "pos": [32, 4, 8, 3]
+      },
+      "round_button_off": {
+        "pos": [48, 0, 5, 5],
+        "nineSlice": [2, 2]
+      },
+      "round_button_on": {
+        "pos": [48, 8, 5, 5],
+        "nineSlice": [2, 2]
+      },
+      "checkbox_off": {
+        "pos": [56, 0, 8, 8]
+      },
+      "checkbox_on": {
+        "pos": [56, 8, 8, 8]
+      },
+      "radio_button_off": {
+        "pos": [56, 16, 8, 8]
+      },
+      "radio_button_on": {
+        "pos": [56, 24, 8, 8]
       }
     }
   }
