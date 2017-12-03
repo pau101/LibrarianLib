@@ -1,18 +1,21 @@
 package com.teamwizardry.librarianlib.features.container
 
-import com.teamwizardry.librarianlib.features.container.builtin.BaseWrappers
-import com.teamwizardry.librarianlib.features.container.internal.SlotBase
+import net.minecraft.inventory.IInventory
 import net.minecraftforge.items.IItemHandler
+import net.minecraftforge.items.wrapper.InvWrapper
 
 /**
- * Used to provide a convenient slot meaning association. See [BaseWrappers] for examples.
+ * Easily manages slots and their types. Subclass this to make custom fields for specific slots or slot ranges.
  */
 open class InventoryWrapper(val inventory: IItemHandler) {
-    val slotArray = (0..inventory.slots - 1).map { SlotBase(inventory, it) }
+    constructor(inv: IInventory) : this(InvWrapper(inv))
+
+    private val slotArray = (0 until inventory.slots).map { SlotBase(inventory, it) }
+    val all = slotArray
     val slots = SlotManager(slotArray)
     val types = TypeManager(slotArray)
 
-    inner class SlotManager(val slotArray: List<SlotBase>) {
+    class SlotManager internal constructor(private val slotArray: List<SlotBase>) {
 
         operator fun get(range: IntRange): List<SlotBase> {
             return slotArray.subList(range.start, range.endInclusive + 1)
@@ -23,7 +26,7 @@ open class InventoryWrapper(val inventory: IItemHandler) {
         }
     }
 
-    inner class TypeManager(val slotArray: List<SlotBase>) {
+    class TypeManager internal constructor(private val slotArray: List<SlotBase>) {
         operator fun get(index: Int): SlotType {
             return slotArray[index].type
         }

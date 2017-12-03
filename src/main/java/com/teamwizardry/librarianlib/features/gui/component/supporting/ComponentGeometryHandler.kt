@@ -112,6 +112,11 @@ class ComponentGeometryHandler(private val component: GuiComponent) {
         this.mouseOverNoOcclusion = this.mouseOver
     }
 
+    internal fun allMouseOversFalse() {
+        this.mouseOver = false
+        component.relationships.children.forEach { it.geometry.allMouseOversFalse() }
+    }
+
     /**
      * Override this to change the shape of a hover. For instance making a per-pixel sprite hover
      */

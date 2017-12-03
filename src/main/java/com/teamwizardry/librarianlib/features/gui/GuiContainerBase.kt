@@ -1,14 +1,16 @@
 package com.teamwizardry.librarianlib.features.gui
 
+import com.teamwizardry.librarianlib.features.container.ContainerBase
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.gui.component.supporting.ComponentEventHookMethodHandler
 import com.teamwizardry.librarianlib.features.gui.components.ComponentVoid
 import com.teamwizardry.librarianlib.features.gui.debugger.ComponentDebugger
 import com.teamwizardry.librarianlib.features.helpers.vec
+import com.teamwizardry.librarianlib.features.network.PacketHandler
+import com.teamwizardry.librarianlib.features.network.PacketSyncSlotVisibility
 import com.teamwizardry.librarianlib.features.utilities.client.StencilUtil
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiScreen
-import net.minecraft.client.gui.ScaledResolution
+import net.minecraft.client.gui.inventory.GuiContainer
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
@@ -17,14 +19,20 @@ import no.birkett.kiwi.Solver
 import no.birkett.kiwi.Strength
 import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
-import org.lwjgl.opengl.GL11
 import java.io.IOException
 
-open class GuiBase(val guiWidth: Int, val guiHeight: Int) : GuiScreen() {
+open class GuiContainerBase(val container: ContainerBase, val guiWidth: Int, val guiHeight: Int) : GuiContainer(container) {
     @Suppress("LeakingThis")
-    private val baseGuiImplementation = BaseGuiImplementation(this, guiWidth, guiHeight, { false /* we can't scale the slots, so we can't scale the GUI */ })
+    private val baseGuiImplementation = BaseGuiImplementation(this, guiWidth, guiHeight, { shouldAutoScale })
     val mainComponents = baseGuiImplementation.mainComponents
     val fullscreenComponents = baseGuiImplementation.fullscreenComponents
+
+    /**
+     * Set to false to disable shrinking the GUI when it is larger than the viewport
+     */
+    var shouldAutoScale = false
+
+    override fun drawGuiContainerBackgroundLayer(partialTicks: Float, mouseX: Int, mouseY: Int) {}
 
     override fun initGui() {
         super.initGui()
@@ -35,8 +43,16 @@ open class GuiBase(val guiWidth: Int, val guiHeight: Int) : GuiScreen() {
     }
 
     override fun drawScreen(mouseX: Int, mouseY: Int, partialTicks: Float) {
-        super.drawScreen(mouseX, mouseY, partialTicks)
+        container.slots.forEach { it.lastVisible = it.visible; it.visible = false }
+
         baseGuiImplementation.drawScreen(mouseX, mouseY, partialTicks)
+
+        if (container.slots.any { it.lastVisible != it.visible }) {
+            PacketHandler.NETWORK.sendToServer(PacketSyncSlotVisibility(container.slots.map { it.visible }.toBooleanArray()))
+        }
+        container.slots.filter { !it.visible }.forEach { it.xPos = -1000; it.yPos = -1000 }
+
+        super.drawScreen(mouseX, mouseY, partialTicks)
     }
 
     override fun mouseClicked(mouseX: Int, mouseY: Int, mouseButton: Int) {
@@ -65,12 +81,14 @@ open class GuiBase(val guiWidth: Int, val guiHeight: Int) : GuiScreen() {
     }
 
     companion object {
-        init { MinecraftForge.EVENT_BUS.register(this) }
+        init {
+            MinecraftForge.EVENT_BUS.register(this)
+        }
 
         @SubscribeEvent
         fun tick(e: TickEvent.ClientTickEvent) {
             val gui = Minecraft.getMinecraft().currentScreen
-            if (gui is GuiBase) {
+            if (gui is GuiContainerBase) {
                 gui.baseGuiImplementation.tick()
             }
         }

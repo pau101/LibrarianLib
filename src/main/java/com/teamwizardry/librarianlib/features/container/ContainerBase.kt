@@ -1,25 +1,23 @@
-package com.teamwizardry.librarianlib.features.container
+package com.teamwizardry.librarianlib.features.container.internal
 
+import com.teamwizardry.librarianlib.features.container.ContainerBase
+import com.teamwizardry.librarianlib.features.container.ITransferRule
+import com.teamwizardry.librarianlib.features.container.InventoryWrapper
 import com.teamwizardry.librarianlib.features.container.builtin.BasicTransferRule
-import com.teamwizardry.librarianlib.features.container.internal.ContainerImpl
-import com.teamwizardry.librarianlib.features.container.internal.SlotBase
-import com.teamwizardry.librarianlib.features.saving.SaveInPlace
 import net.minecraft.entity.player.EntityPlayer
+import net.minecraft.inventory.ClickType
+import net.minecraft.inventory.Container
+import net.minecraft.inventory.Slot
 import net.minecraft.item.ItemStack
 
 /**
  * Created by TheCodeWarrior
  */
-@SaveInPlace
-abstract class ContainerBase(val player: EntityPlayer) {
+abstract class ContainerImpl(val player: EntityPlayer) : Container() {
 
-    lateinit var impl: ContainerImpl // hopefully people don't do anything screwy, cause lateinit would cause problems.
-
-    open fun onClosed() {}
-
-    protected fun addSlots(wrapper: InventoryWrapper) {
-        wrapper.slotArray.forEach {
-            allSlots.add(it)
+    fun addSlots(wrapper: InventoryWrapper) {
+        wrapper.all.forEach {
+            addSlotToContainer(it)
         }
     }
 
@@ -32,26 +30,49 @@ abstract class ContainerBase(val player: EntityPlayer) {
         return rule
     }
 
-    fun transferStackInSlot(slot: SlotBase): ItemStack {
+    val transferRules = mutableListOf<ITransferRule>()
+
+    //region Implementation details
+    @Suppress("UNCHECKED_CAST")
+    internal val slots = inventorySlots as List<SlotBase>
+    override fun canInteractWith(playerIn: EntityPlayer?): Boolean {
+        return true
+    }
+
+    override fun slotClick(slotId: Int, dragType: Int, clickTypeIn: ClickType?, player: EntityPlayer): ItemStack {
+        if (slotId > 0 && slotId < inventorySlots.size) {
+            val slot = inventorySlots[slotId] as SlotBase
+
+            val pair = slot.handleClick(this, dragType, clickTypeIn, player)
+            if (pair != null) {
+                return pair
+            }
+        }
+
+        return super.slotClick(slotId, dragType, clickTypeIn, player)
+    }
+
+    override fun transferStackInSlot(playerIn: EntityPlayer?, index: Int): ItemStack? {
+        val slot = inventorySlots[index] as SlotBase
         val stack = slot.stack
         if (stack.isEmpty) return stack
         for (rule in transferRules) {
             if (rule.shouldApply(slot)) {
-                val result = rule.putStack(stack)
-                if (result !== stack) {
+                val result = rule.transferStack(stack)
+                if (result != null) {
                     slot.putStack(result)
-                    return if (result === stack) result else ItemStack.EMPTY
+                    return if (ItemStack.areItemStacksEqual(result, stack)) result else ItemStack.EMPTY
                 }
             }
         }
         return ItemStack.EMPTY
     }
 
-    val transferRules = mutableListOf<ITransferRule>()
-    val allSlots = mutableListOf<SlotBase>()
-
-    fun addContainerSlots() {
-        allSlots.forEach { impl.addSlotToContainer(it) }
+    override public fun addSlotToContainer(slotIn: Slot?): Slot {
+        if(slotIn !is SlotBase) {
+            throw IllegalArgumentException("LibrarianLib containers only support subclasses of `SlotBase`")
+        }
+        return super.addSlotToContainer(slotIn)
     }
-
+    //endregion
 }

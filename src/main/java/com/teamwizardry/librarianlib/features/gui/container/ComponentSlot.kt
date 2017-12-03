@@ -1,6 +1,6 @@
-package com.teamwizardry.librarianlib.features.guicontainer
+package com.teamwizardry.librarianlib.features.gui.container
 
-import com.teamwizardry.librarianlib.features.container.internal.SlotBase
+import com.teamwizardry.librarianlib.features.container.SlotBase
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.gui.component.Hook

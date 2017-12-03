@@ -1,16 +1,16 @@
 package com.teamwizardry.librarianlib.test.container
 
-import com.teamwizardry.librarianlib.features.container.ContainerBase
 import com.teamwizardry.librarianlib.features.container.GuiHandler
 import com.teamwizardry.librarianlib.features.container.InventoryWrapper
-import com.teamwizardry.librarianlib.features.container.builtin.BaseWrappers
+import com.teamwizardry.librarianlib.features.container.builtin.InventoryWrapperPlayer
 import com.teamwizardry.librarianlib.features.container.builtin.SlotTypeGhost
-import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
+import com.teamwizardry.librarianlib.features.container.ContainerBase
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.gui.components.ComponentRect
 import com.teamwizardry.librarianlib.features.gui.components.ComponentSprite
-import com.teamwizardry.librarianlib.features.guicontainer.GuiContainerBase
-import com.teamwizardry.librarianlib.features.guicontainer.builtin.BaseLayouts
+import com.teamwizardry.librarianlib.features.gui.GuiContainerBase
+import com.teamwizardry.librarianlib.features.gui.container.ComponentGridSlotLayout
+import com.teamwizardry.librarianlib.features.gui.container.ComponentPlayerSlotLayout
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.sprite.Texture
 import net.minecraft.entity.player.EntityPlayer
@@ -23,28 +23,28 @@ import java.awt.Color
  */
 class ContainerTest(player: EntityPlayer, tile: TEContainer) : ContainerBase(player) {
 
-    val invPlayer = BaseWrappers.player(player)
+    val invPlayer = InventoryWrapperPlayer(player)
     val invBlock = TestWrapper(tile)
 
     init {
         addSlots(invPlayer)
         addSlots(invBlock)
 
-        transferRule().from(invPlayer.main).from(invPlayer.hotbar).deposit(invPlayer.head).filter {
+        transferRule().from(invPlayer.main).from(invPlayer.hotbar).to(invPlayer.head).filter {
             it.stack.item == Items.DIAMOND_HELMET
         }
 
-        transferRule().from(invPlayer.main).deposit(invBlock.main)
-        transferRule().from(invPlayer.hotbar).deposit(invBlock.small)
-        transferRule().from(invBlock.main).deposit(invPlayer.main)
-        transferRule().from(invBlock.small).deposit(invPlayer.hotbar)
+        transferRule().from(invPlayer.main).to(invBlock.main)
+        transferRule().from(invPlayer.hotbar).to(invBlock.small)
+        transferRule().from(invBlock.main).to(invPlayer.main)
+        transferRule().from(invBlock.small).to(invPlayer.hotbar)
     }
 
     companion object {
         val NAME = ResourceLocation("librarianlibtest:container")
 
         init {
-            GuiHandler.registerBasicContainer(NAME, { player, _, tile -> ContainerTest(player, tile as TEContainer) }, { _, container -> GuiContainerTest(container) })
+            GuiHandler.registerTileContainer(NAME, { player, _, tile -> ContainerTest(player, tile as TEContainer) }, { _, container -> GuiContainerTest(container) })
         }
     }
 }
@@ -69,8 +69,8 @@ class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 1
         val b = ComponentSprite(bg, 0, 0)
         mainComponents.add(b)
 
-        val layout = BaseLayouts.player(container.invPlayer)
-        b.add(layout.root)
+        val layout = ComponentPlayerSlotLayout(container.invPlayer)
+        b.add(layout)
 
         layout.armor.pos = vec(6, 12)
         layout.armor.isVisible = true
@@ -78,17 +78,17 @@ class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 1
         layout.offhand.isVisible = true
         layout.main.pos = vec(29, 84)
 
-        val grid = BaseLayouts.grid(container.invBlock.main, 9)
-        grid.root.pos = vec(29, 12)
-        b.add(grid.root)
+        val grid = ComponentGridSlotLayout(container.invBlock.main, 9)
+        grid.pos = vec(29, 12)
+        b.add(grid)
 
         val s = ComponentSprite(slider, 197, 79)
         s.isVisible = false
         b.add(s)
 
-        val miniGrid = BaseLayouts.grid(container.invBlock.small, 3)
-        miniGrid.root.pos = vec(3, 5)
-        s.add(miniGrid.root)
+        val miniGrid = ComponentGridSlotLayout(container.invBlock.small, 3)
+        miniGrid.pos = vec(3, 5)
+        s.add(miniGrid)
 
         val button = ComponentRect(178, 68, 12, 11)
         button.color = Color(0, 0, 0, 127)

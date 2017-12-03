@@ -1,12 +1,15 @@
 package com.teamwizardry.librarianlib.features.container.builtin
 
 import com.teamwizardry.librarianlib.features.container.ITransferRule
-import com.teamwizardry.librarianlib.features.container.internal.SlotBase
-import com.teamwizardry.librarianlib.features.kotlin.isNotEmpty
+import com.teamwizardry.librarianlib.features.container.SlotBase
 import net.minecraft.item.ItemStack
 
 /**
- * Created by TheCodeWarrior
+ * A basic transfer rule. It stores a list of source slots, target slots, and a filter.
+ *
+ * See [ITransferRule] for the behavior of transfer rules in containers
+ *
+ *
  */
 open class BasicTransferRule : ITransferRule {
     protected val fromSet = mutableSetOf<SlotBase>()
@@ -28,11 +31,11 @@ open class BasicTransferRule : ITransferRule {
         return this
     }
 
-    fun deposit(slots: List<SlotBase>): BasicTransferRule {
-        return deposit(*slots.toTypedArray())
+    fun to(slots: List<SlotBase>): BasicTransferRule {
+        return to(*slots.toTypedArray())
     }
 
-    fun deposit(vararg slots: SlotBase): BasicTransferRule {
+    fun to(vararg slots: SlotBase): BasicTransferRule {
         targets.add(listOf(*slots))
         return this
     }
@@ -41,9 +44,15 @@ open class BasicTransferRule : ITransferRule {
         return slot in fromSet && filter(slot)
     }
 
-    override fun putStack(stack: ItemStack)
-            = targets.fold(stack) { stack, target ->
-        if (stack.isNotEmpty) ITransferRule.mergeIntoRegion(stack, target.filter { it.visible }).remainingStack
-        else return ItemStack.EMPTY
+    override fun transferStack(stack: ItemStack): ItemStack? {
+        var stack = stack
+        for(target in targets) {
+            val result = ITransferRule.mergeIntoRegion(stack, target.filter { it.visible })
+
+            stack = result.remainingStack
+            if(result.success || result.finished)
+                return stack
+        }
+        return null // we only get here if nothing was successful or finished
     }
 }

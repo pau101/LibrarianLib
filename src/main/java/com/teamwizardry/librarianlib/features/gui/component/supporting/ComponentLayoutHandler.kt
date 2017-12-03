@@ -65,7 +65,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
     }
 
     /**
-     * Makes the size as defined by [GuiComponent.size] fixed by setting its constraints to be [Strength.REQUIRED]
+     * Makes the size as defined by [GuiComponent.size] fixed by setting their constraints to be [Strength.REQUIRED]
      */
     fun fixedSize() {
         width.strength = Strength.REQUIRED
@@ -73,11 +73,20 @@ class ComponentLayoutHandler(val component: GuiComponent) {
     }
 
     /**
-     * Makes the position as defined by [GuiComponent.pos] fixed by setting its constraints to be [Strength.REQUIRED]
+     * Makes the position as defined by [GuiComponent.pos] fixed by setting thier constraints to be [Strength.REQUIRED]
      */
     fun fixedPos() {
         left.strength = Strength.REQUIRED
         top.strength = Strength.REQUIRED
+    }
+
+    /**
+     * Makes the position and size as defined by [GuiComponent.pos] and [GuiComponent.size] fixed by setting thier
+     * constraints to be [Strength.REQUIRED]
+     */
+    fun fixedBounds() {
+        fixedPos()
+        fixedSize()
     }
 
     /**

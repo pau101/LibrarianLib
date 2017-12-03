@@ -10,33 +10,23 @@ import net.minecraftforge.items.wrapper.InvWrapper
 /**
  * Created by TheCodeWarrior
  */
-object BaseWrappers {
+class InventoryWrapperPlayer(val player: EntityPlayer) : InventoryWrapper(player.inventory) {
 
-    fun player(player: EntityPlayer) = InventoryWrapperPlayer(InvWrapper(player.inventory), player)
+    val armor = slots[36..39]
+    val head = slots[39]
+    val chest = slots[38]
+    val legs = slots[37]
+    val feet = slots[36]
 
-    fun inventory(inv: IInventory) = InventoryWrapper(InvWrapper(inv))
+    val hotbar = slots[0..8]
+    val main = slots[9..35]
+    val offhand = slots[40]
 
-    fun stacks(inv: IItemHandler) = InventoryWrapper(inv)
-
-    class InventoryWrapperPlayer(inv: IItemHandler, val player: EntityPlayer) : InventoryWrapper(inv) {
-
-        val armor = slots[36..39]
-        val head = slots[39]
-        val chest = slots[38]
-        val legs = slots[37]
-        val feet = slots[36]
-
-        val hotbar = slots[0..8]
-        val main = slots[9..35]
-        val offhand = slots[40]
-
-        init {
-            head.type = SlotTypeEquipment(player, EntityEquipmentSlot.HEAD)
-            chest.type = SlotTypeEquipment(player, EntityEquipmentSlot.CHEST)
-            legs.type = SlotTypeEquipment(player, EntityEquipmentSlot.LEGS)
-            feet.type = SlotTypeEquipment(player, EntityEquipmentSlot.FEET)
-        }
-
+    init {
+        head.type = SlotTypeEquipment(player, EntityEquipmentSlot.HEAD)
+        chest.type = SlotTypeEquipment(player, EntityEquipmentSlot.CHEST)
+        legs.type = SlotTypeEquipment(player, EntityEquipmentSlot.LEGS)
+        feet.type = SlotTypeEquipment(player, EntityEquipmentSlot.FEET)
     }
 
 }

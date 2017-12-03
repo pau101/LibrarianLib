@@ -6,13 +6,12 @@ import com.teamwizardry.librarianlib.features.autoregister.TileRegister
 import com.teamwizardry.librarianlib.features.base.capability.CapabilityMod
 import com.teamwizardry.librarianlib.features.base.item.ItemMod
 import com.teamwizardry.librarianlib.features.config.EasyConfigHandler
-import com.teamwizardry.librarianlib.features.container.ContainerBase
 import com.teamwizardry.librarianlib.features.eventbus.Event
 import com.teamwizardry.librarianlib.features.eventbus.EventBus
 import com.teamwizardry.librarianlib.features.gui.GuiBase
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.GuiOverlay
-import com.teamwizardry.librarianlib.features.guicontainer.GuiContainerBase
+import com.teamwizardry.librarianlib.features.gui.GuiContainerBase
 import com.teamwizardry.librarianlib.features.kotlin.json
 import com.teamwizardry.librarianlib.features.kotlin.nbt
 import com.teamwizardry.librarianlib.features.math.Matrix4
@@ -24,7 +23,6 @@ import com.teamwizardry.librarianlib.features.particle.ParticleSpawner
 import com.teamwizardry.librarianlib.features.saving.Save
 import com.teamwizardry.librarianlib.features.structure.Structure
 import com.teamwizardry.librarianlib.features.utilities.LoggerBase
-import com.teamwizardry.librarianlib.features.utilities.client.F3Handler
 import com.teamwizardry.librarianlib.features.utilities.getUnsafe
 import net.minecraft.launchwrapper.Launch
 import net.minecraftforge.fml.common.Mod

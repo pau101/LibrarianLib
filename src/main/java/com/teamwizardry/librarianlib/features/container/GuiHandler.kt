@@ -2,10 +2,10 @@ package com.teamwizardry.librarianlib.features.container
 
 import com.google.common.collect.HashBiMap
 import com.teamwizardry.librarianlib.core.LibrarianLib
-import com.teamwizardry.librarianlib.features.container.internal.ContainerImpl
-import com.teamwizardry.librarianlib.features.guicontainer.GuiContainerBase
-import com.teamwizardry.librarianlib.features.kotlin.getTileEntitySafely
+import net.minecraft.client.gui.Gui
+import net.minecraft.client.gui.inventory.GuiContainer
 import net.minecraft.entity.player.EntityPlayer
+import net.minecraft.inventory.Container
 import net.minecraft.tileentity.TileEntity
 import net.minecraft.util.ResourceLocation
 import net.minecraft.util.math.BlockPos
@@ -32,8 +32,8 @@ object GuiHandler : IGuiHandler {
 
     @JvmStatic
     fun registerRaw(name: ResourceLocation,
-                    server: ((player: EntityPlayer, world: World, pos: BlockPos) -> ContainerBase)?,
-                    client: ((player: EntityPlayer, world: World, pos: BlockPos) -> GuiContainerBase)?) {
+                    server: (player: EntityPlayer, world: World, pos: BlockPos) -> Container?,
+                    client: (player: EntityPlayer, world: World, pos: BlockPos) -> Gui) {
         if (name !in ids.keys) {
             ids.put(name, ids.size)
         }
@@ -44,14 +44,40 @@ object GuiHandler : IGuiHandler {
     }
 
     @JvmStatic
-    fun <T : ContainerBase> registerBasicContainer(name: ResourceLocation,
-                                                   server: (player: EntityPlayer, pos: BlockPos, te: TileEntity?) -> T,
-                                                   client: (player: EntityPlayer, container: T) -> GuiContainerBase) {
+    fun registerGui(name: ResourceLocation, client: (player: EntityPlayer, world: World, pos: BlockPos) -> Gui) {
+        if (name !in ids.keys) {
+            ids.put(name, ids.size)
+        }
+        if (name in registry) {
+            throw IllegalArgumentException("GUI handler for $name already exists")
+        }
+        registerRaw(name, { _, _, _ -> null }, { player, world, pos -> client(player, world, pos) })
+    }
+
+    @JvmStatic
+    fun <T : Container> registerGuiContainer(name: ResourceLocation,
+                                              server: (player: EntityPlayer, world: World, pos: BlockPos) -> T,
+                                              client: (player: EntityPlayer, container: T) -> GuiContainer) {
         val rawServer: (EntityPlayer, World, BlockPos) -> T = { player, world, pos ->
-            server(player, pos, world.getTileEntitySafely(pos))
+            server(player, world, pos)
         }
 
-        val rawClient: (EntityPlayer, World, BlockPos) -> GuiContainerBase = { player, world, pos ->
+        val rawClient: (EntityPlayer, World, BlockPos) -> GuiContainer = { player, world, pos ->
+            client(player, rawServer(player, world, pos))
+        }
+
+        registerRaw(name, rawServer, rawClient)
+    }
+
+    @JvmStatic
+    fun <T : Container> registerTileContainer(name: ResourceLocation,
+                                             server: (player: EntityPlayer, pos: BlockPos, te: TileEntity?) -> T,
+                                             client: (player: EntityPlayer, container: T) -> GuiContainer) {
+        val rawServer: (EntityPlayer, World, BlockPos) -> T = { player, world, pos ->
+            server(player, pos, world.getTileEntity(pos))
+        }
+
+        val rawClient: (EntityPlayer, World, BlockPos) -> GuiContainer = { player, world, pos ->
             client(player, rawServer(player, world, pos))
         }
 
@@ -74,7 +100,7 @@ object GuiHandler : IGuiHandler {
             val handler = registry[ids.inverse()[ID]]?.server
 
             if (handler != null) {
-                return ContainerImpl(handler(player, world, BlockPos(x, y, z)))
+                return handler(player, world, BlockPos(x, y, z))
             }
         }
         return null
@@ -83,6 +109,6 @@ object GuiHandler : IGuiHandler {
 }
 
 private data class GuiEntry(
-        val server: ((player: EntityPlayer, world: World, pos: BlockPos) -> ContainerBase)?,
-        val client: ((player: EntityPlayer, world: World, pos: BlockPos) -> GuiContainerBase)?
+        val server: (player: EntityPlayer, world: World, pos: BlockPos) -> Container?,
+        val client: (player: EntityPlayer, world: World, pos: BlockPos) -> Gui
 )

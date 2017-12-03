@@ -1,7 +1,5 @@
-package com.teamwizardry.librarianlib.features.container.internal
+package com.teamwizardry.librarianlib.features.container
 
-import com.teamwizardry.librarianlib.features.container.ContainerBase
-import com.teamwizardry.librarianlib.features.container.SlotType
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory.ClickType
 import net.minecraft.item.ItemStack
@@ -18,24 +16,26 @@ class SlotBase(handler: IItemHandler, index: Int) : SlotItemHandler(handler, ind
     var visible = true
     var lastVisible = visible
 
-    override fun onTake(thePlayer: EntityPlayer?, stack: ItemStack): ItemStack {
-        if (type.onPickup(this, thePlayer, stack))
+    /**
+     * Directly set the slot's stack to [stack]
+     */
+    fun set(stack: ItemStack) {
+        super.putStack(stack)
+    }
+
+    override fun onTake(thePlayer: EntityPlayer, stack: ItemStack): ItemStack {
+        if (type.onTake(this, thePlayer, stack))
             return super.onTake(thePlayer, stack)
         return ItemStack.EMPTY
     }
 
     override fun onSlotChanged() {
-        if (type.onSlotChange(this))
-            super.onSlotChanged()
-    }
-
-    override fun onSlotChange(old: ItemStack, new: ItemStack) {
-        if (type.onSlotChange(this, old, new))
-            super.onSlotChange(old, new)
+        type.onSlotChange(this)
+        super.onSlotChanged()
     }
 
     override fun putStack(stack: ItemStack) {
-        if (type.putStack(this, stack))
+        if (type.setStack(this, stack))
             super.putStack(stack)
     }
 
@@ -43,8 +43,8 @@ class SlotBase(handler: IItemHandler, index: Int) : SlotItemHandler(handler, ind
         return if (visible) type.getStack(this, super.getStack()) else ItemStack.EMPTY
     }
 
-    override fun canTakeStack(playerIn: EntityPlayer?): Boolean {
-        return if (visible) type.canTake(this, playerIn, stack, super.canTakeStack(playerIn)) else false
+    override fun canTakeStack(playerIn: EntityPlayer): Boolean {
+        return if (visible) super.canTakeStack(playerIn) && type.canTake(this, playerIn, stack) else false
     }
 
     @SideOnly(Side.CLIENT)
@@ -53,14 +53,14 @@ class SlotBase(handler: IItemHandler, index: Int) : SlotItemHandler(handler, ind
     }
 
     override fun isItemValid(stack: ItemStack): Boolean {
-        return if (visible) type.isValid(this, stack, super.isItemValid(stack)) else false
+        return if (visible) super.isItemValid(stack) && type.isValid(this, stack) else false
     }
 
     override fun getSlotStackLimit(): Int {
         return type.stackLimit(this, stack)
     }
 
-    fun handleClick(container: ContainerBase, dragType: Int, clickType: ClickType?, player: EntityPlayer): Pair<Boolean, ItemStack> {
+    fun handleClick(container: ContainerBase, dragType: Int, clickType: ClickType?, player: EntityPlayer): ItemStack? {
         return type.handleClick(this, container, dragType, clickType, player)
     }
 }
