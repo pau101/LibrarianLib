@@ -9,9 +9,9 @@ package com.teamwizardry.librarianlib.test.gui.tests
 import com.teamwizardry.librarianlib.features.gui.components.ComponentFluidStack
 import com.teamwizardry.librarianlib.features.gui.components.ComponentSprite
 import com.teamwizardry.librarianlib.features.gui.components.ComponentText
-import com.teamwizardry.librarianlib.features.gui.container.ComponentSlot
+import com.teamwizardry.librarianlib.features.gui.pastry.PastrySlot
 import com.teamwizardry.librarianlib.features.gui.GuiContainerBase
-import com.teamwizardry.librarianlib.features.gui.container.ComponentPlayerSlotLayout
+import com.teamwizardry.librarianlib.features.gui.pastry.PastryInventoryPlayer
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.math.Vec2d
 import com.teamwizardry.librarianlib.features.sprite.Texture
@@ -32,17 +32,17 @@ open class GuiFluidTank(inventorySlotsIn: FluidTankContainer) : GuiContainerBase
         val bg = ComponentSprite(BG, 0, 0)
         mainComponents.add(bg)
 
-        val inventory = ComponentPlayerSlotLayout(inventorySlotsIn.invPlayer)
+        val inventory = PastryInventoryPlayer(inventorySlotsIn.invPlayer)
         bg.add(inventory)
         inventory.main.pos = vec(8, 84)
 
         bg.add(ComponentSprite(SLOT, 50, 33))
         bg.add(ComponentSprite(SLOT, 100, 33))
 
-        val input = ComponentSlot(inventorySlotsIn.invBlock.input, 51, 34)
+        val input = PastrySlot(inventorySlotsIn.invBlock.input, 51, 34)
         bg.add(input)
 
-        val output = ComponentSlot(inventorySlotsIn.invBlock.output, 101, 34)
+        val output = PastrySlot(inventorySlotsIn.invBlock.output, 101, 34)
         bg.add(output)
 
         val state = te.world.getBlockState(te.pos)

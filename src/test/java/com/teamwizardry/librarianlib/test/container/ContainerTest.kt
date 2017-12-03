@@ -9,8 +9,8 @@ import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.gui.components.ComponentRect
 import com.teamwizardry.librarianlib.features.gui.components.ComponentSprite
 import com.teamwizardry.librarianlib.features.gui.GuiContainerBase
-import com.teamwizardry.librarianlib.features.gui.container.ComponentGridSlotLayout
-import com.teamwizardry.librarianlib.features.gui.container.ComponentPlayerSlotLayout
+import com.teamwizardry.librarianlib.features.gui.pastry.PastryInventoryGrid
+import com.teamwizardry.librarianlib.features.gui.pastry.PastryInventoryPlayer
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.sprite.Texture
 import net.minecraft.entity.player.EntityPlayer
@@ -69,7 +69,7 @@ class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 1
         val b = ComponentSprite(bg, 0, 0)
         mainComponents.add(b)
 
-        val layout = ComponentPlayerSlotLayout(container.invPlayer)
+        val layout = PastryInventoryPlayer(container.invPlayer)
         b.add(layout)
 
         layout.armor.pos = vec(6, 12)
@@ -78,7 +78,7 @@ class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 1
         layout.offhand.isVisible = true
         layout.main.pos = vec(29, 84)
 
-        val grid = ComponentGridSlotLayout(container.invBlock.main, 9)
+        val grid = PastryInventoryGrid(container.invBlock.main, 9)
         grid.pos = vec(29, 12)
         b.add(grid)
 
@@ -86,7 +86,7 @@ class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 1
         s.isVisible = false
         b.add(s)
 
-        val miniGrid = ComponentGridSlotLayout(container.invBlock.small, 3)
+        val miniGrid = PastryInventoryGrid(container.invBlock.small, 3)
         miniGrid.pos = vec(3, 5)
         s.add(miniGrid)
 

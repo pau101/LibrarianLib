@@ -1,8 +1,5 @@
-package com.teamwizardry.librarianlib.features.container.internal
+package com.teamwizardry.librarianlib.features.container
 
-import com.teamwizardry.librarianlib.features.container.ContainerBase
-import com.teamwizardry.librarianlib.features.container.ITransferRule
-import com.teamwizardry.librarianlib.features.container.InventoryWrapper
 import com.teamwizardry.librarianlib.features.container.builtin.BasicTransferRule
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory.ClickType
@@ -13,7 +10,7 @@ import net.minecraft.item.ItemStack
 /**
  * Created by TheCodeWarrior
  */
-abstract class ContainerImpl(val player: EntityPlayer) : Container() {
+abstract class ContainerBase(val player: EntityPlayer) : Container() {
 
     fun addSlots(wrapper: InventoryWrapper) {
         wrapper.all.forEach {

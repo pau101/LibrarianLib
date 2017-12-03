@@ -1,4 +1,4 @@
-package com.teamwizardry.librarianlib.features.gui.container
+package com.teamwizardry.librarianlib.features.gui.pastry
 
 import com.teamwizardry.librarianlib.features.container.SlotBase
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
@@ -10,7 +10,7 @@ import com.teamwizardry.librarianlib.features.math.Vec2d
 /**
  * Created by TheCodeWarrior
  */
-class ComponentSlot(val slot: SlotBase, x: Int, y: Int) : GuiComponent(x, y) {
+class PastrySlot(val slot: SlotBase, x: Int, y: Int) : GuiComponent(x, y) {
     val background = ComponentVoid(0, 0)
     var scaler: GuiComponent? = null
 
