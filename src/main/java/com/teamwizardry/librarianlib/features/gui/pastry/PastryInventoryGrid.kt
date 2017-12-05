@@ -13,20 +13,17 @@ import com.teamwizardry.librarianlib.features.gui.pastry.PastrySlot
 class PastryInventoryGrid(inv: List<SlotBase>, rowLength: Int) : GuiComponent() {
     constructor(inv: InventoryWrapper, rowLength: Int) : this(inv.all, rowLength)
 
-    val rowCount = (inv.size + rowLength - 1) / rowLength
-    val rows = Array(rowCount) {
-        val row = ComponentVoid(0, it * 18)
+    val rows = Array((inv.size + rowLength - 1) / rowLength) { i ->
+        val row = PastryInventoryRow(inv, i * rowLength .. Math.min((i+1)*rowLength, inv.size-1))
+        row.layout.left eq this.layout.left
+        row.layout.right eq this.layout.right
         this.add(row)
         row
     }
-    val slots = Array(rowCount) { row ->
-        Array(if (row == rowCount - 1) inv.size - rowLength * row else rowLength) { column ->
-            val index = row * rowLength + column
+    val slots = rows.flatMap { it.slots }
 
-            val slot = PastrySlot(inv[index], column * 18, 0)
-            rows[row].add(slot)
-
-            slot
-        }
+    init {
+        this.layout.top eq rows.first().layout.top
+        this.layout.bottom eq rows.last().layout.bottom
     }
 }

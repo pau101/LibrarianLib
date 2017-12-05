@@ -50,7 +50,16 @@ open class GuiContainerBase(val container: ContainerBase, val guiWidth: Int, val
         if (container.slots.any { it.lastVisible != it.visible }) {
             PacketHandler.NETWORK.sendToServer(PacketSyncSlotVisibility(container.slots.map { it.visible }.toBooleanArray()))
         }
-        container.slots.filter { !it.visible }.forEach { it.xPos = -1000; it.yPos = -1000 }
+
+        container.slots.forEach {
+            if(it.visible) {
+                it.xPos -= this.guiLeft
+                it.yPos -= this.guiTop
+            } else {
+                it.xPos = -1000
+                it.yPos = -1000
+            }
+        }
 
         super.drawScreen(mouseX, mouseY, partialTicks)
     }

@@ -4,44 +4,39 @@ import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.components.ComponentVoid
 import com.teamwizardry.librarianlib.features.container.builtin.InventoryWrapperPlayer
 
-class PastryInventoryPlayer(player: InventoryWrapperPlayer) : GuiComponent() {
-    val armor: ComponentVoid
-    val mainWrapper: ComponentVoid
-    val main: ComponentVoid
-    val hotbar: ComponentVoid
-    val offhand: ComponentVoid
+class PastryInventoryPlayer(player: InventoryWrapperPlayer) {
+    /**
+     * When first accessed, this property adds [main] and [hotbar] to itself.
+     */
+    val inventory by lazy {
+        val c = ComponentVoid(0, 0)
+        c.add(main, hotbar)
+        hotbar.layout.top eq main.layout.bottom + 4
+
+        main.layout.top eq c.layout.top
+        main.layout.left eq c.layout.left
+        main.layout.right eq c.layout.right
+
+        hotbar.layout.bottom eq c.layout.bottom
+        hotbar.layout.left eq c.layout.left
+        hotbar.layout.right eq c.layout.right
+        c
+    }
+
+    val main: PastryInventoryGrid
+    val hotbar: PastryInventoryRow
+
+    val armor: PastryInventoryColumn
+    val offhand: PastrySlot
 
     init {
-        armor = ComponentVoid(0, 0)
-        armor.isVisible = false
-        armor.add(
-                PastrySlot(player.head, 0, 0),
-                PastrySlot(player.chest, 0, 18),
-                PastrySlot(player.legs, 0, 2 * 18),
-                PastrySlot(player.feet, 0, 3 * 18)
-        )
+        armor = PastryInventoryColumn(player.armor, reverse = true)
 
-        offhand = ComponentVoid(0, 0)
-        offhand.isVisible = false
-        offhand.add(
-                PastrySlot(player.offhand, 0, 0)
-        )
+        offhand = PastrySlot(player.offhand)
 
-        mainWrapper = ComponentVoid(0, 0)
+        main = PastryInventoryGrid(player.main, 9)
 
-        main = ComponentVoid(0, 0)
-        for (row in 0..2) {
-            for (column in 0..8) {
-                main.add(PastrySlot(player.main[row * 9 + column], column * 18, row * 18))
-            }
-        }
+        hotbar = PastryInventoryRow(player.hotbar)
 
-        hotbar = ComponentVoid(0, 58)
-        for (column in 0..8) {
-            hotbar.add(PastrySlot(player.hotbar[column], column * 18, 0))
-        }
-        mainWrapper.add(main, hotbar)
-
-        this.add(armor, mainWrapper, offhand)
     }
 }

@@ -9,8 +9,7 @@ import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.gui.components.ComponentRect
 import com.teamwizardry.librarianlib.features.gui.components.ComponentSprite
 import com.teamwizardry.librarianlib.features.gui.GuiContainerBase
-import com.teamwizardry.librarianlib.features.gui.pastry.PastryInventoryGrid
-import com.teamwizardry.librarianlib.features.gui.pastry.PastryInventoryPlayer
+import com.teamwizardry.librarianlib.features.gui.pastry.*
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.sprite.Texture
 import net.minecraft.entity.player.EntityPlayer
@@ -66,59 +65,74 @@ class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 1
     }
 
     init {
-        val b = ComponentSprite(bg, 0, 0)
+        val b = PastryBackground()
+        b.layout.boundsEqualTo(mainComponents)
         mainComponents.add(b)
+        val s = PastrySlot(container.invPlayer.offhand)
+        mainComponents.add(s)
+        s.layout.left eq mainComponents.layout.left + 10
+        s.layout.top eq mainComponents.layout.top + 10
 
-        val layout = PastryInventoryPlayer(container.invPlayer)
-        b.add(layout)
+        val hotbar = PastryInventoryRow(container.invPlayer.hotbar)
+        mainComponents.add(hotbar)
+        hotbar.layout.centerX eq mainComponents.layout.centerX
+        hotbar.layout.bottom eq mainComponents.layout.bottom - 4
 
-        layout.armor.pos = vec(6, 12)
-        layout.armor.isVisible = true
-        layout.offhand.pos = vec(6, 84)
-        layout.offhand.isVisible = true
-        layout.main.pos = vec(29, 84)
-
-        val grid = PastryInventoryGrid(container.invBlock.main, 9)
-        grid.pos = vec(29, 12)
-        b.add(grid)
-
-        val s = ComponentSprite(slider, 197, 79)
-        s.isVisible = false
-        b.add(s)
-
-        val miniGrid = PastryInventoryGrid(container.invBlock.small, 3)
-        miniGrid.pos = vec(3, 5)
-        s.add(miniGrid)
-
-        val button = ComponentRect(178, 68, 12, 11)
-        button.color = Color(0, 0, 0, 127)
-
-        button.BUS.hook(GuiComponentEvents.MouseClickEvent::class.java) {
-            s.isVisible = !s.isVisible
-        }
-
-        b.add(button)
-        // CIRCLE!!!
-        /*
-        grid.rows[2].pos += vec(18*4.5, 40)
-
-        var a = 0.0
-        val aFrame = (2*Math.PI)/360
-        val aPer = (2*Math.PI)/9
-        val radius = 30
-
-        val row = grid.slots[2]
-
-        grid.root.BUS.hook(GuiComponent.ComponentTickEvent::class.java) {
-            a += aFrame
-
-            row.forEachIndexed { i, slot ->
-                val s = Math.sin(a + aPer*i)
-                val c = Math.cos(a + aPer*i)
-                slot.pos = vec(c*radius, s*radius) - vec(8, 8)
-            }
-        }
-        */
+        val main = PastryInventoryRow(container.invPlayer.main)
+        mainComponents.add(main)
+        main.layout.centerX eq mainComponents.layout.centerX
+        main.layout.bottom eq hotbar.layout.top - 4
+//
+//        val layout = PastryInventoryPlayer(container.invPlayer)
+//        b.add(layout.inventory)
+//
+//        layout.armor.pos = vec(6, 12)
+//        layout.armor.isVisible = true
+//        layout.offhand.pos = vec(6, 84)
+//        layout.offhand.isVisible = true
+//        layout.inventory.pos = vec(29, 84)
+//
+//        val grid = PastryInventoryGrid(container.invBlock.main, 9)
+//        grid.pos = vec(29, 12)
+//        b.add(grid)
+//
+//        val s = ComponentSprite(slider, 197, 79)
+//        s.isVisible = false
+//        b.add(s)
+//
+//        val miniGrid = PastryInventoryGrid(container.invBlock.small, 3)
+//        miniGrid.pos = vec(3, 5)
+//        s.add(miniGrid)
+//
+//        val button = ComponentRect(178, 68, 12, 11)
+//        button.color = Color(0, 0, 0, 127)
+//
+//        button.BUS.hook(GuiComponentEvents.MouseClickEvent::class.java) {
+//            s.isVisible = !s.isVisible
+//        }
+//
+//        b.add(button)
+//        // CIRCLE!!!
+//        /*
+//        grid.rows[2].pos += vec(18*4.5, 40)
+//
+//        var a = 0.0
+//        val aFrame = (2*Math.PI)/360
+//        val aPer = (2*Math.PI)/9
+//        val radius = 30
+//
+//        val row = grid.slots[2]
+//
+//        grid.root.BUS.hook(GuiComponent.ComponentTickEvent::class.java) {
+//            a += aFrame
+//
+//            row.forEachIndexed { i, slot ->
+//                val s = Math.sin(a + aPer*i)
+//                val c = Math.cos(a + aPer*i)
+//                slot.pos = vec(c*radius, s*radius) - vec(8, 8)
+//            }
+//        }
+//        */
     }
 }
 

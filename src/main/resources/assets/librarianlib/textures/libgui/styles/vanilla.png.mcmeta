@@ -2,7 +2,16 @@
   "spritesheet": {
     "textureWidth": 256,
     "textureHeight": 256,
+    "__comment": "Sprites are ordered top to bottom, left to right",
     "sprites": {
+      "background": {
+        "pos": [0, 0, 12, 12],
+        "nineSlice": [4, 4]
+      },
+      "slot_background": {
+        "pos": [0, 16, 5, 5],
+        "nineSlice": [2, 2]
+      },
       "button_off": {
         "pos": [16, 0, 5, 5],
         "nineSlice": [2, 2]
@@ -14,10 +23,6 @@
       "button_hover": {
         "pos": [16, 16, 5, 5],
         "nineSlice": [2, 2]
-      },
-      "background": {
-        "pos": [0, 0, 12, 12],
-        "nineSlice": [4, 4]
       },
       "pane_separator_background_vertical": {
         "pos": [24, 0, 3, 8]

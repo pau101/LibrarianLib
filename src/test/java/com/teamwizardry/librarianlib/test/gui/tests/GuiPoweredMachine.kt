@@ -33,16 +33,18 @@ open class GuiPoweredMachine(inventorySlotsIn: PoweredMachineContainer) : GuiCon
         mainComponents.add(bg)
 
         val inventory = PastryInventoryPlayer(inventorySlotsIn.invPlayer)
-        bg.add(inventory)
-        inventory.main.pos = vec(8, 84)
+        bg.add(inventory.inventory)
+        inventory.inventory.pos = vec(8, 84)
 
         bg.add(ComponentSprite(SLOT, 50, 33))
         bg.add(ComponentSprite(SLOT, 100, 33))
 
-        val input = PastrySlot(inventorySlotsIn.invBlock.input, 51, 34)
+        val input = PastrySlot(inventorySlotsIn.invBlock.input)
+        input.pos = vec(51, 34)
         bg.add(input)
 
-        val output = PastrySlot(inventorySlotsIn.invBlock.output, 101, 34)
+        val output = PastrySlot(inventorySlotsIn.invBlock.output)
+        output.pos = vec(101, 34)
         bg.add(output)
 
         val state = te.world.getBlockState(te.pos)

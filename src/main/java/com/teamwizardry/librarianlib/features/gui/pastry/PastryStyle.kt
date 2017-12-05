@@ -42,7 +42,10 @@ class PastryStyle(
         val splitPaneDividerThickness: Int,
         val splitPaneKnobHeight: Int,
 
-        val radioAndCheckboxSize: Int
+        val radioAndCheckboxSize: Int,
+
+        val slotBackgroundMargins: Margins,
+        val slotBackgroundSize: Vec2d
 ) {
 
     val texture = Texture(map)
@@ -67,7 +70,10 @@ class PastryStyle(
                 splitPaneDividerThickness = 3,
                 splitPaneKnobHeight = 8,
 
-                radioAndCheckboxSize = 8
+                radioAndCheckboxSize = 8,
+
+                slotBackgroundMargins = Margins(1, 1, 1, 1),
+                slotBackgroundSize = vec(5, 5)
         )
 
         var currentStyle: PastryStyle = VANILLA
