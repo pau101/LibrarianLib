@@ -19,30 +19,33 @@ class PastryRadioButton<T> internal constructor(private val set: PastryRadioButt
     private val sprite_off = PastryStyle.getSprite("radio_button_off", PastryStyle.currentStyle.radioAndCheckboxSize, PastryStyle.currentStyle.radioAndCheckboxSize)
 
     init {
-        this.layout.shrinkIfPossible = true
-        labelContainer.layout.shrinkIfPossible = true
+//        this.layout.shrinkIfPossible = true
+//        labelContainer.layout.shrinkIfPossible = true
 
         this.add(labelContainer, icon)
-
-        icon.layout.left eq this.layout.left
-        icon.layout.top geq this.layout.top
-        icon.layout.bottom leq this.layout.bottom
-        icon.layout.centerY eq this.layout.centerY
-        icon.layout.width eq PastryStyle.currentStyle.radioAndCheckboxSize
-        icon.layout.height eq PastryStyle.currentStyle.radioAndCheckboxSize
-
-        labelContainer.layout.left eq icon.layout.right + 2
-        labelContainer.layout.top geq this.layout.top
-        labelContainer.layout.bottom leq this.layout.bottom
-        labelContainer.layout.centerY eq this.layout.centerY
-        labelContainer.layout.right eq this.layout.right
-
         labelContainer.add(label)
-        label.layout.left eq labelContainer.layout.left
-        label.layout.centerY eq labelContainer.layout.centerY
-        label.layout.top geq labelContainer.layout.top
-        label.layout.bottom leq labelContainer.layout.bottom
-        label.layout.right leq labelContainer.layout.right
+
+        val size = PastryStyle.currentStyle.radioAndCheckboxSize
+        layout {
+            icon.layout.left eq this.layout.left
+            icon.layout.top geq this.layout.top
+            icon.layout.bottom leq this.layout.bottom
+            icon.layout.centerY eq this.layout.centerY
+            icon.layout.width eq size
+            icon.layout.height eq size
+
+            labelContainer.layout.left eq icon.layout.right + 2
+            labelContainer.layout.top geq this.layout.top
+            labelContainer.layout.bottom leq this.layout.bottom
+            labelContainer.layout.centerY eq this.layout.centerY
+            labelContainer.layout.right eq this.layout.right
+
+            label.layout.left eq labelContainer.layout.left
+            label.layout.centerY eq labelContainer.layout.centerY
+            label.layout.top geq labelContainer.layout.top
+            label.layout.bottom leq labelContainer.layout.bottom
+            label.layout.right leq labelContainer.layout.right
+        }
 
         updateSprite()
     }

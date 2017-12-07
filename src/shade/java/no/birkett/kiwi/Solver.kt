@@ -8,21 +8,56 @@ import java.util.*
  */
 class Solver {
 
-    internal class Tag {
-        internal var marker = Symbol()
-        internal var other = Symbol()
+    data class Tag(var marker: Symbol = Symbol(), var other: Symbol = Symbol()) {
+        fun copy() = Tag(marker, other)
     }
 
-    private class EditInfo(internal var constraint: Constraint, internal var tag: Tag, internal var constant: Double)
+    data class EditInfo(var constraint: Constraint, var tag: Tag, var constant: Double) {
+        fun copy() = EditInfo(constraint, tag.copy(), constant)
+    }
+
+    var changed = false
 
     private val cns = LinkedHashMap<Constraint, Tag>()
     private val rows = LinkedHashMap<Symbol, Row>()
     private val vars = LinkedHashMap<Variable, Symbol>()
     private val edits = LinkedHashMap<Variable, EditInfo>()
     private val infeasibleRows = ArrayList<Symbol>()
-    private val objective = Row()
+    private var objective = Row()
     private var artificial: Row? = null
 
+    private val backup_cns = LinkedHashMap<Constraint, Tag>()
+    private val backup_rows = LinkedHashMap<Symbol, Row>()
+    private val backup_vars = LinkedHashMap<Variable, Symbol>()
+    private val backup_infeasibleRows = ArrayList<Symbol>()
+    private var backup_objective = Row()
+    private var backup_artificial: Row? = null
+
+    fun backup() {
+        backup_cns.clear()
+        backup_cns.putAll(cns.mapValues { it.value.copy() })
+        backup_rows.clear()
+        backup_rows.putAll(rows.mapValues { it.value.copy() })
+        backup_vars.clear()
+        backup_vars.putAll(vars)
+        backup_infeasibleRows.clear()
+        backup_infeasibleRows.addAll(infeasibleRows)
+        backup_objective = objective.copy()
+        backup_artificial = artificial?.copy()
+    }
+
+    fun restore() {
+        cns.clear()
+        cns.putAll(backup_cns)
+        rows.clear()
+        rows.putAll(backup_rows)
+        vars.clear()
+        vars.putAll(backup_vars)
+        infeasibleRows.clear()
+        infeasibleRows.addAll(backup_infeasibleRows)
+        objective = backup_objective
+        artificial = backup_artificial
+    }
 
     /**
      * Add a constraint to the solver.
@@ -33,17 +68,19 @@ class Solver {
      */
     @Throws(DuplicateConstraintException::class, UnsatisfiableConstraintException::class)
     fun addConstraint(constraint: Constraint) {
-
         if (cns.containsKey(constraint)) {
             throw DuplicateConstraintException(constraint)
         }
+
+        backup()
 
         val tag = Tag()
         val row = createRow(constraint, tag)
         var subject = chooseSubject(row, tag)
 
-        if (subject!!.type == Symbol.Type.INVALID && allDummies(row)) {
+        if (subject.type == Symbol.Type.INVALID && allDummies(row)) {
             if (!Util.nearZero(row.constant)) {
+                restore()
                 throw UnsatisfiableConstraintException(constraint)
             } else {
                 subject = tag.marker
@@ -52,6 +89,7 @@ class Solver {
 
         if (subject.type == Symbol.Type.INVALID) {
             if (!addWithArtificialVariable(row)) {
+                restore()
                 throw UnsatisfiableConstraintException(constraint)
             }
         } else {
@@ -191,6 +229,7 @@ class Solver {
 
         val info = EditInfo(constraint, cns[constraint]!!, 0.0)
         edits.put(variable, info)
+        changed = true
     }
 
     @Throws(UnknownEditVariableException::class)
@@ -204,10 +243,15 @@ class Solver {
         }
 
         edits.remove(variable)
+        changed = true
     }
 
     fun hasEditVariable(variable: Variable): Boolean {
         return edits.containsKey(variable)
+    }
+
+    fun editVariable(variable: Variable): EditInfo? {
+        return edits[variable]
     }
 
     @Throws(UnknownEditVariableException::class)
@@ -285,9 +329,9 @@ class Solver {
      */
     internal fun createRow(constraint: Constraint, tag: Tag): Row {
         val expression = constraint.expression
-        val row = Row(expression!!.constant)
+        val row = Row(expression.constant)
 
-        for (term in expression.terms!!) {
+        for (term in expression.terms) {
             if (!Util.nearZero(term.coefficient)) {
                 val symbol = getVarSymbol(term.variable)
 
@@ -352,7 +396,7 @@ class Solver {
      * 2) A negative slack or error tag variable.
      * If a subject cannot be found, an invalid symbol will be returned.
      */
-    private fun chooseSubject(row: Row, tag: Tag): Symbol? {
+    private fun chooseSubject(row: Row, tag: Tag): Symbol {
 
         for ((key) in row.cells) {
             if (key.type == Symbol.Type.EXTERNAL) {
@@ -363,7 +407,7 @@ class Solver {
             if (row.coefficientFor(tag.marker) < 0.0)
                 return tag.marker
         }
-        if (tag.other != null && (tag.other!!.type == Symbol.Type.SLACK || tag.other!!.type == Symbol.Type.ERROR)) {
+        if (tag.other.type == Symbol.Type.SLACK || tag.other.type == Symbol.Type.ERROR) {
             if (row.coefficientFor(tag.other) < 0.0)
                 return tag.other
         }
@@ -409,7 +453,7 @@ class Solver {
                 }
             }
             while (!deleteQueue.isEmpty()) {
-                rows.remove(deleteQueue.pop())
+                val key = deleteQueue.pop()
             }
             deleteQueue.clear()
 
@@ -468,6 +512,7 @@ class Solver {
      * @throws InternalSolverError The value of the objective function is unbounded.
      */
     internal fun optimize(objective: Row) {
+        changed = true
         while (true) {
             val entering = getEnteringSymbol(objective)
             if (entering.type == Symbol.Type.INVALID) {
@@ -499,6 +544,7 @@ class Solver {
 
     @Throws(InternalSolverError::class)
     internal fun dualOptimize() {
+        changed = true
         while (!infeasibleRows.isEmpty()) {
             val leaving = infeasibleRows.removeAt(infeasibleRows.size - 1)
             val row = rows[leaving]
@@ -640,3 +686,4 @@ class Solver {
     }
 
 }
+

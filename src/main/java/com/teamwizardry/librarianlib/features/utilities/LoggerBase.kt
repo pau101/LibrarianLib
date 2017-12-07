@@ -9,8 +9,10 @@ import net.minecraft.util.text.Style
 import net.minecraft.util.text.TextFormatting
 import net.minecraft.world.World
 import net.minecraftforge.fml.common.FMLCommonHandler
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
+import kotlin.reflect.jvm.internal.impl.utils.ExceptionUtilsKt
 
 abstract class LoggerBase(name: String) {
     val debugMode = LibrarianLib.DEV_ENVIRONMENT
@@ -51,7 +53,7 @@ abstract class LoggerBase(name: String) {
 
     fun error(e: Exception, message: String, vararg args: Any?) {
         logger.log(Level.ERROR, String.format(message, *processFormatting(args)))
-        e.printStackTrace()
+        errorStackTrace(e)
     }
 
     fun warn(message: String, vararg args: Any?) {
@@ -72,6 +74,32 @@ abstract class LoggerBase(name: String) {
 
     fun warn(player: EntityPlayer, message: String, vararg args: Any?) {
         player.sendStatusMessage(String.format(message, *processFormatting(args)).toComponent().setStyle(Style().setColor(TextFormatting.RED)), false)
+    }
+
+    fun errorStackTrace(error: Throwable? = null) {
+        getStackTrace(error, 1).forEach { logger.log(Level.ERROR, "| " + it) }
+    }
+
+    fun warnStackTrace(error: Throwable? = null) {
+        getStackTrace(error, 1).forEach { logger.log(Level.WARN, "| " + it) }
+    }
+
+    fun infoStackTrace(error: Throwable? = null) {
+        getStackTrace(error, 1).forEach { logger.log(Level.INFO, "| " + it) }
+    }
+
+    fun debugStackTrace(error: Throwable? = null) {
+        if(debugMode) getStackTrace(error, 1).forEach { logger.log(Level.INFO, "| " + it) }
+    }
+
+    fun complain(error: Throwable) {
+        getStackTrace(error, 0).forEach { logger.log(Level.ERROR, "| " + it) }
+    }
+
+    private fun getStackTrace(error: Throwable? = null, callsToTrim: Int = 0): List<String> {
+        var trace = ExceptionUtils.getStackTrace(error ?: Throwable()).lines()
+        trace = trace.subList(if(error == null) 2 + callsToTrim else callsToTrim, trace.size)
+        return trace
     }
 
     /**

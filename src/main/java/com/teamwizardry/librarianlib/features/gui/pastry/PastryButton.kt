@@ -8,6 +8,7 @@ import com.teamwizardry.librarianlib.features.gui.components.ComponentSprite
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.math.Vec2d
 import com.teamwizardry.librarianlib.features.sprite.Sprite
+import no.birkett.kiwi.Strength
 
 class PastryButton() : GuiComponent(0, 0) {
     constructor(text: String) : this() {
@@ -47,16 +48,18 @@ class PastryButton() : GuiComponent(0, 0) {
         updateState()
 
         add(backgroundComponent, iconComponent, label)
-        backgroundComponent.layout.boundsEqualTo(this)
         val margin = PastryStyle.currentStyle.buttonMargins
-        label.layout.boundsEqualTo(this, margin)
+        layout {
+            backgroundComponent.layout.boundsEqualTo(this)
+            label.layout.boundsEqualTo(this, margin)
 
-        iconComponent.layout.left eq this.layout.left + margin.left
-        iconComponent.layout.top eq this.layout.top + margin.top
-        iconComponent.layout.right leq this.layout.right - margin.right
-        iconComponent.layout.bottom leq this.layout.bottom - margin.bottom
+            iconComponent.layout.left eq this.layout.left + margin.left
+            iconComponent.layout.top eq this.layout.top + margin.top
+            iconComponent.layout.right leq this.layout.right - margin.right
+            iconComponent.layout.bottom leq this.layout.bottom - margin.bottom
 
-        iconComponent.layout.fixedSize()
+            iconComponent.layout.sizeStay = Strength.REQUIRED
+        }
     }
 
     private fun updateState() {

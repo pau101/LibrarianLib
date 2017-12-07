@@ -2,6 +2,7 @@ package com.teamwizardry.librarianlib.features.gui
 
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.gui.component.supporting.ComponentEventHookMethodHandler
+import com.teamwizardry.librarianlib.features.gui.component.supporting.ModifierKey
 import com.teamwizardry.librarianlib.features.gui.components.ComponentVoid
 import com.teamwizardry.librarianlib.features.gui.debugger.ComponentDebugger
 import com.teamwizardry.librarianlib.features.helpers.vec
@@ -12,6 +13,7 @@ import net.minecraft.client.gui.GuiScreen
 import net.minecraft.client.gui.ScaledResolution
 import net.minecraft.client.renderer.GlStateManager
 import no.birkett.kiwi.Solver
+import no.birkett.kiwi.Strength
 import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
 import java.io.IOException
@@ -29,11 +31,13 @@ internal class BaseGuiImplementation(
     private val mainScaleWrapper: ComponentVoid = ComponentVoid(0, 0)
     private var isDebugMode = false
     private val debugger = ComponentDebugger()
-    private var solver = Solver()
 
     private val eventHookHandler = ComponentEventHookMethodHandler(gui, fullscreenComponents)
 
     init {
+        fullscreenComponents.layout.rootSolver = Solver()
+        debugger.layout.rootSolver = Solver()
+
         mainComponents.geometry.shouldCalculateOwnHover = false
         fullscreenComponents.geometry.shouldCalculateOwnHover = false
         mainScaleWrapper.zIndex = -100000 // really far back
@@ -43,9 +47,9 @@ internal class BaseGuiImplementation(
         mainComponents.size = vec(guiWidth, guiHeight)
         debugger.geometry.shouldCalculateOwnHover = false
 
-        mainComponents.layout.fixedBounds()
-        mainScaleWrapper.layout.fixedBounds()
-        fullscreenComponents.layout.fixedBounds()
+        mainComponents.layout.boundsStay = Strength.REQUIRED
+        mainScaleWrapper.layout.boundsStay = Strength.REQUIRED
+        fullscreenComponents.layout.boundsStay = Strength.REQUIRED
     }
 
     fun scaleGui() {
@@ -91,12 +95,7 @@ internal class BaseGuiImplementation(
 
         StencilUtil.start()
         fullscreenComponents.guiEventHandler.preLayout(relPos, partialTicks)
-
-        fullscreenComponents.layout.addBase(solver, vec(1,1), null, null)
-        fullscreenComponents.layout.addCustom(solver)
-        solver.updateVariables()
-        fullscreenComponents.layout.update()
-        solver = Solver()
+        fullscreenComponents.layout.updateAllLayoutsIfNeeded()
 
         fullscreenComponents.geometry.calculateMouseOver(relPos)
         fullscreenComponents.render.draw(relPos, partialTicks)
@@ -106,12 +105,7 @@ internal class BaseGuiImplementation(
 
         if(isDebugMode) {
             debugger.guiEventHandler.preLayout(relPos, partialTicks)
-
-            debugger.layout.addBase(solver, vec(1,1), null, null)
-            debugger.layout.addCustom(solver)
-            solver.updateVariables()
-            debugger.layout.update()
-            solver = Solver()
+            debugger.layout.updateAllLayoutsIfNeeded()
 
             debugger.geometry.calculateMouseOver(relPos)
             debugger.render.draw(relPos, partialTicks)
@@ -146,10 +140,7 @@ internal class BaseGuiImplementation(
     @Throws(IOException::class)
     fun handleKeyboardInput() {
         if(Keyboard.getEventKeyState()) {
-            if(Keyboard.getEventKey() == Keyboard.KEY_D &&
-                    ( Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ) &&
-                    ( Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL) )
-                    ) {
+            if(Keyboard.getEventKey() == Keyboard.KEY_D && ModifierKey.doModifiersMatch(ModifierKey.SHIFT, ModifierKey.CTRL)) {
                 isDebugMode = !isDebugMode
             }
 

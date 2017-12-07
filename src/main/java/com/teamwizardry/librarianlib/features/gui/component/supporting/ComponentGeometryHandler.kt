@@ -14,16 +14,28 @@ import com.teamwizardry.librarianlib.features.math.Vec2d
  */
 class ComponentGeometryHandler(private val component: GuiComponent) {
     /** [GuiComponent.transform] */
-    val transform = ComponentTransform()
-    /** [GuiComponent.size] */
+    val transform = ComponentTransform(component)
     var size: Vec2d = vec(0, 0)
-    /** [GuiComponent.pos] */
+        internal set(value) {
+            field = value
+            component.layout.setNeedsLayout()
+        }
     var pos: Vec2d
         get() = transform.translate
-        set(value) { transform.translate = value }
+        internal set(value) {
+            transform.translate = value
+            component.layout.setNeedsLayout()
+        }
+//    /** [GuiComponent.pos] */
+//    var pos: Vec2d
+//        get() = transform.translate
+//        set(value) { transform.translate = value }
     /** [GuiComponent.mouseOver] */
     var mouseOver = false
+    /** True if the mouse is over the component at all, ignoring other components on top of it blocking the cursor */
     var mouseOverNoOcclusion = false
+    /** True if the mouse is directly over this component and not one of its children */
+    var mouseOverDirectly = false
 
     /**
      * Set whether the element should calculate hovering based on it's bounds as
@@ -95,26 +107,29 @@ class ComponentGeometryHandler(private val component: GuiComponent) {
         this.mouseOver = false
 
         if (component.isVisible) {
+
+            var mouseOverChild = false
             component.relationships.components.asReversed().forEach { child ->
                 child.geometry.calculateMouseOver(mousePos)
-                if (mouseOver) {
+                if (mouseOverChild) {
                     child.mouseOver = false // occlusion
                 }
                 if (child.mouseOver) {
+                    mouseOverChild = true
                     mouseOver = true // mouseover upward transfer
                 }
-
             }
 
             mouseOver = mouseOver || (shouldCalculateOwnHover && calculateOwnHover(mousePos))
+            mouseOver = component.BUS.fire(GuiComponentEvents.MouseOverEvent(component, mousePos, mouseOver)).isOver
+            mouseOverNoOcclusion = mouseOver
+            mouseOverDirectly = mouseOver && !mouseOverChild
         }
-        this.mouseOver = component.BUS.fire(GuiComponentEvents.MouseOverEvent(component, mousePos, this.mouseOver)).isOver
-        this.mouseOverNoOcclusion = this.mouseOver
     }
 
     internal fun allMouseOversFalse() {
         this.mouseOver = false
-        component.relationships.children.forEach { it.geometry.allMouseOversFalse() }
+        component.relationships.components.forEach { it.geometry.allMouseOversFalse() }
     }
 
     /**

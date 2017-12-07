@@ -58,6 +58,8 @@ object GuiComponentEvents {
     class RemoveChildEvent(@JvmField val component: GuiComponent, val child: GuiComponent) : EventCancelable()
     /** Fired when the component is added as a child to another component */
     class AddToParentEvent(@JvmField val component: GuiComponent, val parent: GuiComponent) : EventCancelable()
+    /** Fired after the component is added as a child to another component */
+    class PostAddToParentEvent(@JvmField val component: GuiComponent, val parent: GuiComponent) : Event()
     /** Fired when the component is removed from its parent */
     class RemoveFromParentEvent(@JvmField val component: GuiComponent, val parent: GuiComponent) : EventCancelable()
 

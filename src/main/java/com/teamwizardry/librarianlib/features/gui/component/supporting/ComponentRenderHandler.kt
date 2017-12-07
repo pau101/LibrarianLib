@@ -35,14 +35,14 @@ class ComponentRenderHandler(private val component: GuiComponent) {
     var cursor: LibCursor? = null
         get() {
             val parent = component.parent
-            if (parent == null)
-                return field
+            return if (parent == null)
+                field
             else
-                return parent.render.cursor
+                parent.render.cursor
         }
         set(value) {
             val parent = component.parent
-            if (parent == null)
+            return if (parent == null)
                 field = value
             else
                 parent.render.cursor = value

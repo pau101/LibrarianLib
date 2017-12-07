@@ -11,15 +11,17 @@ class PastryInventoryPlayer(player: InventoryWrapperPlayer) {
     val inventory by lazy {
         val c = ComponentVoid(0, 0)
         c.add(main, hotbar)
-        hotbar.layout.top eq main.layout.bottom + 4
+        c.layout {
+            hotbar.layout.top eq main.layout.bottom + 4
 
-        main.layout.top eq c.layout.top
-        main.layout.left eq c.layout.left
-        main.layout.right eq c.layout.right
+            main.layout.top eq c.layout.top
+            main.layout.left eq c.layout.left
+            main.layout.right eq c.layout.right
 
-        hotbar.layout.bottom eq c.layout.bottom
-        hotbar.layout.left eq c.layout.left
-        hotbar.layout.right eq c.layout.right
+            hotbar.layout.bottom eq c.layout.bottom
+            hotbar.layout.left eq c.layout.left
+            hotbar.layout.right eq c.layout.right
+        }
         c
     }
 

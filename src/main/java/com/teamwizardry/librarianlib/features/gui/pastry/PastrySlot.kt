@@ -9,6 +9,7 @@ import com.teamwizardry.librarianlib.features.gui.components.ComponentVoid
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.kotlin.delegate
 import com.teamwizardry.librarianlib.features.math.Vec2d
+import no.birkett.kiwi.Strength
 
 /**
  * Created by TheCodeWarrior
@@ -22,14 +23,15 @@ class PastrySlot(val slot: SlotBase, useBackground: Boolean = true) : GuiCompone
 
     init {
         if(useBackground) {
-
-            inner.layout.fixedSize()
-            inner.size = vec(16, 16)
-            inner.layout.boundsEqualTo(background, PastryStyle.currentStyle.slotBackgroundMargins)
-//            this.layout.boundsEqualTo(inner)
-            this.layout.boundsEqualTo(background)
-            iconComponent.layout.boundsEqualTo(inner)
             this.add(background, iconComponent, inner)
+            layout {
+                inner.layout.sizeStay = Strength.REQUIRED
+                inner.size = vec(16, 16)
+                inner.layout.boundsEqualTo(background, PastryStyle.currentStyle.slotBackgroundMargins)
+//            this.layout.boundsEqualTo(inner)
+                this.layout.boundsEqualTo(background)
+                iconComponent.layout.boundsEqualTo(inner)
+            }
         }
     }
 

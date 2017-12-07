@@ -16,7 +16,9 @@ class PastryBackground : GuiComponent(0, 0) {
         this.add(background)
         background.zIndex = -1000
 
-        this.layout.boundsEqualTo(background, PastryStyle.currentStyle.backgroundMargins)
+        layout {
+            this.layout.boundsEqualTo(background, PastryStyle.currentStyle.backgroundMargins)
+        }
     }
 
     private fun getSprite(): Sprite {

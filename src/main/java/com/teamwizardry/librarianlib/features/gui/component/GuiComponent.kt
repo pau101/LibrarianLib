@@ -114,6 +114,10 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int = 0, posY: Int =
     @Suppress("LeakingThis") @JvmField val clipping = ComponentClippingHandler(this)
     /** Handles autolayout constraints */
     @Suppress("LeakingThis") @JvmField val layout = ComponentLayoutHandler(this)
+    /** Handles debug info */
+    @Suppress("LeakingThis") @JvmField val debug = ComponentDebugHandler(this)
+    /** Handles key combinations */
+    @Suppress("LeakingThis") @JvmField val keyCombos = ComponentKeyCombinationHandler(this)
     /** Handles rippling and detecting events for @[Hook] annotations */
     @Suppress("LeakingThis") @JvmField internal val eventHookMethodHandler = ComponentEventHookMethodHandler(this)
     //endregion
@@ -122,15 +126,17 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int = 0, posY: Int =
     /**
      * The position of the component relative to its parent. This is the first operation performed by [transform]
      */
-    var pos
-            by geometry.transform::translate.delegate
+    var pos: Vec2d
+            by geometry::pos.delegate
+
     /**
-     * The size of the in the local context
+     * The size of the component in the local context
      */
-    var size
+    var size: Vec2d
             by geometry::size.delegate
+
     /**
-     * The transformations to apply to this component
+     * The transformations to apply to this component. The translation component will not persist.
      */
     val transform
             by geometry::transform.delegate
@@ -263,7 +269,21 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int = 0, posY: Int =
     fun add(vararg animations: Animation<*>) = render.add(*animations)
     //endregion
 
+    //region - LayoutHandler
+    /** run the passed lambda when this component is added to a valid autolayout context */
+    fun layout(lambda: Runnable) {
+        this.layout.constraints(lambda)
+    }
+    /** run the passed lambda when this component is added to a valid autolayout context */
+    fun layout(lambda: () -> Unit) {
+        layout(Runnable(lambda))
+    }
+    //endregion
+
     //region - Internal
+    var opaque = false
+        protected set
+
     init {
         this.pos = vec(posX, posY)
         this.size = vec(width, height)

@@ -39,23 +39,23 @@ class ComponentDebugger : GuiComponent(0, 0, 0, 0) {
         bottomAligned.add(resizeBar)
 
         resizeBar.pos = vec(0, -debugPanel.size.y - resizeBar.size.y)
-        resizeBar.layout.bottom.strength = Strength.STRONG
+        resizeBar.layout.topStay = Strength.STRONG
+        resizeBar.layout.heightStay = Strength.REQUIRED
         DragMixin(resizeBar) {
             vec(0, it.y.clamp(-size.y, -resizeBar.size.y))
         }
 
-        resizeBar.layout.left.equalTo(this.layout.left)
-        resizeBar.layout.right.equalTo(this.layout.right)
-        debugPanel.layout.left.equalTo(this.layout.left)
-        debugPanel.layout.right.equalTo(this.layout.right)
+        layout {
+            resizeBar.layout.left eq this.layout.left
+            resizeBar.layout.right eq this.layout.right
+            debugPanel.layout.left eq this.layout.left
+            debugPanel.layout.right eq this.layout.right
 
-        debugPanel.layout.bottom.equalTo(this.layout.bottom)
-        debugPanel.layout.top.equalTo(resizeBar.layout.bottom)
+            debugPanel.layout.bottom eq this.layout.bottom
+            debugPanel.layout.top eq resizeBar.layout.bottom
+        }
 
-        this.layout.width.strength = Strength.REQUIRED
-        this.layout.height.strength = Strength.REQUIRED
-        this.layout.top.strength = Strength.REQUIRED
-        this.layout.left.strength = Strength.REQUIRED
+        this.layout.boundsStay = Strength.REQUIRED
 
         resizeBar.render.hoverCursor = LibCursor.RESIZE_UPDOWN
     }

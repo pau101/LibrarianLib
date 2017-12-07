@@ -1,5 +1,6 @@
 package com.teamwizardry.librarianlib.features.gui.component.supporting
 
+import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.kotlin.div
 import com.teamwizardry.librarianlib.features.kotlin.minus
@@ -21,7 +22,7 @@ import net.minecraft.client.renderer.GlStateManager
  * - anchor
  * - postTranslate
  */
-class ComponentTransform {
+class ComponentTransform(private val component: GuiComponent) {
     /**
      * The translation component of the transform
      */
@@ -62,6 +63,7 @@ class ComponentTransform {
     var postTranslate = vec(0, 0)
 
     internal var anchorZ = 0.0
+
     /**
      * Create a [Matrix4] containing this transform
      */

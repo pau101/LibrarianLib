@@ -10,30 +10,30 @@ class PastryInventoryRow @JvmOverloads constructor(inv: List<SlotBase>, range: I
     val slots: List<PastrySlot>
 
     init {
-        var prev = if(reverse) this.layout.right else this.layout.left
+        slots = range.map { PastrySlot(inv[it]) }
+
+        this.add(*slots.toTypedArray())
+
+        layout {
+            var prev = if (reverse) this.layout.right else this.layout.left
 //        this.layout.height eq 18
-        slots = range.map { i ->
-            val slot = PastrySlot(inv[i])
-
-            slot.layout.top eq this.layout.top
-            slot.layout.bottom eq this.layout.bottom
-            if(reverse) {
-                slot.layout.right eq prev - gap
+            slots.forEach { slot ->
+                slot.layout.top eq this.layout.top
+                slot.layout.bottom eq this.layout.bottom
+                if (reverse) {
+                    slot.layout.right eq prev - gap
 //                slot.layout.left eq gap*i
-                prev = slot.layout.left
-            } else {
-                slot.layout.left eq prev + gap
+                    prev = slot.layout.left
+                } else {
+                    slot.layout.left eq prev + gap
 //                slot.layout.left eq gap*i
-                prev = slot.layout.right
+                    prev = slot.layout.right
+                }
             }
-
-            this.add(slot)
-
-            slot
+            if (reverse)
+                this.layout.left eq prev
+            else
+                this.layout.right eq prev
         }
-        if(reverse)
-            this.layout.left eq prev
-        else
-            this.layout.right eq prev
     }
 }

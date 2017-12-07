@@ -12,82 +12,105 @@ import java.util.*
 
 @Suppress("LEAKING_THIS", "UNUSED")
 class ComponentLayoutHandler(val component: GuiComponent) {
+
+    @JvmField val posX = Anchor(component, "posX")
+    @JvmField val posY = Anchor(component, "posY")
+    @JvmField val sizeX = Anchor(component, "sizeX")
+    @JvmField val sizeY = Anchor(component, "sizeY")
+
     /** The anchor corresponding to the minimum x coordinate of the component's bounds */
-    @JvmField val left = Anchor(component, Vec2d.Axis.X)
+    val left: LayoutExpression
+        get() = component.parent?.layout?.left?.let { it + posX } ?: posX
     /** The anchor corresponding to the maximum x coordinate of the component's bounds */
-    @JvmField val right = Anchor(component, Vec2d.Axis.X)
+    val right: LayoutExpression
+        get() = left + width
     /** The anchor corresponding to the minimum y coordinate of the component's bounds */
-    @JvmField val top = Anchor(component, Vec2d.Axis.Y)
+    val top: LayoutExpression
+        get() = component.parent?.layout?.top?.let { it + posY } ?: posY
     /** The anchor corresponding to the maximum y coordinate of the component's bounds */
-    @JvmField val bottom = Anchor(component, Vec2d.Axis.Y)
+    val bottom: LayoutExpression
+        get() = top + height
     /** The anchor corresponding to the x coordinate of the center of the component's bounds */
-    @JvmField val centerX = Anchor(component, Vec2d.Axis.X)
+    val centerX: LayoutExpression
+        get() = (left + right) / 2
     /** The anchor corresponding to the y coordinate of the center of the component's bounds */
-    @JvmField val centerY = Anchor(component, Vec2d.Axis.Y)
+    val centerY: LayoutExpression
+        get() = (top + bottom) / 2
 
     /** The anchor corresponding to the width of the component's bounds */
-    @JvmField val width = Anchor(component, Vec2d.Axis.X)
+    val width: LayoutExpression
+        get() = sizeX
     /** The anchor corresponding to the height of the component's bounds */
-    @JvmField val height = Anchor(component, Vec2d.Axis.Y)
+    val height: LayoutExpression
+        get() = sizeY
 
-    /** An anchor always set to zero on the X axis */
-    @JvmField val zeroX = Anchor(component, Vec2d.Axis.X)
-    /** An anchor always set to zero on the Y axis */
-    @JvmField val zeroY = Anchor(component, Vec2d.Axis.Y)
     /**
-     * If set to true, the width and height constraints will be set to the component's implicit size if it exists, rather
-     * than the component's size attribute
+     * If nonzero, the width and height constraints will be set to the component's implicit size if it exists, rather
+     * than the component's size attribute, and use this strength
+     *
+     * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED]
      */
-    var useImplicitSize = true
+    var implicitSizeStrength = Strength.IMPLICIT
+
     /**
-     * If set to true, this component will shrink as much as possible with a strength of [Strength.PREFERRED].
-     * The component's implicit size overrides this value, and this value overrides the strength of the
-     * [width] and [height] anchors.
+     * Calls the passed lambda when adding constraints. The lambda may be called multiple times if the component is
+     * removed from its parent and added to another parent.
      */
-    var shrinkIfPossible = false
+    fun constraints(lambda: Runnable) {
+        constraintCallbacks.add(lambda)
 
-    init {
-        width.strength = Strength.MEDIUM
-        height.strength = Strength.MEDIUM
-
-        width.relativeVariable = width.variable
-        height.relativeVariable = height.variable
+        if(rootSolver != null) {
+            lambda.run()
+        }
     }
 
-    private val constraints = Sets.newSetFromMap(IdentityHashMap<LayoutConstraint, Boolean>())
-
     fun add(constraint: LayoutConstraint) {
-        constraints.add(constraint)
+        rootSolver?.addConstraint(constraint.kiwiConstraint)
     }
 
     fun remove(constraint: LayoutConstraint) {
-        constraints.remove(constraint)
+        rootSolver?.removeConstraint(constraint.kiwiConstraint)
     }
 
-    /**
-     * Makes the size as defined by [GuiComponent.size] fixed by setting their constraints to be [Strength.REQUIRED]
-     */
-    fun fixedSize() {
-        width.strength = Strength.REQUIRED
-        height.strength = Strength.REQUIRED
-    }
+    /** Specifies the strength with which the x coordinate defined by [GuiComponent.pos] should be maintained
+     * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    var leftStay = 0.0
+    /** Specifies the strength with which the y coordinate defined by [GuiComponent.pos] should be maintained
+    * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    var topStay = 0.0
+    /** Specifies the strength with which the width defined by [GuiComponent.size] should be maintained
+    * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    var widthStay = 0.0
+    /** Specifies the strength with which the height defined by [GuiComponent.size] should be maintained
+    * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    var heightStay = 0.0
 
-    /**
-     * Makes the position as defined by [GuiComponent.pos] fixed by setting thier constraints to be [Strength.REQUIRED]
-     */
-    fun fixedPos() {
-        left.strength = Strength.REQUIRED
-        top.strength = Strength.REQUIRED
-    }
+    /** Specifies the strength with which the size defined by [GuiComponent.size] should be maintained
+    * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    var sizeStay
+        get() = Math.min(widthStay, heightStay)
+        set(value) {
+            widthStay = value
+            heightStay = value
+        }
 
-    /**
-     * Makes the position and size as defined by [GuiComponent.pos] and [GuiComponent.size] fixed by setting thier
-     * constraints to be [Strength.REQUIRED]
-     */
-    fun fixedBounds() {
-        fixedPos()
-        fixedSize()
-    }
+    /** Specifies the strength with which the position defined by [GuiComponent.pos] should be maintained
+    * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    var positionStay
+        get() = Math.min(leftStay, topStay)
+        set(value) {
+            leftStay = value
+            topStay = value
+        }
+
+    /** Specifies the strength with which the size and position defined by [GuiComponent.size] and [GuiComponent.pos] should be maintained
+    * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    var boundsStay
+        get() = Math.min(sizeStay, positionStay)
+        set(value) {
+            sizeStay = value
+            positionStay = value
+        }
 
     /**
      * Creates constraints to attach this component's top, left, bottom, and right anchors to the same anchors on
@@ -139,108 +162,132 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         )
     }
 
-    internal fun addBase(solver: Solver, parentScaleFactor: Vec2d, parentLeft: Variable?, parentTop: Variable?) {
-        val name = component.relationships.guiPath()
-        left.setName(name + "#left")
-        right.setName(name + "#right")
-        top.setName(name + "#top")
-        bottom.setName(name + "#bottom")
-        width.setName(name + "#width")
-        height.setName(name + "#height")
-        centerX.setName(name + "#centerX")
-        centerY.setName(name + "#centerY")
+    var isolated = false
+        private set
 
-        val implicitSize = component.getImplicitSize()
-        val scaleFactor = parentScaleFactor * component.transform.scale2D
-
-        solver.addConstraint(Symbolics.equals(zeroX.variable, 0.0).setStrength(Strength.REQUIRED))
-        solver.addConstraint(Symbolics.equals(zeroY.variable, 0.0).setStrength(Strength.REQUIRED))
-
-        // absolute pos given parent pos and relative pos
-        if(parentLeft == null) {
-            solver.addConstraint(Symbolics.equals(left.variable, component.pos.x).setStrength(Strength.REQUIRED))
-        } else {
-            solver.addConstraint(Symbolics.equals(left.relativeVariable, component.pos.x * parentScaleFactor.x).setStrength(left.strength))
-            solver.addConstraint(Symbolics.equals(left.variable, Symbolics.add(parentLeft, left.relativeVariable)).setStrength(Strength.REQUIRED))
+    /**
+     * Isolates
+     */
+    fun isolate() {
+        if(component.relationships.components.isNotEmpty()) {
+            throw IllegalStateException("Cannot isolate a component once it has children!")
         }
-        if(parentTop == null) {
-            solver.addConstraint(Symbolics.equals(top.variable, component.pos.y).setStrength(Strength.REQUIRED))
-        } else {
-            solver.addConstraint(Symbolics.equals(top.relativeVariable, component.pos.y * parentScaleFactor.y).setStrength(top.strength))
-            solver.addConstraint(Symbolics.equals(top.variable, Symbolics.add(parentTop, top.relativeVariable)).setStrength(Strength.REQUIRED))
+        if(component.relationships.parent != null) {
+            throw IllegalStateException("Cannot isolate a component once it has been added to a component tree!")
         }
+        rootSolver = Solver()
+        isolated = true
+    }
 
-        if(useImplicitSize && implicitSize != null) {
-            // implicit width and height in global coord space
-            solver.addConstraint(Symbolics.equals(width.variable, implicitSize.x * scaleFactor.x).setStrength(Strength.IMPLICIT))
-            solver.addConstraint(Symbolics.equals(height.variable, implicitSize.y * scaleFactor.y).setStrength(Strength.IMPLICIT))
-        } else if(shrinkIfPossible) {
-            // try to shrink width and height to 0
-            solver.addConstraint(Symbolics.equals(width.variable, 0.0).setStrength(Strength.PREFERRED))
-            solver.addConstraint(Symbolics.equals(height.variable, 0.0).setStrength(Strength.PREFERRED))
-        } else {
-            // width and height in global coord space
-            solver.addConstraint(Symbolics.equals(width.variable, component.size.x * scaleFactor.x).setStrength(width.strength))
-            solver.addConstraint(Symbolics.equals(height.variable, component.size.y * scaleFactor.y).setStrength(height.strength))
+    fun bake() {
+        if(!isolated) {
+            throw IllegalStateException("Only isolated layouts can be baked!")
         }
+        setNeedsLayout()
+        updateLayoutIfNeeded()
+        baked = true
+        solverStorage = null
+    }
 
-        // limit width and height to be >= 0
-        solver.addConstraint(Symbolics.greaterThanOrEqualTo(width.variable, 0.0).setStrength(Strength.REQUIRED))
-        solver.addConstraint(Symbolics.greaterThanOrEqualTo(height.variable, 0.0).setStrength(Strength.REQUIRED))
-
-        // right and bottom based on top, left, width, and height
-        solver.addConstraint(Symbolics.equals(right.variable, Symbolics.add(left.variable, width.variable)).setStrength(Strength.REQUIRED))
-        solver.addConstraint(Symbolics.equals(bottom.variable, Symbolics.add(top.variable, height.variable)).setStrength(Strength.REQUIRED))
-
-        // right and bottom relative to parent, scaled to global coord space
-        solver.addConstraint(Symbolics.equals(right.relativeVariable, Symbolics.add(left.relativeVariable, width.variable)).setStrength(Strength.REQUIRED))
-        solver.addConstraint(Symbolics.equals(bottom.relativeVariable, Symbolics.add(top.relativeVariable, height.variable)).setStrength(Strength.REQUIRED))
-
-        // centerX/Y based on left and right
-        solver.addConstraint(Symbolics.equals(centerX.variable, Symbolics.divide(Symbolics.add(left.variable, right.variable), 2.0)).setStrength(Strength.REQUIRED))
-        solver.addConstraint(Symbolics.equals(centerY.variable, Symbolics.divide(Symbolics.add(top.variable, bottom.variable), 2.0)).setStrength(Strength.REQUIRED))
-
-        // centerX/Y relative to parent, scaled to global coord space
-        if(parentLeft != null)
-            solver.addConstraint(Symbolics.equals(centerX.relativeVariable, Symbolics.subtract(centerX.variable, parentLeft)).setStrength(Strength.REQUIRED))
-        else
-            solver.addConstraint(Symbolics.equals(centerX.relativeVariable, Symbolics.subtract(centerX.variable, 0.0)).setStrength(Strength.REQUIRED))
-        if(parentTop != null)
-            solver.addConstraint(Symbolics.equals(centerY.relativeVariable, Symbolics.subtract(centerY.variable, parentTop)).setStrength(Strength.REQUIRED))
-        else
-            solver.addConstraint(Symbolics.equals(centerY.relativeVariable, Symbolics.subtract(centerY.variable, 0.0)).setStrength(Strength.REQUIRED))
-
-        component.relationships.children.forEach {
-            it.layout.addBase(solver, scaleFactor, left.variable, top.variable)
+    fun setNeedsLayout() {
+        solverRootComponent?.also {
+            it.layout.needsLayout = true
         }
     }
 
-    internal fun addCustom(solver: Solver) {
-        component.BUS.fire(GuiComponentEvents.AddConstraintsEvent(component, solver))
-        constraints.forEach {
-            solver.addConstraint(it.makeConstraint())
-        }
-        component.relationships.children.forEach {
-            it.layout.addCustom(solver)
+    fun updateLayoutIfNeeded() {
+        val solver = this.solverStorage
+        if(solver == null) {
+            solverRootComponent?.layout?.updateLayoutIfNeeded()
+        } else if (needsLayout || solver.changed) {
+            addIntrinsic()
+            solver.updateVariables()
+            update()
+
+            needsLayout = false
+            solver.changed = false
         }
     }
 
-    internal fun update() {
-        val rootMin = vec(left.variable.value, top.variable.value)
-        val rootMax = vec(right.variable.value, bottom.variable.value)
+    //region internals
 
-        val parent = component.relationships.parent
-        if(parent != null) {
-            val pos = parent.otherPosToThisContext(null, rootMin)
-            component.pos = pos
+    private val constraintCallbacks = mutableListOf<Runnable>()
 
-            val size = component.otherPosToThisContext(null, rootMax)
-            component.size = size
+    private var needsLayout = false
+    private var solverStorage: Solver? = null
+    internal var rootSolver: Solver?
+        get() = if(baked) null else solverStorage ?: component.parent?.layout?.rootSolver
+        set(value) {
+            if(baked) throw IllegalStateException("Component already baked!")
+            solverStorage = value
+            onAddedToLayoutContext()
         }
+    internal val solverRootComponent: GuiComponent?
+        get() = if(baked) null else if(solverStorage != null) this.component else this.component.parent?.layout?.solverRootComponent
+    private var baked = false
 
-        component.relationships.children.forEach {
+    private fun addIntrinsic() {
+        val implicit = component.getImplicitSize()
+        if(implicitSizeStrength != 0.0 && implicit != null) {
+            rootSolver?.setEditVariable(sizeX.variable, implicit.x, implicitSizeStrength)
+            rootSolver?.setEditVariable(sizeY.variable, implicit.y, implicitSizeStrength)
+        } else {
+            rootSolver?.setEditVariable(sizeX.variable, component.size.x, widthStay)
+            rootSolver?.setEditVariable(sizeY.variable, component.size.y, heightStay)
+
+        }
+        rootSolver?.setEditVariable(posX.variable, component.pos.x, leftStay)
+        rootSolver?.setEditVariable(posY.variable, component.pos.y, topStay)
+
+        component.relationships.components.forEach {
+            it.layout.addIntrinsic()
+        }
+    }
+
+    private fun update() {
+        component.transform.translate = vec(posX.variable.value, posY.variable.value)
+        component.size = vec(sizeX.variable.value, sizeY.variable.value)
+
+        component.relationships.components.forEach {
             it.layout.update()
         }
     }
 
+    init {
+        component.BUS.hook(GuiComponentEvents.PostAddToParentEvent::class.java) { e ->
+            if(solverStorage == null && rootSolver != null)
+                onAddedToLayoutContext()
+        }
+    }
+
+    private fun onAddedToLayoutContext() {
+        constraintCallbacks.forEach(Runnable::run)
+        component.relationships.components.forEach {
+            if(it.layout.solverStorage != null) return@forEach
+            it.layout.onAddedToLayoutContext()
+        }
+    }
+
+    // Uses depth-first search so subcomponents with isolated layouts are updated first
+    internal fun updateAllLayoutsIfNeeded() {
+        component.relationships.components.forEach {
+            it.layout.updateAllLayoutsIfNeeded()
+        }
+        if(solverStorage != null)
+            updateLayoutIfNeeded()
+    }
+    //endregion
+}
+
+fun Solver.setEditVariable(variable: Variable, value: Double, strength: Double) {
+    val strength = if(strength >= Strength.REQUIRED) Strength.REQUIRED - 1 else strength
+
+    val edit = editVariable(variable)
+    if(edit?.constraint?.strength != strength) {
+        if(hasEditVariable(variable)) removeEditVariable(variable)
+        addEditVariable(variable, strength)
+    }
+    if(edit?.constant != value) {
+        suggestValue(variable, value)
+    }
 }

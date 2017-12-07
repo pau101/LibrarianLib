@@ -26,7 +26,7 @@ class ComponentGuiEventHandler(private val component: GuiComponent) {
 
         val mousePos = component.geometry.transformFromParentContext(mousePos)
 
-        component.relationships.children.forEach {
+        component.relationships.components.forEach {
             it.guiEventHandler.preLayout(mousePos, partialTicks)
         }
     }

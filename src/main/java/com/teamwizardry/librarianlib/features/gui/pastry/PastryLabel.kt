@@ -21,7 +21,9 @@ class PastryLabel @JvmOverloads constructor(text: String? = null) : GuiComponent
 
     init {
         this.add(managedText)
-        managedText.layout.boundsEqualTo(this)
+        layout {
+            managedText.layout.boundsEqualTo(this)
+        }
         text?.also { this.text = it }
     }
 

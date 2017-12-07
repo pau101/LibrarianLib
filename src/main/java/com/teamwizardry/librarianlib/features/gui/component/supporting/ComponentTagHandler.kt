@@ -66,6 +66,7 @@ class ComponentTagHandler(private val component: GuiComponent) {
      * Removes all components that have the supplied tag
      */
     fun removeByTag(tag: Any) {
+        if(component.opaque) throw IllegalStateException("Component is opaque")
         component.relationships.components.removeAll { e ->
             var b = e.hasTag(tag)
             if (component.BUS.fire(GuiComponentEvents.RemoveChildEvent(component, e)).isCanceled())
@@ -81,10 +82,10 @@ class ComponentTagHandler(private val component: GuiComponent) {
 
     private fun addAllByTag(tag: Any, list: MutableList<GuiComponent>) {
         addByTag(tag, list)
-        component.relationships.components.forEach { it.tags.addAllByTag(tag, list) }
+        component.relationships.children.forEach { it.tags.addAllByTag(tag, list) }
     }
 
     private fun addByTag(tag: Any, list: MutableList<GuiComponent>) {
-        component.relationships.components.filterTo(list) { it.hasTag(tag) }
+        component.relationships.children.filterTo(list) { it.hasTag(tag) }
     }
 }

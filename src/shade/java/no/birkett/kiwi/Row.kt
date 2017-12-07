@@ -12,6 +12,13 @@ class Row {
 
     var cells: MutableMap<Symbol, Double> = LinkedHashMap()
 
+    fun copy(): Row {
+        val n = Row()
+        n.constant = constant
+        n.cells.putAll(cells)
+        return n
+    }
+
     @JvmOverloads constructor(constant: Double = 0.0) {
         this.constant = constant
     }

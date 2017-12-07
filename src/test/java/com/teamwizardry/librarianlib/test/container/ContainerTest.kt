@@ -65,21 +65,19 @@ class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 1
     }
 
     init {
-        val b = PastryBackground()
-        b.layout.boundsEqualTo(mainComponents)
-        mainComponents.add(b)
-        val s = PastrySlot(container.invPlayer.offhand)
-        mainComponents.add(s)
-        s.layout.left eq mainComponents.layout.left + 10
-        s.layout.top eq mainComponents.layout.top + 10
-
+        val bg = PastryBackground()
+        val offhand = PastrySlot(container.invPlayer.offhand)
         val hotbar = PastryInventoryRow(container.invPlayer.hotbar)
-        mainComponents.add(hotbar)
+        val main = PastryInventoryRow(container.invPlayer.main)
+        mainComponents.add(bg, offhand, main, hotbar)
+
+        bg.layout.boundsEqualTo(mainComponents)
+        offhand.layout.left eq mainComponents.layout.left + 10
+        offhand.layout.top eq mainComponents.layout.top + 10
+
         hotbar.layout.centerX eq mainComponents.layout.centerX
         hotbar.layout.bottom eq mainComponents.layout.bottom - 4
 
-        val main = PastryInventoryRow(container.invPlayer.main)
-        mainComponents.add(main)
         main.layout.centerX eq mainComponents.layout.centerX
         main.layout.bottom eq hotbar.layout.top - 4
 //

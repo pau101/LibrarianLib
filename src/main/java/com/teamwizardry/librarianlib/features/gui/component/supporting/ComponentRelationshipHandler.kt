@@ -16,14 +16,23 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
     internal val components = mutableListOf<GuiComponent>()
     /** [GuiComponent.children] */
     val children: Collection<GuiComponent> = Collections.unmodifiableCollection(components)
+        get() =
+            if(component.opaque)
+                emptyList()
+            else
+                field
     /**
      * An unmodifiable collection of all the children of this component, recursively.
      */
     val allChildren: Collection<GuiComponent>
         get() {
-            val list = mutableListOf<GuiComponent>()
-            addChildrenRecursively(list)
-            return Collections.unmodifiableCollection(list)
+            if(component.opaque)
+                return emptyList()
+            else {
+                val list = mutableListOf<GuiComponent>()
+                addChildrenRecursively(list)
+                return Collections.unmodifiableCollection(list)
+            }
         }
 
     private fun addChildrenRecursively(list: MutableList<GuiComponent>) {
@@ -50,10 +59,11 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
      * @throws IllegalArgumentException if the component had a parent already
      */
     fun add(vararg components: GuiComponent?) {
+        if(component.opaque) throw IllegalStateException("Component is opaque")
         components.forEach { addInternal(it) }
     }
 
-    protected fun addInternal(component: GuiComponent?) {
+    private fun addInternal(component: GuiComponent?) {
         if (component == null) {
             LibrarianLog.error("Null component, ignoring")
             return
@@ -64,6 +74,7 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
         if (component.parent != null) {
             if (component.parent == this.component) {
                 LibrarianLog.warn("You tried to add the component to the same parent twice. Why?")
+                LibrarianLog.warnStackTrace()
                 return
             } else {
                 throw IllegalArgumentException("Component already had a parent")
@@ -81,19 +92,23 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
             return
         components.add(component)
         component.relationships.parent = this.component
+
+        component.BUS.fire(GuiComponentEvents.PostAddToParentEvent(component, this.component))
+        component.layout.setNeedsLayout()
     }
 
     /**
      * @return whether this component has [component] as a decendant
      */
     operator fun contains(component: GuiComponent): Boolean =
-            component in components || components.any { component in it.relationships }
+            !component.opaque && (component in components || components.any { component in it.relationships })
 
     /**
      * Removes the supplied component
      * @param component
      */
     fun remove(component: GuiComponent) {
+        if(component.opaque) throw IllegalStateException("Component is opaque")
         if (component !in components)
             return
         if (this.component.BUS.fire(GuiComponentEvents.RemoveChildEvent(this.component, component)).isCanceled())
@@ -102,12 +117,14 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
             return
         component.relationships.parent = null
         components.remove(component)
+        component.layout.setNeedsLayout()
     }
 
     /**
      * Iterates over children while allowing children to be added or removed.
      */
     fun forEachChild(l: (GuiComponent) -> Unit) {
+        if(component.opaque) throw IllegalStateException("Component is opaque")
         val copy = components.toList()
         copy.forEach(l)
     }
@@ -116,6 +133,7 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
      * Returns a list of all children that are subclasses of [clazz]
      */
     fun <C : GuiComponent> getByClass(clazz: Class<C>): List<C> {
+        if(component.opaque) return listOf()
         val list = mutableListOf<C>()
         addByClass(clazz, list)
         return list
@@ -125,6 +143,7 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
      * Returns a list of all children and grandchildren etc. that are subclasses of [clazz]
      */
     fun <C : GuiComponent> getAllByClass(clazz: Class<C>): List<C> {
+        if(component.opaque) return listOf()
         val list = mutableListOf<C>()
         addAllByClass(clazz, list)
         return list
@@ -161,7 +180,7 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
      * - `[index]` is the number of duplicates of this component identifier that occur before this one
      */
     fun guiPath(endAt: GuiComponent? = null): String {
-        val pathToParent = if(parent == endAt) "" else parent?.relationships?.guiPath()?.let { it + "." } ?: ""
+        val pathToParent = if(parent == endAt) "" else parent?.relationships?.guiPath()?.let { it + "/" } ?: ""
 
         var ourElement = ""
 
@@ -172,7 +191,7 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
 
         var occurances = 0
         var dups = 0
-        parent?.relationships?.children?.forEach { child ->
+        parent?.relationships?.components?.forEach { child ->
             if(child == this.component) {
                 dups = occurances
             }

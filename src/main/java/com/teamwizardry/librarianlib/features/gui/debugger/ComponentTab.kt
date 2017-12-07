@@ -13,20 +13,22 @@ class ComponentTab(val tabString: String, posX: Int, posY: Int, width: Int, heig
     private val text = ComponentText(0, 0).centered()
 
     init {
-        this.layout.width.strength = Strength.STRONG
-        this.layout.height.strength = Strength.STRONG
+        this.layout.widthStay = Strength.STRONG
+        this.layout.heightStay = Strength.STRONG
         text.text = tabString
 
         add(background, text)
 
-        background.layout.top.equalTo(this.layout.top)
-        background.layout.bottom.equalTo(this.layout.bottom)
-        background.layout.left.equalTo(this.layout.left)
-        background.layout.right.equalTo(this.layout.right)
+        layout {
+            background.layout.top eq this.layout.top
+            background.layout.bottom eq this.layout.bottom
+            background.layout.left eq this.layout.left
+            background.layout.right eq this.layout.right
 
-        text.layout.left.equalTo(this.layout.left)
-        text.layout.right.equalTo(this.layout.right)
-        text.layout.centerY.equalTo(this.layout.centerY)
+            text.layout.left eq this.layout.left
+            text.layout.right eq this.layout.right
+            text.layout.centerY eq this.layout.centerY
+        }
 
         background.name = this.name
         text.name = this.name
