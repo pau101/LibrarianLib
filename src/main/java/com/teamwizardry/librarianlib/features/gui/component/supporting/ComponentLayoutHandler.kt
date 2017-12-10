@@ -179,6 +179,11 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         setNeedsLayout()
     }
 
+    /**
+     * Applies the current layout if one exists, and disables autolayout for its children.
+     *
+     * If children have separate solver contexts designated with `isolate` they will function as normal.
+     */
     fun bake() {
         needsLayout = true
         updateLayoutIfNeeded()

@@ -58,35 +58,31 @@ class TestWrapper(te: TEContainer) : InventoryWrapper(te) {
 }
 
 class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 197, 166) {
-    companion object {
-        val TEXTURE = Texture(ResourceLocation("librarianlibtest:textures/gui/containerTest.png"))
-        val bg = TEXTURE.getSprite("bg", 197, 166)
-        val slider = TEXTURE.getSprite("slider", 60, 62)
-    }
-
     init {
         val bg = PastryBackground()
 
         mainComponents.add(bg)
 
         val offhand = PastrySlot(container.invPlayer.offhand)
-        val hotbar = PastryInventoryGrid(container.invPlayer.hotbar, 9)
-        val main = PastryInventoryRow(container.invPlayer.main)
+        val hotbar = PastryInventoryRow(container.invPlayer.hotbar)
+        val main = PastryInventoryGrid(container.invPlayer.main, 9)
+        val armor = PastryInventoryColumn(container.invPlayer.armor)
 
-        mainComponents.add(offhand, main, hotbar)
+        mainComponents.add(offhand, main, hotbar, armor)
         layout {
             bg.layout.boundsEqualTo(mainComponents)
 
-            offhand.pos = vec(10, 10)
+            armor.layout.left eq mainComponents.layout.left + 10
+            armor.layout.top eq mainComponents.layout.top + 10
 
-            offhand.layout.left eq mainComponents.layout.left + 50
-            offhand.layout.top eq mainComponents.layout.top + 50
+            offhand.layout.bottom eq armor.layout.bottom
+            offhand.layout.left eq armor.layout.right + 10
 
+            hotbar.layout.bottom eq mainComponents.layout.bottom - 10
             hotbar.layout.centerX eq mainComponents.layout.centerX
-            hotbar.layout.bottom eq mainComponents.layout.bottom - 4
 
+            main.layout.bottom eq hotbar.layout.top - 10
             main.layout.centerX eq mainComponents.layout.centerX
-            main.layout.bottom eq hotbar.layout.top - 4
         }
 //
 //        val layout = PastryInventoryPlayer(container.invPlayer)

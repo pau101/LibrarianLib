@@ -16,7 +16,7 @@ import no.birkett.kiwi.Strength
 /**
  * Created by TheCodeWarrior
  */
-class PastrySlot(val slot: SlotBase, useBackground: Boolean = true) : GuiComponent() {
+class PastrySlot @JvmOverloads constructor(val slot: SlotBase, buffer: Int = 0, useBackground: Boolean = true) : GuiComponent() {
     private val inner = ComponentVoid(0, 0)
     private val background = ComponentSprite(PastryStyle.getSprite("slot_background", PastryStyle.currentStyle.slotBackgroundSize.xi, PastryStyle.currentStyle.slotBackgroundSize.yi), 0, 0)
     private val iconComponent = ComponentSprite(null, 0, 0)
@@ -32,11 +32,11 @@ class PastrySlot(val slot: SlotBase, useBackground: Boolean = true) : GuiCompone
             val margins = PastryStyle.currentStyle.slotBackgroundMargins
 
             inner.size = vec(16, 16)
-            this.size = inner.size + vec(margins.left + margins.right, margins.top + margins.bottom)
+            this.size = inner.size + vec(margins.left + margins.right + buffer*2, margins.top + margins.bottom + buffer*2)
             background.size = this.size
             iconComponent.size = inner.size
 
-            inner.pos = vec(margins.left, margins.top)
+            inner.pos = vec(margins.left + buffer, margins.top + buffer)
             iconComponent.pos = inner.pos
         } else {
             this.add(inner)

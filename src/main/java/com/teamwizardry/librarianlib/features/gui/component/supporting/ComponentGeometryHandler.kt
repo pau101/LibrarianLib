@@ -3,6 +3,7 @@ package com.teamwizardry.librarianlib.features.gui.component.supporting
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.helpers.vec
+import com.teamwizardry.librarianlib.features.kotlin.round
 import com.teamwizardry.librarianlib.features.kotlin.times
 import com.teamwizardry.librarianlib.features.math.Matrix4
 import com.teamwizardry.librarianlib.features.math.Vec2d
@@ -17,19 +18,23 @@ class ComponentGeometryHandler(private val component: GuiComponent) {
     val transform = ComponentTransform(component)
     var size: Vec2d = vec(0, 0)
         internal set(value) {
-            if(field != value) {
+            val v = if(integerBounds) value.round() else value
+            if(field != v) {
                 component.layout.setNeedsLayout()
             }
-            field = value
+            field = v
         }
     var pos: Vec2d
         get() = transform.translate
         internal set(value) {
-            if(transform.translate != value) {
+            val v = if(integerBounds) value.round() else value
+            if(transform.translate != v) {
                 component.layout.setNeedsLayout()
             }
-            transform.translate = value
+            transform.translate = v
         }
+    /** Set to true to snap all position and size values to integers */
+    var integerBounds = false
 //    /** [GuiComponent.pos] */
 //    var pos: Vec2d
 //        get() = transform.translate
