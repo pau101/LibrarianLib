@@ -17,7 +17,7 @@ class ComponentGuiEventHandler(private val component: GuiComponent) {
 
     fun tick() {
         component.BUS.fire(GuiComponentEvents.ComponentTickEvent(component))
-        component.relationships.forEachChild { it.guiEventHandler.tick() }
+        component.relationships.components.forEach { it.guiEventHandler.tick() }
     }
 
     fun preLayout(mousePos: Vec2d, partialTicks: Float) {
@@ -46,7 +46,7 @@ class ComponentGuiEventHandler(private val component: GuiComponent) {
         if (component.mouseOver)
             mouseButtonsDown[button.ordinal] = true
 
-        component.relationships.forEachChild { child ->
+        component.relationships.components.forEach { child ->
             child.guiEventHandler.mouseDown(mousePos, button)
         }
     }
@@ -59,7 +59,8 @@ class ComponentGuiEventHandler(private val component: GuiComponent) {
      */
     fun mouseUp(mousePos: Vec2d, button: EnumMouseButton) {
         val mousePos = component.geometry.transformFromParentContext(mousePos)
-        if (!component.isVisible) return
+        if (!component.isVisible)
+            return
         val wasDown = mouseButtonsDown[button.ordinal]
         mouseButtonsDown[button.ordinal] = false
 
@@ -71,7 +72,7 @@ class ComponentGuiEventHandler(private val component: GuiComponent) {
             // don't return here, if a click was handled we should still handle the mouseUp
         }
 
-        component.relationships.forEachChild { child ->
+        component.relationships.components.forEach { child ->
             child.guiEventHandler.mouseUp(mousePos, button)
         }
     }
@@ -88,7 +89,7 @@ class ComponentGuiEventHandler(private val component: GuiComponent) {
         if (component.BUS.fire(GuiComponentEvents.MouseDragEvent(component, mousePos, button)).isCanceled())
             return
 
-        component.relationships.forEachChild { child ->
+        component.relationships.components.forEach { child ->
             child.guiEventHandler.mouseDrag(mousePos, button)
         }
     }
@@ -105,7 +106,7 @@ class ComponentGuiEventHandler(private val component: GuiComponent) {
         if (component.BUS.fire(GuiComponentEvents.MouseWheelEvent(component, mousePos, direction)).isCanceled())
             return
 
-        component.relationships.forEachChild { child ->
+        component.relationships.components.forEach { child ->
             child.guiEventHandler.mouseWheel(mousePos, direction)
         }
     }
@@ -123,7 +124,7 @@ class ComponentGuiEventHandler(private val component: GuiComponent) {
 
         keysDown.put(Key[key, keyCode], true)
 
-        component.relationships.forEachChild { child ->
+        component.relationships.components.forEach { child ->
             child.guiEventHandler.keyPressed(key, keyCode)
         }
     }
@@ -141,7 +142,7 @@ class ComponentGuiEventHandler(private val component: GuiComponent) {
         if (component.BUS.fire(GuiComponentEvents.KeyUpEvent(component, key, keyCode)).isCanceled())
             return
 
-        component.relationships.forEachChild { child ->
+        component.relationships.components.forEach { child ->
             child.guiEventHandler.keyReleased(key, keyCode)
         }
     }

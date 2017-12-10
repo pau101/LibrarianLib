@@ -3,73 +3,88 @@ package com.teamwizardry.librarianlib.features.gui.component.supporting
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import no.birkett.kiwi.Expression
 import no.birkett.kiwi.Strength
+import no.birkett.kiwi.Symbol
 import no.birkett.kiwi.Symbolics
 
-open class LayoutExpression internal constructor(internal val kiwiExpression: Expression, internal var involvedComponents: Set<GuiComponent>,
-                                                 open internal var stringRepresentation: String, internal val isAddition: Boolean) {
-    /**
-     * Return an anchor multiplied by [other]
-     */
-    operator fun times(other: Number): LayoutExpression {
-        return LayoutExpression(Symbolics.multiply(kiwiExpression, other.toDouble()), involvedComponents,
-                (if(this.isAddition) "(${this.stringRepresentation})" else this.stringRepresentation) + " * $other",
-                false)
+abstract class LayoutExpression internal constructor(internal var involvedComponents: Set<GuiComponent>, dependsOn: List<LayoutExpression>) {
+    abstract val kiwiExpression: Expression
+    abstract protected val _stringRepresentation: String
+
+    private var stringRepresentationStorage: String? = null
+    var stringRepresentation: String
+        get() = stringRepresentationStorage ?: _stringRepresentation
+        set(value) { stringRepresentationStorage = value}
+
+    internal val dependants = mutableSetOf<() -> Unit>()
+    init {
+        dependsOn.forEach {
+            it.dependants.add(this::change)
+        }
     }
 
-    /**
-     * Return an anchor divided by [other]
-     */
-    operator fun div(other: Number): LayoutExpression {
-        return LayoutExpression(Symbolics.divide(kiwiExpression, other.toDouble()), involvedComponents,
-                (if(this.isAddition) "(${this.stringRepresentation})" else this.stringRepresentation) + " / $other",
-                false)
-    }
-
-    /**
-     * Return an anchor increased by [other]
-     */
-    operator fun plus(other: Number): LayoutExpression {
-        return LayoutExpression(Symbolics.add(kiwiExpression, other.toDouble()), involvedComponents,
-                "${this.stringRepresentation} + $other",
-                true)
-    }
-
-    /**
-     * Return an anchor reduced by [other]
-     */
-    operator fun minus(other: Number): LayoutExpression {
-        return LayoutExpression(Symbolics.subtract(kiwiExpression, other.toDouble()), involvedComponents,
-                "${this.stringRepresentation} - $other",
-                true)
+    fun change() {
+        dependants.forEach { it() }
     }
 
     /**
      * Return an anchor multiplied by [other]
      */
-    operator fun times(other: LayoutExpression): Nothing = throw UnsupportedOperationException("Constraints do not support multiplying variables by variables")
+    operator fun times(other: Number): LayoutExpression = LayoutExpressionTimes(this, LayoutExpressionConstant(other))
 
     /**
      * Return an anchor divided by [other]
      */
-    operator fun div(other: LayoutExpression): Nothing = throw UnsupportedOperationException("Constraints do not support dividing by variables")
+    operator fun div(other: Number): LayoutExpression = LayoutExpressionDiv(this, LayoutExpressionConstant(other))
 
     /**
      * Return an anchor increased by [other]
      */
-    operator fun plus(other: LayoutExpression): LayoutExpression {
-        return LayoutExpression(Symbolics.add(kiwiExpression, other.kiwiExpression), involvedComponents + other.involvedComponents,
-                "${this.stringRepresentation} + ${other.stringRepresentation}",
-                true)
-    }
+    operator fun plus(other: Number): LayoutExpression = LayoutExpressionPlus(this, LayoutExpressionConstant(other))
 
     /**
      * Return an anchor reduced by [other]
      */
-    operator fun minus(other: LayoutExpression): LayoutExpression {
-        return LayoutExpression(Symbolics.subtract(kiwiExpression, other.kiwiExpression), involvedComponents + other.involvedComponents,
-                "${this.stringRepresentation} - ${other.stringRepresentation}",
-                true)
-    }
+    operator fun minus(other: Number): LayoutExpression = LayoutExpressionMinus(this, LayoutExpressionConstant(other))
+
+    /**
+     * Return an anchor multiplied by [other]
+     */
+    operator fun times(other: LayoutConstantCell): LayoutExpression = LayoutExpressionTimes(this, LayoutExpressionMutableConstant(other))
+
+    /**
+     * Return an anchor divided by [other]
+     */
+    operator fun div(other: LayoutConstantCell): LayoutExpression = LayoutExpressionDiv(this, LayoutExpressionMutableConstant(other))
+
+    /**
+     * Return an anchor increased by [other]
+     */
+    operator fun plus(other: LayoutConstantCell): LayoutExpression = LayoutExpressionPlus(this, LayoutExpressionMutableConstant(other))
+
+    /**
+     * Return an anchor reduced by [other]
+     */
+    operator fun minus(other: LayoutConstantCell): LayoutExpression = LayoutExpressionMinus(this, LayoutExpressionMutableConstant(other))
+
+    /**
+     * Return an anchor multiplied by [other]
+     */
+    operator fun times(other: LayoutExpression): LayoutExpression = LayoutExpressionTimes(this, other)
+
+    /**
+     * Return an anchor divided by [other]
+     */
+    operator fun div(other: LayoutExpression): LayoutExpression = LayoutExpressionDiv(this, other)
+
+    /**
+     * Return an anchor increased by [other]
+     */
+    operator fun plus(other: LayoutExpression): LayoutExpression = LayoutExpressionPlus(this, other)
+
+    /**
+     * Return an anchor reduced by [other]
+     */
+    operator fun minus(other: LayoutExpression): LayoutExpression = LayoutExpressionMinus(this, other)
 
     /**
      * Set this anchor to be equal to [other].
@@ -77,10 +92,7 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
     @JvmOverloads
     fun equalTo(other: LayoutExpression, isActive: Boolean = true): LayoutConstraint {
         val root = getSolverRootComponent(other)
-        val c = LayoutConstraint(
-                root.layout.adjustChildConstraint(Symbolics.equals(this.kiwiExpression, other.kiwiExpression)),
-                root.layout.solver!!, Strength.REQUIRED,
-                this.stringRepresentation + " == " + other.stringRepresentation)
+        val c = LayoutConstraintEqual(root, this, other)
         c.isActive = isActive
         return c
     }
@@ -91,10 +103,7 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
     @JvmOverloads
     fun gequalTo(other: LayoutExpression, isActive: Boolean = true): LayoutConstraint {
         val root = getSolverRootComponent(other)
-        val c = LayoutConstraint(
-                root.layout.adjustChildConstraint(Symbolics.greaterThanOrEqualTo(this.kiwiExpression, other.kiwiExpression)),
-                root.layout.solver!!, Strength.REQUIRED,
-                this.stringRepresentation + " >= " + other.stringRepresentation)
+        val c = LayoutConstraintGreaterThanOrEqual(root, this, other)
         c.isActive = isActive
         return c
     }
@@ -105,10 +114,7 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
     @JvmOverloads
     fun lequalTo(other: LayoutExpression, isActive: Boolean = true): LayoutConstraint {
         val root = getSolverRootComponent(other)
-        val c = LayoutConstraint(
-                root.layout.adjustChildConstraint(Symbolics.lessThanOrEqualTo(this.kiwiExpression, other.kiwiExpression)),
-                root.layout.solver!!, Strength.REQUIRED,
-                this.stringRepresentation + " <= " + other.stringRepresentation)
+        val c = LayoutConstraintLessThanOrEqual(root, this, other)
         c.isActive = isActive
         return c
     }
@@ -118,13 +124,7 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
      */
     @JvmOverloads
     fun equalTo(other: Number, isActive: Boolean = true): LayoutConstraint {
-        val root = getSolverRootComponent(null)
-        val c = LayoutConstraint(
-                root.layout.adjustChildConstraint(Symbolics.equals(this.kiwiExpression, other.toDouble())),
-                root.layout.solver!!, Strength.REQUIRED,
-                this.stringRepresentation + " == " + other)
-        c.isActive = isActive
-        return c
+        return equalTo(LayoutExpressionConstant(other), isActive)
     }
 
     /**
@@ -132,13 +132,7 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
      */
     @JvmOverloads
     fun gequalTo(other: Number, isActive: Boolean = true): LayoutConstraint {
-        val root = getSolverRootComponent(null)
-        val c = LayoutConstraint(
-                root.layout.adjustChildConstraint(Symbolics.greaterThanOrEqualTo(this.kiwiExpression, other.toDouble())),
-                root.layout.solver!!, Strength.REQUIRED,
-                this.stringRepresentation + " >= " + other)
-        c.isActive = isActive
-        return c
+        return gequalTo(LayoutExpressionConstant(other), isActive)
     }
 
     /**
@@ -146,13 +140,7 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
      */
     @JvmOverloads
     fun lequalTo(other: Number, isActive: Boolean = true): LayoutConstraint {
-        val root = getSolverRootComponent(null)
-        val c = LayoutConstraint(
-                root.layout.adjustChildConstraint(Symbolics.lessThanOrEqualTo(this.kiwiExpression, other.toDouble())),
-                root.layout.solver!!, Strength.REQUIRED,
-                this.stringRepresentation + " <= " + other)
-        c.isActive = isActive
-        return c
+        return lequalTo(LayoutExpressionConstant(other), isActive)
     }
 
     /** Kotlin infix shortcut for [equalTo] */
@@ -200,31 +188,95 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
 /**
  * Return an anchor multiplied by [other]
  */
-operator fun Number.times(other: LayoutExpression): LayoutExpression {
-    return LayoutExpression(Symbolics.multiply(this.toDouble(), other.kiwiExpression), other.involvedComponents,
-            "$this * " + (if(other.isAddition) "(${other.stringRepresentation})" else other.stringRepresentation),
-            false)
-}
+operator fun Number.times(other: LayoutExpression): LayoutExpression = LayoutExpressionTimes(LayoutExpressionConstant(this), other)
 
 /**
  * Return an anchor divided by [other]
  */
-operator fun Number.div(other: LayoutExpression): Nothing = throw UnsupportedOperationException("Constraints do not support dividing by variables")
+operator fun Number.div(other: LayoutExpression): LayoutExpression = LayoutExpressionDiv(LayoutExpressionConstant(this), other)
 
 /**
  * Return an anchor increased by [other]
  */
-operator fun Number.plus(other: LayoutExpression): LayoutExpression {
-    return LayoutExpression(Symbolics.add(this.toDouble(), other.kiwiExpression), other.involvedComponents,
-            "$this + ${other.stringRepresentation}",
-            true)
-}
+operator fun Number.plus(other: LayoutExpression): LayoutExpression  = LayoutExpressionPlus(LayoutExpressionConstant(this), other)
 
 /**
  * Return an anchor reduced by [other]
  */
-operator fun Number.minus(other: LayoutExpression): LayoutExpression {
-    return LayoutExpression(Symbolics.subtract(this.toDouble(), other.kiwiExpression), other.involvedComponents,
-            "$this - ${other.stringRepresentation}",
-            true)
+operator fun Number.minus(other: LayoutExpression): LayoutExpression  = LayoutExpressionMinus(LayoutExpressionConstant(this), other)
+
+class LayoutExpressionConstant(val const: Number) : LayoutExpression(emptySet(), emptyList()) {
+    override val kiwiExpression: Expression
+        get() = Expression(const.toDouble())
+    override val _stringRepresentation: String
+        get() = "$const"
+}
+
+class LayoutExpressionMutableConstant(val const: LayoutConstantCell) : LayoutExpression(emptySet(), emptyList()) {
+    override val kiwiExpression: Expression
+        get() = Expression(const.value.toDouble())
+    override val _stringRepresentation: String
+        get() = "{${const.value}}"
+
+    init {
+        const.onChange { this.change() }
+    }
+}
+
+class LayoutExpressionPlus(val left: LayoutExpression, val right: LayoutExpression) : LayoutExpression(left.involvedComponents + right.involvedComponents, listOf(left, right)) {
+    override val kiwiExpression: Expression
+        get() = Symbolics.add(left.kiwiExpression, right.kiwiExpression)
+    override val _stringRepresentation: String
+        get() = "$left + $right"
+}
+
+class LayoutExpressionMinus(val left: LayoutExpression, val right: LayoutExpression) : LayoutExpression(left.involvedComponents + right.involvedComponents, listOf(left, right)) {
+    override val kiwiExpression: Expression
+        get() = Symbolics.subtract(left.kiwiExpression, right.kiwiExpression)
+    override val _stringRepresentation: String
+        get() = "$left - $right"
+}
+
+class LayoutExpressionTimes(val left: LayoutExpression, val right: LayoutExpression) : LayoutExpression(left.involvedComponents + right.involvedComponents, listOf(left, right)) {
+    init {
+        if(left.involvedComponents.isNotEmpty() && right.involvedComponents.isNotEmpty()) {
+            throw IllegalArgumentException("Cannot multiply variables by other variables: `$left` * `$right`")
+        }
+    }
+    override val kiwiExpression: Expression
+        get() = Symbolics.multiply(left.kiwiExpression, right.kiwiExpression)
+    override val _stringRepresentation: String
+        get() = "$leftStr * $rightStr"
+
+    private val leftStr: String
+        get() = if(left is LayoutExpressionPlus || left is LayoutExpressionMinus) "($left)" else "$left"
+    private val rightStr: String
+        get() = if(right is LayoutExpressionPlus || right is LayoutExpressionMinus) "($right)" else "$right"
+}
+
+class LayoutExpressionDiv(val left: LayoutExpression, val right: LayoutExpression) : LayoutExpression(left.involvedComponents + right.involvedComponents, listOf(left, right)) {
+    init {
+        if(right.involvedComponents.isNotEmpty()) {
+            throw IllegalArgumentException("Cannot divide by variables: `$left` / `$right`")
+        }
+    }
+    override val kiwiExpression: Expression
+        get() = Symbolics.multiply(left.kiwiExpression, right.kiwiExpression)
+    override val _stringRepresentation: String
+        get() = "$leftStr / $rightStr"
+
+    private val leftStr: String
+        get() = if(left is LayoutExpressionPlus || left is LayoutExpressionMinus) "($left)" else "$left"
+    private val rightStr: String
+        get() = if(right is LayoutExpressionPlus || right is LayoutExpressionMinus) "($right)" else "$right"
+}
+
+class LayoutExpressionNegate(val expr: LayoutExpression) : LayoutExpression(expr.involvedComponents, listOf(expr)) {
+    override val kiwiExpression: Expression
+        get() = Symbolics.negate(expr.kiwiExpression)
+    override val _stringRepresentation: String
+        get() = "-$exprStr"
+
+    private val exprStr: String
+        get() = if(expr is LayoutExpressionPlus || expr is LayoutExpressionMinus) "($expr)" else "$expr"
 }

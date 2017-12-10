@@ -132,6 +132,7 @@ class ComponentRenderHandler(private val component: GuiComponent) {
             GlStateManager.color(1f, 1f, 1f)
             if (!component.mouseOver) GlStateManager.color(1f, 0f, 1f)
             GlStateManager.disableTexture2D()
+            GlStateManager.glLineWidth(1f)
             val tessellator = Tessellator.getInstance()
             val vb = tessellator.buffer
             vb.begin(GL_LINE_STRIP, DefaultVertexFormats.POSITION)
@@ -142,22 +143,22 @@ class ComponentRenderHandler(private val component: GuiComponent) {
             vb.pos(0.0, 0.0, 0.0).endVertex()
             tessellator.draw()
 
-            val big = 1000.0
+            val depth = component.transform.translateZ
             vb.begin(GL_LINES, DefaultVertexFormats.POSITION)
             vb.pos(0.0, 0.0, 0.0).endVertex()
-            vb.pos(0.0, 0.0, -big).endVertex()
+            vb.pos(0.0, 0.0, -depth).endVertex()
             vb.pos(component.size.x, 0.0, 0.0).endVertex()
-            vb.pos(component.size.x, 0.0, -big).endVertex()
+            vb.pos(component.size.x, 0.0, -depth).endVertex()
             vb.pos(component.size.x, component.size.y, 0.0).endVertex()
-            vb.pos(component.size.x, component.size.y, -big).endVertex()
+            vb.pos(component.size.x, component.size.y, -depth).endVertex()
             vb.pos(0.0, component.size.y, 0.0).endVertex()
-            vb.pos(0.0, component.size.y, -big).endVertex()
+            vb.pos(0.0, component.size.y, -depth).endVertex()
             tessellator.draw()
 
             GlStateManager.color(0f, 1f, 1f)
             vb.begin(GL_LINES, DefaultVertexFormats.POSITION)
             vb.pos(mousePos.x, mousePos.y, 0.0).endVertex()
-            vb.pos(mousePos.x, mousePos.y, big).endVertex()
+            vb.pos(mousePos.x, mousePos.y, 1000.0).endVertex()
             tessellator.draw()
             GlStateManager.enableTexture2D()
             GlStateManager.popAttrib()
@@ -166,7 +167,7 @@ class ComponentRenderHandler(private val component: GuiComponent) {
         GlStateManager.pushAttrib()
 
         component.BUS.fire(GuiComponentEvents.PreChildrenDrawEvent(component, mousePos, partialTicks))
-        component.relationships.forEachChild { it.render.draw(mousePos, partialTicks) }
+        component.relationships.components.forEach { it.render.draw(it.geometry.transformFromParentContext(mousePos), partialTicks) }
 
         GlStateManager.popAttrib()
 
@@ -191,7 +192,7 @@ class ComponentRenderHandler(private val component: GuiComponent) {
             }
         }
 
-        component.relationships.forEachChild { it.render.drawLate(mousePos, partialTicks) }
+        component.relationships.components.forEach { it.render.drawLate(mousePos, partialTicks) }
     }
 
 }

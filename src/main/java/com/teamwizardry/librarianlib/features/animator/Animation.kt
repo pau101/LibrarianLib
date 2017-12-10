@@ -30,7 +30,7 @@ abstract class Animation<T: Any>(val target: T, val property: AnimatableProperty
     /**
      * The duration in ticks of the animation. This is the duration before reverses or loops
      */
-    var duration: Float = 0f
+    var duration: Float = 20f
 
     /**
      * The end time of the animation in ticks, taking into account whether the animation loops, or reverses.

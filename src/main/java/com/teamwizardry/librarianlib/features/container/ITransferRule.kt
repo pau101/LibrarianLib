@@ -37,9 +37,11 @@ interface ITransferRule {
 
                 // try to merge stack into slots that already have items (don't fill up empty slots unless we need to)
                 for(slot in region) {
-                    result = slot.type.autoTransferInto(slot, result.remainingStack)
-                    anySuccess = anySuccess || result.success
-                    if(result.finished) break
+                    if (areItemStacksEqual(stack, slot.stack)) {
+                        result = slot.type.autoTransferInto(slot, result.remainingStack)
+                        anySuccess = anySuccess || result.success
+                        if (result.finished) break
+                    }
                 }
             }
 

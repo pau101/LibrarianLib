@@ -275,7 +275,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
 
     private fun update(solver: Solver) {
         if(solver != this.solver)
-            component.transform.translate = vec(posX.variable.value, posY.variable.value)
+            component.pos = vec(posX.variable.value, posY.variable.value)
         component.size = vec(sizeX.variable.value, sizeY.variable.value)
 
         if(baked && solver != this.solver) return
@@ -336,8 +336,8 @@ class ComponentLayoutHandler(val component: GuiComponent) {
 
         var edit = editVariable(variable)
 
-        if(edit != null && strength == 0.0) {
-            removeEditVariable(variable)
+        if(strength == 0.0) {
+            if(edit != null) removeEditVariable(variable)
             return
         }
 

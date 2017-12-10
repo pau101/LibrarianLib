@@ -1,9 +1,15 @@
 package com.teamwizardry.librarianlib.features.gui.component.supporting
 
 import com.teamwizardry.librarianlib.core.LibrarianLog
+import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import no.birkett.kiwi.*
 
-class LayoutConstraint(val kiwiConstraint: Constraint, val solver: Solver, strength: Double, val stringRepresentation: String) {
+abstract class LayoutConstraint(val solver: Solver) {
+    abstract protected val _kiwiConstraint: Constraint
+    abstract val stringRepresentation: String
+
+    lateinit var kiwiConstraint: Constraint
+
     /**
      * Whether this constraint should have an effect
      */
@@ -23,16 +29,29 @@ class LayoutConstraint(val kiwiConstraint: Constraint, val solver: Solver, stren
      *
      * @see no.birkett.kiwi.Strength
      */
-    var strength = strength
+    var strength = Strength.REQUIRED
         set(value) {
             if(value != field) {
-                remove()
+                remove(false)
                 kiwiConstraint.setStrength(strength)
                 add()
             }
         }
 
+    internal fun change() {
+        if(isActive) {
+            try {
+                remove(false)
+                add()
+            } catch (e: UnsatisfiableConstraintException) {
+                LibrarianLog.error("Unsatisfiable constraint: `${this.stringRepresentation}` strength: ${Strength.name(strength)}")
+                LibrarianLog.errorStackTrace(e)
+            }
+        }
+    }
+
     private fun add() {
+        kiwiConstraint = _kiwiConstraint
         try {
             solver.addConstraint(kiwiConstraint)
         } catch (e: UnsatisfiableConstraintException) {
@@ -41,11 +60,51 @@ class LayoutConstraint(val kiwiConstraint: Constraint, val solver: Solver, stren
         }
     }
 
-    private fun remove() {
+    private fun remove(solve: Boolean = true) {
+        if(!solver.hasConstraint(kiwiConstraint)) return
         try {
-            solver.removeConstraint(kiwiConstraint)
+            solver.removeConstraint(kiwiConstraint, solve)
         } catch (e: UnknownConstraintException) {
             // NOOP
         }
+    }
+}
+
+class LayoutConstraintEqual(val root: GuiComponent, val left: LayoutExpression, val right: LayoutExpression) : LayoutConstraint(root.layout.solver!!) {
+    override val _kiwiConstraint: Constraint
+        get() = Symbolics.equals(left.kiwiExpression, right.kiwiExpression)
+    override val stringRepresentation: String
+        get() = "$left == $right"
+
+    init {
+        left.dependants.add(this::change)
+        right.dependants.add(this::change)
+        kiwiConstraint = _kiwiConstraint
+    }
+}
+
+class LayoutConstraintLessThanOrEqual(val root: GuiComponent, val left: LayoutExpression, val right: LayoutExpression) : LayoutConstraint(root.layout.solver!!) {
+    override val _kiwiConstraint: Constraint
+        get() = Symbolics.lessThanOrEqualTo(left.kiwiExpression, right.kiwiExpression)
+    override val stringRepresentation: String
+        get() = "$left <= $right"
+
+    init {
+        left.dependants.add(this::change)
+        right.dependants.add(this::change)
+        kiwiConstraint = _kiwiConstraint
+    }
+}
+
+class LayoutConstraintGreaterThanOrEqual(val root: GuiComponent, val left: LayoutExpression, val right: LayoutExpression) : LayoutConstraint(root.layout.solver!!) {
+    override val _kiwiConstraint: Constraint
+        get() = Symbolics.greaterThanOrEqualTo(left.kiwiExpression, right.kiwiExpression)
+    override val stringRepresentation: String
+        get() = "$left >= $right"
+
+    init {
+        left.dependants.add(this::change)
+        right.dependants.add(this::change)
+        kiwiConstraint = _kiwiConstraint
     }
 }

@@ -1,5 +1,7 @@
 package com.teamwizardry.librarianlib.test.container
 
+import com.teamwizardry.librarianlib.features.animator.Easing
+import com.teamwizardry.librarianlib.features.animator.animations.BasicAnimation
 import com.teamwizardry.librarianlib.features.container.GuiHandler
 import com.teamwizardry.librarianlib.features.container.InventoryWrapper
 import com.teamwizardry.librarianlib.features.container.builtin.InventoryWrapperPlayer
@@ -9,12 +11,16 @@ import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.gui.components.ComponentRect
 import com.teamwizardry.librarianlib.features.gui.components.ComponentSprite
 import com.teamwizardry.librarianlib.features.gui.GuiContainerBase
+import com.teamwizardry.librarianlib.features.gui.component.Hook
+import com.teamwizardry.librarianlib.features.gui.component.named
+import com.teamwizardry.librarianlib.features.gui.component.supporting.LayoutConstantCell
 import com.teamwizardry.librarianlib.features.gui.pastry.*
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.sprite.Texture
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.init.Items
 import net.minecraft.util.ResourceLocation
+import org.lwjgl.input.Mouse
 import java.awt.Color
 
 /**
@@ -34,7 +40,9 @@ class ContainerTest(player: EntityPlayer, tile: TEContainer) : ContainerBase(pla
         }
 
         transferRule().from(invPlayer.main).to(invBlock.main)
+        transferRule().from(invPlayer.main).to(invBlock.small)
         transferRule().from(invPlayer.hotbar).to(invBlock.small)
+        transferRule().from(invPlayer.hotbar).to(invBlock.main)
         transferRule().from(invBlock.main).to(invPlayer.main)
         transferRule().from(invBlock.small).to(invPlayer.hotbar)
     }
@@ -58,6 +66,16 @@ class TestWrapper(te: TEContainer) : InventoryWrapper(te) {
 }
 
 class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 197, 166) {
+
+    val offhandLeft = LayoutConstantCell(4)
+    val upperGrid = PastryInventoryGrid(container.invBlock.main, 9)
+    val smallGrid = PastryInventoryGrid(container.invBlock.small, 3)
+
+    @Hook("moveButton")
+    fun moveClick(e: GuiComponentEvents.MouseClickEvent) {
+        smallGrid.isVisible = !smallGrid.isVisible
+    }
+
     init {
         val bg = PastryBackground()
 
@@ -68,23 +86,45 @@ class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 1
         val main = PastryInventoryGrid(container.invPlayer.main, 9)
         val armor = PastryInventoryColumn(container.invPlayer.armor)
 
-        mainComponents.add(offhand, main, hotbar, armor)
+        val button = PastryButton("Move").named("moveButton")
+
+
+        mainComponents.add(offhand, main, hotbar, armor, upperGrid, smallGrid, button)
         layout {
             bg.layout.boundsEqualTo(mainComponents)
 
-            armor.layout.left eq mainComponents.layout.left + 10
-            armor.layout.top eq mainComponents.layout.top + 10
+            armor.layout.left eq mainComponents.layout.left + 4
+            armor.layout.top eq mainComponents.layout.top + 4
 
-            offhand.layout.bottom eq armor.layout.bottom
-            offhand.layout.left eq armor.layout.right + 10
+            offhand.layout.bottom eq bg.layout.top + 4
+            offhand.layout.left eq mainComponents.layout.left + offhandLeft
 
-            hotbar.layout.bottom eq mainComponents.layout.bottom - 10
+            hotbar.layout.bottom eq mainComponents.layout.bottom - 4
             hotbar.layout.centerX eq mainComponents.layout.centerX
 
-            main.layout.bottom eq hotbar.layout.top - 10
+            main.layout.bottom eq hotbar.layout.top - 4
             main.layout.centerX eq mainComponents.layout.centerX
+
+            button.layout.right eq mainComponents.layout.right - 2
+            button.layout.top eq mainComponents.layout.top + 2
+
+            upperGrid.layout.left eq armor.layout.right + 4
+            upperGrid.layout.top eq mainComponents.layout.top + 4
+
+            smallGrid.layout.left eq bg.layout.right + 4
+            smallGrid.layout.top eq mainComponents.layout.top + 4
         }
-//
+
+        val anim = BasicAnimation(offhandLeft, "value")
+        anim.from = 4
+        anim.to = 150
+        anim.duration = 80f
+        anim.easing = Easing.easeInOutSine
+        anim.repeatCount = -1
+        anim.shouldReverse = true
+        offhand.add(anim)
+        offhand.geometry.integerBounds = true
+
 //        val layout = PastryInventoryPlayer(container.invPlayer)
 //        b.add(layout.inventory)
 //

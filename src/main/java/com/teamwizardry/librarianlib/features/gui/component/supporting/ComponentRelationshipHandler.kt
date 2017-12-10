@@ -156,7 +156,7 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
 
     @Suppress("UNCHECKED_CAST")
     protected fun <C : GuiComponent> addByClass(clazz: Class<C>, list: MutableList<C>) {
-        forEachChild { component ->
+        components.forEach { component ->
             if (clazz.isAssignableFrom(component.javaClass))
                 list.add(component as C)
         }

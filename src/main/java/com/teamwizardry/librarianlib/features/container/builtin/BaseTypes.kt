@@ -43,15 +43,12 @@ open class SlotTypeGhost(val maxStackSize: Int = 1, val overstack: Boolean = fal
     }
 
     override fun autoTransferInto(slot: SlotBase, stack: ItemStack): AutoTransferResult {
-        if (slot.stack.isEmpty) {
+        if (slot.stack.isEmpty || ITransferRule.areItemStacksEqual(slot.stack, stack)) {
             val newStack = stack.copy()
             newStack.count = Math.min(newStack.count, maxStackSize)
 
             slot.putStack(newStack)
-            return AutoTransferResult(stack, true, false)
-        }
-        if (ITransferRule.areItemStacksEqual(slot.stack, stack)) {
-            return AutoTransferResult(stack, false, false)
+            return AutoTransferResult(stack, true, true)
         }
         return AutoTransferResult(stack, false)
     }

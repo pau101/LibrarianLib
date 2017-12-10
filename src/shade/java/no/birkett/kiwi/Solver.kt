@@ -104,7 +104,7 @@ class Solver {
     }
 
     @Throws(UnknownConstraintException::class, InternalSolverError::class)
-    fun removeConstraint(constraint: Constraint) {
+    fun removeConstraint(constraint: Constraint, solve: Boolean = true) {
         val tag = cns[constraint] ?: throw UnknownConstraintException(constraint)
 
         cns.remove(constraint)
@@ -137,7 +137,7 @@ class Solver {
             row.solveFor(leaving, tag.marker)
             substitute(tag.marker, row)
         }
-        optimize(objective)
+        if(solve) optimize(objective)
     }
 
     internal fun removeConstraintEffects(constraint: Constraint, tag: Tag) {

@@ -3,6 +3,8 @@ package com.teamwizardry.librarianlib.features.gui.component.supporting
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.helpers.vec
+import com.teamwizardry.librarianlib.features.kotlin.minus
+import com.teamwizardry.librarianlib.features.kotlin.plus
 import com.teamwizardry.librarianlib.features.kotlin.round
 import com.teamwizardry.librarianlib.features.kotlin.times
 import com.teamwizardry.librarianlib.features.math.Matrix4
@@ -33,7 +35,7 @@ class ComponentGeometryHandler(private val component: GuiComponent) {
             }
             transform.translate = v
         }
-    /** Set to true to snap all position and size values to integers */
+    /** Set to true to snap the position and size to integer coordinates */
     var integerBounds = false
 //    /** [GuiComponent.pos] */
 //    var pos: Vec2d
