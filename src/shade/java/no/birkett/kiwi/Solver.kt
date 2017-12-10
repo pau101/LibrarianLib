@@ -214,13 +214,11 @@ class Solver {
 //            throw RequiredFailureException()
 //        }
 
-        val terms = ArrayList<Term>()
-        terms.add(Term(variable))
-        val constraint = Constraint(Expression(terms, -value), RelationalOperator.OP_EQ, strength)
+        val constraint = Symbolics.equals(variable, value).setStrength(strength)
 
         addConstraint(constraint)
 
-        val info = EditInfo(constraint, cns[constraint]!!, 0.0)
+        val info = EditInfo(constraint, cns[constraint]!!, value)
         edits.put(variable, info)
         changed = true
     }

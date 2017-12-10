@@ -23,14 +23,13 @@ import java.io.IOException
 
 open class GuiContainerBase(val container: ContainerBase, val guiWidth: Int, val guiHeight: Int) : GuiContainer(container) {
     @Suppress("LeakingThis")
-    private val baseGuiImplementation = BaseGuiImplementation(this, guiWidth, guiHeight, { shouldAutoScale })
+    private val baseGuiImplementation = BaseGuiImplementation(this, guiWidth, guiHeight, { false /* we can't scale the slots, so we can't scale the GUI */ })
     val mainComponents = baseGuiImplementation.mainComponents
     val fullscreenComponents = baseGuiImplementation.fullscreenComponents
 
-    /**
-     * Set to false to disable shrinking the GUI when it is larger than the viewport
-     */
-    var shouldAutoScale = false
+
+    fun layout(runnable: Runnable) = baseGuiImplementation.layout(runnable)
+    fun layout(lambda: () -> Unit) = baseGuiImplementation.layout(Runnable(lambda))
 
     override fun drawGuiContainerBackgroundLayer(partialTicks: Float, mouseX: Int, mouseY: Int) {}
 

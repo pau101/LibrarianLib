@@ -7,6 +7,6 @@ import no.birkett.kiwi.*
 
 class Anchor(internal val component: GuiComponent, val name: String, internal var variable: Variable = Variable(0.0)) : LayoutExpression(Expression(Term(variable)), setOf(component), "", false) {
     override var stringRepresentation: String
-        get() = component.relationships.guiPath() + "@" + System.identityHashCode(component).toString(16) +  "#" + name
+        get() = "$component#$name"
         set(value) {}
 }

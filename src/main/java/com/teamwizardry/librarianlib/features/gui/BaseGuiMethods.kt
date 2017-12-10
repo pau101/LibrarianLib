@@ -1,11 +1,14 @@
 package com.teamwizardry.librarianlib.features.gui
 
+import com.teamwizardry.librarianlib.core.LibrarianLog
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.gui.component.supporting.ComponentEventHookMethodHandler
 import com.teamwizardry.librarianlib.features.gui.component.supporting.ModifierKey
 import com.teamwizardry.librarianlib.features.gui.components.ComponentVoid
 import com.teamwizardry.librarianlib.features.gui.debugger.ComponentDebugger
 import com.teamwizardry.librarianlib.features.helpers.vec
+import com.teamwizardry.librarianlib.features.kotlin.div
+import com.teamwizardry.librarianlib.features.kotlin.unaryMinus
 import com.teamwizardry.librarianlib.features.utilities.client.StencilUtil
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiScreen
@@ -22,65 +25,108 @@ internal class BaseGuiImplementation(
         private val guiWidth: Int, private val guiHeight: Int,
         private val autoScaleGetter: () -> Boolean
 ) {
-    val mainComponents: ComponentVoid = ComponentVoid(0, 0)
-    val fullscreenComponents: ComponentVoid = ComponentVoid(0, 0)
+    // On TheCodeWarrior's linux machine breakpoints don't release the cursor, so liblib needs to release it first.
+    // Otherwise it's nearly impossible to do any debugging of stuff in the main GUI init phase.
+    init { Mouse.setGrabbed(false) }
+
+    val root = ComponentVoid()
+    val centered = ComponentVoid()
+
+    val mainComponents = ComponentVoid()
+    val fullscreenComponents = ComponentVoid()
 
     private val shouldAutoScale: Boolean
         get() = autoScaleGetter()
-    private val mainScaleWrapper: ComponentVoid = ComponentVoid(0, 0)
+    private val layoutLambdas = mutableListOf<Runnable>()
+    private var layoutCalled = false
     private var isDebugMode = false
-    private val debugger = ComponentDebugger()
+    private val debugger = ComponentVoid()
 
     private val eventHookHandler = ComponentEventHookMethodHandler(gui, fullscreenComponents)
 
     init {
-        fullscreenComponents.layout.solver = Solver()
-        debugger.layout.solver = Solver()
+        fullscreenComponents.layout.isolate()
+        mainComponents.layout.isolate()
+        debugger.layout.isolate()
 
+        root.add(fullscreenComponents, centered)
+        centered.add(mainComponents)
+
+        debugger.add(ComponentDebugger())
+
+        root.geometry.shouldCalculateOwnHover = false
         mainComponents.geometry.shouldCalculateOwnHover = false
         fullscreenComponents.geometry.shouldCalculateOwnHover = false
-        mainScaleWrapper.zIndex = -100000 // really far back
-        fullscreenComponents.add(mainScaleWrapper)
-        mainScaleWrapper.add(mainComponents)
-
-        mainComponents.size = vec(guiWidth, guiHeight)
         debugger.geometry.shouldCalculateOwnHover = false
 
         mainComponents.layout.boundsStay = Strength.REQUIRED
-        mainScaleWrapper.layout.boundsStay = Strength.REQUIRED
         fullscreenComponents.layout.boundsStay = Strength.REQUIRED
     }
 
+    fun layout(runnable: Runnable) {
+        layoutLambdas.add(runnable)
+        if(layoutCalled) runnable.run()
+    }
+
     fun scaleGui() {
-        var s = 1.0
-        if (shouldAutoScale) {
-            var i = 1
-            // find required scale, either 1x, 1/2x 1/3x, or 1/4x
-            while ((guiWidth * s > gui.width || guiHeight * s > gui.height) && i < 4) {
-                i++
-                s = 1.0 / i
-            }
-        }
-
-        val left = (gui.width / 2 - guiWidth * s / 2).toInt()
-        val top = (gui.height / 2 - guiHeight * s / 2).toInt()
-
-        if (mainScaleWrapper.pos.xi != left || mainScaleWrapper.pos.yi != top) {
-            mainScaleWrapper.pos = vec(left, top)
-            mainScaleWrapper.transform.scale = s
-            mainScaleWrapper.size = vec(guiWidth * s, guiHeight * s)
-        }
-
-        fullscreenComponents.size = vec(gui.width, gui.height)
-
 
         val scaledresolution = ScaledResolution(gui.mc)
+//
+//        debugger.transform.scale = 1.0/scaledresolution.scaleFactor
+//        debugger.size = vec(gui.width * scaledresolution.scaleFactor, gui.height * scaledresolution.scaleFactor)
+        root.transform.scale = 1.0/scaledresolution.scaleFactor
+        root.size = vec(gui.width * scaledresolution.scaleFactor, gui.height * scaledresolution.scaleFactor)
 
-        debugger.transform.scale = 1.0/scaledresolution.scaleFactor
-        debugger.size = vec(gui.width * scaledresolution.scaleFactor, gui.height * scaledresolution.scaleFactor)
+        fullscreenComponents.transform.scale = scaledresolution.scaleFactor.toDouble()
+        fullscreenComponents.size = vec(gui.width, gui.height)
+
+        centered.pos = root.size/2
+
+        mainComponents.transform.scale = scaledresolution.scaleFactor.toDouble()
+        mainComponents.size = vec(guiWidth, guiHeight)
+        mainComponents.pos = -vec(guiWidth, guiHeight)/(2 * scaledresolution.scaleFactor)
+
+//        val left = (gui.width - guiWidth)/2
+//        val top = (gui.height - guiHeight)/2
+
+//        LibrarianLog.debug("Left: $left, Top: $top")
+
+//        if (mainScaleWrapper.pos.xi != left || mainScaleWrapper.pos.yi != top) {
+//            mainScaleWrapper.pos = vec(left, top)
+//            mainScaleWrapper.transform.scale = s
+//            mainScaleWrapper.size = vec(guiWidth * s, guiHeight * s)
+//        }
+
+//        var s = 1.0
+//        if (shouldAutoScale) {
+//            var i = 1
+//            // find required scale, either 1x, 1/2x 1/3x, or 1/4x
+//            while ((guiWidth * s > gui.width || guiHeight * s > gui.height) && i < 4) {
+//                i++
+//                s = 1.0 / i
+//            }
+//        }
+//
+//        val left = (gui.width / 2 - guiWidth * s / 2).toInt()
+//        val top = (gui.height / 2 - guiHeight * s / 2).toInt()
+//
+//        if (mainScaleWrapper.pos.xi != left || mainScaleWrapper.pos.yi != top) {
+//            mainScaleWrapper.pos = vec(left, top)
+//            mainScaleWrapper.transform.scale = s
+//            mainScaleWrapper.size = vec(guiWidth * s, guiHeight * s)
+//        }
+//
+//        fullscreenComponents.size = vec(gui.width, gui.height)/2
+//
+//
+//        val scaledresolution = ScaledResolution(gui.mc)
+//
+//        debugger.transform.scale = 1.0/scaledresolution.scaleFactor
+//        debugger.size = vec(gui.width * scaledresolution.scaleFactor, gui.height * scaledresolution.scaleFactor)
     }
 
     fun drawScreen(mouseX: Int, mouseY: Int, partialTicks: Float) {
+        if(!layoutCalled) layoutLambdas.forEach { it.run() }
         GlStateManager.enableBlend()
         val relPos = vec(mouseX, mouseY)
         GlStateManager.pushMatrix()
@@ -89,16 +135,17 @@ internal class BaseGuiImplementation(
             GlStateManager.translate(gui.width / 2.0, gui.height / 2.0, 0.0)
             GlStateManager.rotate(-20f, 1f, 0f, 0f)
             GlStateManager.rotate(-20f, 0f, 1f, 0f)
+//            GlStateManager.scale(0.5f, 0.5f, 0.5f)
             GlStateManager.translate(-gui.width / 2.0, -gui.height / 2.0, 0.0)
         }
 
         StencilUtil.start()
-        fullscreenComponents.guiEventHandler.preLayout(relPos, partialTicks)
-        fullscreenComponents.layout.updateAllLayoutsIfNeeded()
+        root.guiEventHandler.preLayout(relPos, partialTicks)
+        root.layout.updateAllLayoutsIfNeeded()
 
-        fullscreenComponents.geometry.calculateMouseOver(relPos)
-        fullscreenComponents.render.draw(relPos, partialTicks)
-        fullscreenComponents.render.drawLate(relPos, partialTicks)
+        root.geometry.calculateMouseOver(relPos)
+        root.render.draw(relPos, partialTicks)
+        root.render.drawLate(relPos, partialTicks)
 
         GlStateManager.popMatrix()
 

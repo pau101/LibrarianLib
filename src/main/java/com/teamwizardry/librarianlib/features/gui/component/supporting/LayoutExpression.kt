@@ -5,7 +5,7 @@ import no.birkett.kiwi.Expression
 import no.birkett.kiwi.Strength
 import no.birkett.kiwi.Symbolics
 
-open class LayoutExpression internal constructor(internal val kiwiExpression: Expression, internal val involvedComponents: Set<GuiComponent>,
+open class LayoutExpression internal constructor(internal val kiwiExpression: Expression, internal var involvedComponents: Set<GuiComponent>,
                                                  open internal var stringRepresentation: String, internal val isAddition: Boolean) {
     /**
      * Return an anchor multiplied by [other]
@@ -178,10 +178,10 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
             throw IllegalArgumentException("Not all components are in valid solver contexts")
         }
 
-        val candidates = involved.flatMap { it.layout.validSolvers }.toMutableList()
+        val candidates = involved.flatMap { it.layout.validSolvers }.toSet()
 
-        candidates.removeIf { candidate -> involved.any { candidate !in it.layout.validSolvers } }
-        val valid = candidates.toSet()
+        val valid = candidates.toMutableSet()
+        valid.removeIf { candidate -> involved.any { candidate !in it.layout.validSolvers } }
 
         if(valid.isEmpty()) {
             throw IllegalArgumentException("No common solvers")

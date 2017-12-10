@@ -22,17 +22,24 @@ import java.io.IOException
 
 open class GuiBase(val guiWidth: Int, val guiHeight: Int) : GuiScreen() {
     @Suppress("LeakingThis")
-    private val baseGuiImplementation = BaseGuiImplementation(this, guiWidth, guiHeight, { false /* we can't scale the slots, so we can't scale the GUI */ })
+    private val baseGuiImplementation = BaseGuiImplementation(this, guiWidth, guiHeight, { shouldAutoScale })
     val mainComponents = baseGuiImplementation.mainComponents
     val fullscreenComponents = baseGuiImplementation.fullscreenComponents
+
+    /**
+     * Set to false to disable shrinking the GUI when it is larger than the viewport
+     */
+    var shouldAutoScale = false
+
+    fun layout(runnable: Runnable) = baseGuiImplementation.layout(runnable)
+    fun layout(lambda: () -> Unit) = baseGuiImplementation.layout(Runnable(lambda))
 
     override fun initGui() {
         super.initGui()
         baseGuiImplementation.scaleGui()
     }
 
-    override fun drawDefaultBackground() { /* NOOP */
-    }
+    override fun drawDefaultBackground() { /* NOOP */ }
 
     override fun drawScreen(mouseX: Int, mouseY: Int, partialTicks: Float) {
         super.drawScreen(mouseX, mouseY, partialTicks)

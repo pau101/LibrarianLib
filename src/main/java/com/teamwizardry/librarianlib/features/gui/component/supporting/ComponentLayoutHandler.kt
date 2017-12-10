@@ -20,27 +20,27 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         get() {
             val parentLayout = component.parent?.layout ?: return posX
             if(parentLayout.solver != null) return posX
-            return named(parentLayout.left + posX, "left")
+            return fixAnchorExpression(parentLayout.left + posX, "left")
         }
     /** The anchor corresponding to the minimum y coordinate of the component's bounds */
     val top: LayoutExpression
         get() {
             val parentLayout = component.parent?.layout ?: return posY
             if(parentLayout.solver != null) return posY
-            return named(parentLayout.top + posY, "left")
+            return fixAnchorExpression(parentLayout.top + posY, "left")
         }
     /** The anchor corresponding to the maximum x coordinate of the component's bounds */
     val right: LayoutExpression
-        get() = named(left + width, "right")
+        get() = fixAnchorExpression(left + width, "right")
     /** The anchor corresponding to the maximum y coordinate of the component's bounds */
     val bottom: LayoutExpression
-        get() = named(top + height, "bottom")
+        get() = fixAnchorExpression(top + height, "bottom")
     /** The anchor corresponding to the x coordinate of the center of the component's bounds */
     val centerX: LayoutExpression
-        get() = named((left + right) / 2, "centerX")
+        get() = fixAnchorExpression((left + right) / 2, "centerX")
     /** The anchor corresponding to the y coordinate of the center of the component's bounds */
     val centerY: LayoutExpression
-        get() = named((top + bottom) / 2, "centerY")
+        get() = fixAnchorExpression((top + bottom) / 2, "centerY")
 
     /** The anchor corresponding to the width of the component's bounds */
     val width: LayoutExpression
@@ -53,7 +53,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
      * If nonzero, the width and height constraints will be set to the component's implicit size if it exists, rather
      * than the component's size attribute, and use this strength
      *
-     * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED]
+
      */
     var implicitSizeStrength = Strength.IMPLICIT
 
@@ -77,21 +77,18 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         containingSolver?.removeConstraint(constraint.kiwiConstraint)
     }
 
-    /** Specifies the strength with which the x coordinate defined by [GuiComponent.pos] should be maintained
-     * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    /** Specifies the strength with which the x coordinate defined by [GuiComponent.pos] should be maintained */
     var leftStay = 0.0
-    /** Specifies the strength with which the y coordinate defined by [GuiComponent.pos] should be maintained
-    * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    /** Specifies the strength with which the y coordinate defined by [GuiComponent.pos] should be maintained */
     var topStay = 0.0
-    /** Specifies the strength with which the width defined by [GuiComponent.size] should be maintained
-    * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    /** Specifies the strength with which the width defined by [GuiComponent.size] should be maintained */
     var widthStay = 0.0
-    /** Specifies the strength with which the height defined by [GuiComponent.size] should be maintained
-    * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+//        get() = if(baked) Strength.REQUIRED else field
+    /** Specifies the strength with which the height defined by [GuiComponent.size] should be maintained */
     var heightStay = 0.0
+//        get() = if(baked) Strength.REQUIRED else field
 
-    /** Specifies the strength with which the size defined by [GuiComponent.size] should be maintained
-    * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    /** Specifies the strength with which the size defined by [GuiComponent.size] should be maintained */
     var sizeStay
         get() = Math.min(widthStay, heightStay)
         set(value) {
@@ -99,8 +96,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
             heightStay = value
         }
 
-    /** Specifies the strength with which the position defined by [GuiComponent.pos] should be maintained
-    * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    /** Specifies the strength with which the position defined by [GuiComponent.pos] should be maintained */
     var positionStay
         get() = Math.min(leftStay, topStay)
         set(value) {
@@ -108,8 +104,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
             topStay = value
         }
 
-    /** Specifies the strength with which the size and position defined by [GuiComponent.size] and [GuiComponent.pos] should be maintained
-    * If set to [Strength.REQUIRED] or higher, this will be clamped slightly lower than [Strength.REQUIRED] */
+    /** Specifies the strength with which the size and position defined by [GuiComponent.size] and [GuiComponent.pos] should be maintained */
     var boundsStay
         get() = Math.min(sizeStay, positionStay)
         set(value) {
@@ -195,10 +190,6 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         updateLayoutIfNeeded()
         solver = null
         baked = true
-        component.layout {
-            sizeX eq component.size.x
-            sizeY eq component.size.y
-        }
     }
 
     fun setNeedsLayout() {
@@ -288,6 +279,8 @@ class ComponentLayoutHandler(val component: GuiComponent) {
             component.transform.translate = vec(posX.variable.value, posY.variable.value)
         component.size = vec(sizeX.variable.value, sizeY.variable.value)
 
+        if(baked && solver != this.solver) return
+
         component.relationships.components.forEach {
             it.layout.update(solver)
         }
@@ -317,9 +310,12 @@ class ComponentLayoutHandler(val component: GuiComponent) {
             updateLayoutIfNeeded()
     }
 
-    fun named(expr: LayoutExpression, name: String): LayoutExpression {
-        expr.stringRepresentation =
-                component.relationships.guiPath() + "@" + System.identityHashCode(component).toString(16) + "#" + name
+    fun fixAnchorExpression(expr: LayoutExpression, name: String): LayoutExpression {
+        expr.stringRepresentation = "$component#$name"
+
+        // otherwise the entire path from the root component to this is considered involved, which means often there
+        // will be no common solver.
+        expr.involvedComponents = setOf(component)
         return expr
     }
 
@@ -351,15 +347,21 @@ class ComponentLayoutHandler(val component: GuiComponent) {
             try {
                 addEditVariable(variable, strength, value)
             } catch (e: UnsatisfiableConstraintException) {
-                val fullName =
-                        component.relationships.guiPath() + "@" + System.identityHashCode(component).toString(16) + "#" + name
+                val fullName = "$component#$name"
                 LibrarianLog.error("Unsatisfiable edit variable: $fullName == $value strength: ${Strength.name(strength)}")
                 LibrarianLog.errorStackTrace(e)
+                return
             }
         }
         edit = editVariable(variable)
         if(edit?.constant != value) {
-            suggestValue(variable, value)
+            try {
+                suggestValue(variable, value)
+            } catch (e: UnsatisfiableConstraintException) {
+                val fullName = "$component#$name"
+                LibrarianLog.error("Unsatisfiable edit variable: $fullName == $value strength: ${Strength.name(strength)}")
+                LibrarianLog.errorStackTrace(e)
+            }
         }
     }
     //endregion

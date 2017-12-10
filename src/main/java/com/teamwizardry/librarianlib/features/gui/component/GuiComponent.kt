@@ -288,6 +288,8 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int = 0, posY: Int =
         this.pos = vec(posX, posY)
         this.size = vec(width, height)
     }
+
+    override fun toString() = relationships.guiPath() + "@" + System.identityHashCode(this).toString(16)
     //endregion
 }
 
