@@ -201,8 +201,8 @@ class Solver {
         return cns.containsKey(constraint)
     }
 
-    @Throws(DuplicateEditVariableException::class, RequiredFailureException::class)
-    fun addEditVariable(variable: Variable, strength: Double) {
+    @Throws(DuplicateEditVariableException::class, RequiredFailureException::class, UnsatisfiableConstraintException::class)
+    fun addEditVariable(variable: Variable, strength: Double, value: Double) {
         var strength = strength
         if (edits.containsKey(variable)) {
             throw DuplicateEditVariableException()
@@ -210,22 +210,15 @@ class Solver {
 
         strength = Strength.clip(strength)
 
-        if (strength == Strength.REQUIRED) {
-            throw RequiredFailureException()
-        }
+//        if (strength == Strength.REQUIRED) {
+//            throw RequiredFailureException()
+//        }
 
         val terms = ArrayList<Term>()
         terms.add(Term(variable))
-        val constraint = Constraint(Expression(terms), RelationalOperator.OP_EQ, strength)
+        val constraint = Constraint(Expression(terms, -value), RelationalOperator.OP_EQ, strength)
 
-        try {
-            addConstraint(constraint)
-        } catch (e: DuplicateConstraintException) {
-            e.printStackTrace()
-        } catch (e: UnsatisfiableConstraintException) {
-            e.printStackTrace()
-        }
-
+        addConstraint(constraint)
 
         val info = EditInfo(constraint, cns[constraint]!!, 0.0)
         edits.put(variable, info)

@@ -66,20 +66,31 @@ class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 1
 
     init {
         val bg = PastryBackground()
-        val offhand = PastrySlot(container.invPlayer.offhand)
-        val hotbar = PastryInventoryRow(container.invPlayer.hotbar)
-        val main = PastryInventoryRow(container.invPlayer.main)
-        mainComponents.add(bg, offhand, main, hotbar)
 
+        mainComponents.add(bg)
         bg.layout.boundsEqualTo(mainComponents)
-        offhand.layout.left eq mainComponents.layout.left + 10
-        offhand.layout.top eq mainComponents.layout.top + 10
 
-        hotbar.layout.centerX eq mainComponents.layout.centerX
-        hotbar.layout.bottom eq mainComponents.layout.bottom - 4
+        var done = false
+        bg.BUS.hook(GuiComponentEvents.MouseClickEvent::class.java) {
+            if(done) return@hook
+            done = true
 
-        main.layout.centerX eq mainComponents.layout.centerX
-        main.layout.bottom eq hotbar.layout.top - 4
+            val offhand = PastrySlot(container.invPlayer.offhand)
+            offhand.pos = vec(10, 10)
+            mainComponents.add(offhand)
+//            val hotbar = PastryInventoryRow(container.invPlayer.hotbar)
+//            val main = PastryInventoryRow(container.invPlayer.main)
+//            mainComponents.add(offhand, main, hotbar)
+
+//            offhand.layout.left eq mainComponents.layout.left + 50
+//            offhand.layout.top eq mainComponents.layout.top + 50
+
+//            hotbar.layout.centerX eq mainComponents.layout.centerX
+//            hotbar.layout.bottom eq mainComponents.layout.bottom - 4
+//
+//            main.layout.centerX eq mainComponents.layout.centerX
+//            main.layout.bottom eq hotbar.layout.top - 4
+        }
 //
 //        val layout = PastryInventoryPlayer(container.invPlayer)
 //        b.add(layout.inventory)

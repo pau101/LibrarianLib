@@ -36,7 +36,7 @@ class LayoutConstraint(val kiwiConstraint: Constraint, val solver: Solver, stren
         try {
             solver.addConstraint(kiwiConstraint)
         } catch (e: UnsatisfiableConstraintException) {
-            LibrarianLog.error("Unsatisfiable constraint: `${this.stringRepresentation}`")
+            LibrarianLog.error("Unsatisfiable constraint: `${this.stringRepresentation}` strength: ${Strength.name(strength)}")
             LibrarianLog.errorStackTrace(e)
         }
     }

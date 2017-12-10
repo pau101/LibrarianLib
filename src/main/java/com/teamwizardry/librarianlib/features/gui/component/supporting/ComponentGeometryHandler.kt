@@ -17,14 +17,18 @@ class ComponentGeometryHandler(private val component: GuiComponent) {
     val transform = ComponentTransform(component)
     var size: Vec2d = vec(0, 0)
         internal set(value) {
+            if(field != value) {
+                component.layout.setNeedsLayout()
+            }
             field = value
-            component.layout.setNeedsLayout()
         }
     var pos: Vec2d
         get() = transform.translate
         internal set(value) {
+            if(transform.translate != value) {
+                component.layout.setNeedsLayout()
+            }
             transform.translate = value
-            component.layout.setNeedsLayout()
         }
 //    /** [GuiComponent.pos] */
 //    var pos: Vec2d

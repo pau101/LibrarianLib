@@ -1,41 +1,46 @@
 package com.teamwizardry.librarianlib.features.gui.component.supporting
 
-import com.google.common.collect.Sets
+import com.teamwizardry.librarianlib.core.LibrarianLog
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.helpers.vec
-import com.teamwizardry.librarianlib.features.kotlin.minus
-import com.teamwizardry.librarianlib.features.kotlin.times
 import com.teamwizardry.librarianlib.features.math.Vec2d
 import no.birkett.kiwi.*
-import java.util.*
 
 @Suppress("LEAKING_THIS", "UNUSED")
 class ComponentLayoutHandler(val component: GuiComponent) {
 
-    @JvmField val posX = Anchor(component, "posX")
-    @JvmField val posY = Anchor(component, "posY")
-    @JvmField val sizeX = Anchor(component, "sizeX")
-    @JvmField val sizeY = Anchor(component, "sizeY")
+    private val posX = Anchor(component, "posX")
+    private val posY = Anchor(component, "posY")
+    private val sizeX = Anchor(component, "width")
+    private val sizeY = Anchor(component, "height")
 
     /** The anchor corresponding to the minimum x coordinate of the component's bounds */
     val left: LayoutExpression
-        get() = component.parent?.layout?.left?.let { it + posX } ?: posX
-    /** The anchor corresponding to the maximum x coordinate of the component's bounds */
-    val right: LayoutExpression
-        get() = left + width
+        get() {
+            val parentLayout = component.parent?.layout ?: return posX
+            if(parentLayout.solver != null) return posX
+            return named(parentLayout.left + posX, "left")
+        }
     /** The anchor corresponding to the minimum y coordinate of the component's bounds */
     val top: LayoutExpression
-        get() = component.parent?.layout?.top?.let { it + posY } ?: posY
+        get() {
+            val parentLayout = component.parent?.layout ?: return posY
+            if(parentLayout.solver != null) return posY
+            return named(parentLayout.top + posY, "left")
+        }
+    /** The anchor corresponding to the maximum x coordinate of the component's bounds */
+    val right: LayoutExpression
+        get() = named(left + width, "right")
     /** The anchor corresponding to the maximum y coordinate of the component's bounds */
     val bottom: LayoutExpression
-        get() = top + height
+        get() = named(top + height, "bottom")
     /** The anchor corresponding to the x coordinate of the center of the component's bounds */
     val centerX: LayoutExpression
-        get() = (left + right) / 2
+        get() = named((left + right) / 2, "centerX")
     /** The anchor corresponding to the y coordinate of the center of the component's bounds */
     val centerY: LayoutExpression
-        get() = (top + bottom) / 2
+        get() = named((top + bottom) / 2, "centerY")
 
     /** The anchor corresponding to the width of the component's bounds */
     val width: LayoutExpression
@@ -59,17 +64,17 @@ class ComponentLayoutHandler(val component: GuiComponent) {
     fun constraints(lambda: Runnable) {
         constraintCallbacks.add(lambda)
 
-        if(rootSolver != null) {
+        if(containingSolver != null) {
             lambda.run()
         }
     }
 
     fun add(constraint: LayoutConstraint) {
-        rootSolver?.addConstraint(constraint.kiwiConstraint)
+        containingSolver?.addConstraint(constraint.kiwiConstraint)
     }
 
     fun remove(constraint: LayoutConstraint) {
-        rootSolver?.removeConstraint(constraint.kiwiConstraint)
+        containingSolver?.removeConstraint(constraint.kiwiConstraint)
     }
 
     /** Specifies the strength with which the x coordinate defined by [GuiComponent.pos] should be maintained
@@ -162,9 +167,6 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         )
     }
 
-    var isolated = false
-        private set
-
     /**
      * Isolates
      */
@@ -175,34 +177,44 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         if(component.relationships.parent != null) {
             throw IllegalStateException("Cannot isolate a component once it has been added to a component tree!")
         }
-        rootSolver = Solver()
+        val solver = Solver()
+        this.solver = solver
         isolated = true
+
+        setNeedsLayout()
     }
 
     fun bake() {
         if(!isolated) {
-            throw IllegalStateException("Only isolated layouts can be baked!")
+            throw IllegalStateException("Only isolated layouts can be baked")
         }
-        setNeedsLayout()
+        if(baked) {
+            throw IllegalStateException("Component already baked")
+        }
+        needsLayout = true
         updateLayoutIfNeeded()
+        solver = null
         baked = true
-        solverStorage = null
+        component.layout {
+            sizeX eq component.size.x
+            sizeY eq component.size.y
+        }
     }
 
     fun setNeedsLayout() {
-        solverRootComponent?.also {
+        containingSolverComponent?.also {
             it.layout.needsLayout = true
         }
     }
 
     fun updateLayoutIfNeeded() {
-        val solver = this.solverStorage
+        val solver = this.solver
         if(solver == null) {
-            solverRootComponent?.layout?.updateLayoutIfNeeded()
+            containingSolverComponent?.layout?.updateLayoutIfNeeded()
         } else if (needsLayout || solver.changed) {
-            addIntrinsic()
+            addIntrinsic(solver)
             solver.updateVariables()
-            update()
+            update(solver)
 
             needsLayout = false
             solver.changed = false
@@ -211,51 +223,79 @@ class ComponentLayoutHandler(val component: GuiComponent) {
 
     //region internals
 
+    var isolated = false
+        private set
     private val constraintCallbacks = mutableListOf<Runnable>()
-
     private var needsLayout = false
-    private var solverStorage: Solver? = null
-    internal var rootSolver: Solver?
-        get() = if(baked) null else solverStorage ?: component.parent?.layout?.rootSolver
-        set(value) {
-            if(baked) throw IllegalStateException("Component already baked!")
-            solverStorage = value
-            onAddedToLayoutContext()
-        }
-    internal val solverRootComponent: GuiComponent?
-        get() = if(baked) null else if(solverStorage != null) this.component else this.component.parent?.layout?.solverRootComponent
     private var baked = false
 
-    private fun addIntrinsic() {
-        val implicit = component.getImplicitSize()
-        if(implicitSizeStrength != 0.0 && implicit != null) {
-            rootSolver?.setEditVariable(sizeX.variable, implicit.x, implicitSizeStrength)
-            rootSolver?.setEditVariable(sizeY.variable, implicit.y, implicitSizeStrength)
-        } else {
-            rootSolver?.setEditVariable(sizeX.variable, component.size.x, widthStay)
-            rootSolver?.setEditVariable(sizeY.variable, component.size.y, heightStay)
-
+    internal var solver: Solver? = null
+        set(value) {
+            if(baked) throw IllegalStateException("Component already baked!")
+            field = value
+            if(value != null) {
+                value.addConstraint(Symbolics.equals(posX.variable, 0.0))
+                value.addConstraint(Symbolics.equals(posY.variable, 0.0))
+            }
+            onAddedToLayoutContext()
         }
-        rootSolver?.setEditVariable(posX.variable, component.pos.x, leftStay)
-        rootSolver?.setEditVariable(posY.variable, component.pos.y, topStay)
 
+    internal val containingSolver: Solver?
+        get() = component.parent?.layout?.solver ?: component.parent?.layout?.containingSolver
+    internal val validSolvers: List<Solver>
+        get() = listOf(solver, containingSolver).filterNotNull()
+    internal val containingSolverComponent: GuiComponent?
+        get() = if(component.parent?.layout?.solver != null) component.parent else component.parent?.layout?.containingSolverComponent
+
+    private fun addIntrinsic(solver: Solver) {
+        if(isolated) {
+            if(solver == this.solver) {
+                val implicit = component.getImplicitSize()
+                if (implicitSizeStrength != 0.0 && implicit != null) {
+                    solver.setEditVariable(sizeX.variable, implicit.x, implicitSizeStrength, "width")
+                    solver.setEditVariable(sizeY.variable, implicit.y, implicitSizeStrength, "height")
+                } else {
+                    solver.setEditVariable(sizeX.variable, component.size.x, widthStay, "width")
+                    solver.setEditVariable(sizeY.variable, component.size.y, heightStay, "height")
+                }
+            } else {
+                solver.setEditVariable(sizeX.variable, component.size.x, Strength.REQUIRED, "width")
+                solver.setEditVariable(sizeY.variable, component.size.y, Strength.REQUIRED, "height")
+
+                solver.setEditVariable(posX.variable, component.pos.x, leftStay, "posX")
+                solver.setEditVariable(posY.variable, component.pos.y, topStay, "posY")
+            }
+        } else {
+            val implicit = component.getImplicitSize()
+            if (implicitSizeStrength != 0.0 && implicit != null) {
+                solver.setEditVariable(sizeX.variable, implicit.x, implicitSizeStrength, "width")
+                solver.setEditVariable(sizeY.variable, implicit.y, implicitSizeStrength, "height")
+            } else {
+                solver.setEditVariable(sizeX.variable, component.size.x, widthStay, "width")
+                solver.setEditVariable(sizeY.variable, component.size.y, heightStay, "height")
+            }
+
+            solver.setEditVariable(posX.variable, component.pos.x, leftStay, "posX")
+            solver.setEditVariable(posY.variable, component.pos.y, topStay, "posY")
+        }
         component.relationships.components.forEach {
-            it.layout.addIntrinsic()
+            it.layout.addIntrinsic(solver)
         }
     }
 
-    private fun update() {
-        component.transform.translate = vec(posX.variable.value, posY.variable.value)
+    private fun update(solver: Solver) {
+        if(solver != this.solver)
+            component.transform.translate = vec(posX.variable.value, posY.variable.value)
         component.size = vec(sizeX.variable.value, sizeY.variable.value)
 
         component.relationships.components.forEach {
-            it.layout.update()
+            it.layout.update(solver)
         }
     }
 
     init {
         component.BUS.hook(GuiComponentEvents.PostAddToParentEvent::class.java) { e ->
-            if(solverStorage == null && rootSolver != null)
+            if(solver == null && containingSolver != null)
                 onAddedToLayoutContext()
         }
     }
@@ -263,7 +303,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
     private fun onAddedToLayoutContext() {
         constraintCallbacks.forEach(Runnable::run)
         component.relationships.components.forEach {
-            if(it.layout.solverStorage != null) return@forEach
+            if(it.layout.solver != null) return@forEach
             it.layout.onAddedToLayoutContext()
         }
     }
@@ -273,21 +313,55 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         component.relationships.components.forEach {
             it.layout.updateAllLayoutsIfNeeded()
         }
-        if(solverStorage != null)
+        if(solver != null)
             updateLayoutIfNeeded()
+    }
+
+    fun named(expr: LayoutExpression, name: String): LayoutExpression {
+        expr.stringRepresentation =
+                component.relationships.guiPath() + "@" + System.identityHashCode(component).toString(16) + "#" + name
+        return expr
+    }
+
+    /**
+     * Called for every constraint added to this root, this method replaces this component's `left` and `right` anchors
+     * with 0
+     */
+    internal fun adjustChildConstraint(constraint: Constraint): Constraint {
+        val toRemove = left.kiwiExpression.terms.map { it.variable } +
+                top.kiwiExpression.terms.map { it.variable }
+
+        constraint.expression.terms.removeIf { it.variable in toRemove }
+
+        return constraint
+    }
+
+    internal fun Solver.setEditVariable(variable: Variable, value: Double, strength: Double, name: String) {
+//        val strength = if(strength >= Strength.REQUIRED) Strength.REQUIRED - 1 else strength
+
+        var edit = editVariable(variable)
+
+        if(edit != null && strength == 0.0) {
+            removeEditVariable(variable)
+            return
+        }
+
+        if(edit?.constraint?.strength != strength) {
+            if(edit != null) removeEditVariable(variable)
+            try {
+                addEditVariable(variable, strength, value)
+            } catch (e: UnsatisfiableConstraintException) {
+                val fullName =
+                        component.relationships.guiPath() + "@" + System.identityHashCode(component).toString(16) + "#" + name
+                LibrarianLog.error("Unsatisfiable edit variable: $fullName == $value strength: ${Strength.name(strength)}")
+                LibrarianLog.errorStackTrace(e)
+            }
+        }
+        edit = editVariable(variable)
+        if(edit?.constant != value) {
+            suggestValue(variable, value)
+        }
     }
     //endregion
 }
 
-fun Solver.setEditVariable(variable: Variable, value: Double, strength: Double) {
-    val strength = if(strength >= Strength.REQUIRED) Strength.REQUIRED - 1 else strength
-
-    val edit = editVariable(variable)
-    if(edit?.constraint?.strength != strength) {
-        if(hasEditVariable(variable)) removeEditVariable(variable)
-        addEditVariable(variable, strength)
-    }
-    if(edit?.constant != value) {
-        suggestValue(variable, value)
-    }
-}

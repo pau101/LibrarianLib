@@ -8,7 +8,6 @@ import com.teamwizardry.librarianlib.features.gui.debugger.ComponentDebugger
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.utilities.client.StencilUtil
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.Gui
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.client.gui.ScaledResolution
 import net.minecraft.client.renderer.GlStateManager
@@ -35,8 +34,8 @@ internal class BaseGuiImplementation(
     private val eventHookHandler = ComponentEventHookMethodHandler(gui, fullscreenComponents)
 
     init {
-        fullscreenComponents.layout.rootSolver = Solver()
-        debugger.layout.rootSolver = Solver()
+        fullscreenComponents.layout.solver = Solver()
+        debugger.layout.solver = Solver()
 
         mainComponents.geometry.shouldCalculateOwnHover = false
         fullscreenComponents.geometry.shouldCalculateOwnHover = false

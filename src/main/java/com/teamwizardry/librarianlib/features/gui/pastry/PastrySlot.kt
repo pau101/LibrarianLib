@@ -1,5 +1,6 @@
 package com.teamwizardry.librarianlib.features.gui.pastry
 
+import com.teamwizardry.librarianlib.core.LibrarianLog
 import com.teamwizardry.librarianlib.features.container.SlotBase
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
@@ -22,17 +23,21 @@ class PastrySlot(val slot: SlotBase, useBackground: Boolean = true) : GuiCompone
     var icon by iconComponent::sprite.delegate
 
     init {
+        this.layout.isolate()
+
         if(useBackground) {
             this.add(background, iconComponent, inner)
-            layout {
-                inner.layout.sizeStay = Strength.REQUIRED
-                inner.size = vec(16, 16)
-                inner.layout.boundsEqualTo(background, PastryStyle.currentStyle.slotBackgroundMargins)
-//            this.layout.boundsEqualTo(inner)
-                this.layout.boundsEqualTo(background)
-                iconComponent.layout.boundsEqualTo(inner)
-            }
+            inner.layout.sizeStay = Strength.REQUIRED
+            inner.size = vec(16, 16)
+            inner.layout.boundsEqualTo(background, PastryStyle.currentStyle.slotBackgroundMargins)
+            iconComponent.layout.boundsEqualTo(inner)
+            this.layout.boundsEqualTo(background)
+        } else {
+            this.add(inner)
+            this.layout.boundsEqualTo(inner)
         }
+
+        this.layout.bake()
     }
 
     override fun drawComponent(mousePos: Vec2d, partialTicks: Float) {

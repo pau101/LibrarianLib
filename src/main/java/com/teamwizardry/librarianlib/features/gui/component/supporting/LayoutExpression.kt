@@ -2,12 +2,11 @@ package com.teamwizardry.librarianlib.features.gui.component.supporting
 
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import no.birkett.kiwi.Expression
-import no.birkett.kiwi.Solver
 import no.birkett.kiwi.Strength
 import no.birkett.kiwi.Symbolics
 
 open class LayoutExpression internal constructor(internal val kiwiExpression: Expression, internal val involvedComponents: Set<GuiComponent>,
-                                                 open internal val stringRepresentation: String, internal val isAddition: Boolean) {
+                                                 open internal var stringRepresentation: String, internal val isAddition: Boolean) {
     /**
      * Return an anchor multiplied by [other]
      */
@@ -77,7 +76,10 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
      */
     @JvmOverloads
     fun equalTo(other: LayoutExpression, isActive: Boolean = true): LayoutConstraint {
-        val c = LayoutConstraint(Symbolics.equals(this.kiwiExpression, other.kiwiExpression), getSolver(other), Strength.REQUIRED,
+        val root = getSolverRootComponent(other)
+        val c = LayoutConstraint(
+                root.layout.adjustChildConstraint(Symbolics.equals(this.kiwiExpression, other.kiwiExpression)),
+                root.layout.solver!!, Strength.REQUIRED,
                 this.stringRepresentation + " == " + other.stringRepresentation)
         c.isActive = isActive
         return c
@@ -88,7 +90,10 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
      */
     @JvmOverloads
     fun gequalTo(other: LayoutExpression, isActive: Boolean = true): LayoutConstraint {
-        val c = LayoutConstraint(Symbolics.greaterThanOrEqualTo(this.kiwiExpression, other.kiwiExpression), getSolver(other), Strength.REQUIRED,
+        val root = getSolverRootComponent(other)
+        val c = LayoutConstraint(
+                root.layout.adjustChildConstraint(Symbolics.greaterThanOrEqualTo(this.kiwiExpression, other.kiwiExpression)),
+                root.layout.solver!!, Strength.REQUIRED,
                 this.stringRepresentation + " >= " + other.stringRepresentation)
         c.isActive = isActive
         return c
@@ -99,7 +104,10 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
      */
     @JvmOverloads
     fun lequalTo(other: LayoutExpression, isActive: Boolean = true): LayoutConstraint {
-        val c = LayoutConstraint(Symbolics.lessThanOrEqualTo(this.kiwiExpression, other.kiwiExpression), getSolver(other), Strength.REQUIRED,
+        val root = getSolverRootComponent(other)
+        val c = LayoutConstraint(
+                root.layout.adjustChildConstraint(Symbolics.lessThanOrEqualTo(this.kiwiExpression, other.kiwiExpression)),
+                root.layout.solver!!, Strength.REQUIRED,
                 this.stringRepresentation + " <= " + other.stringRepresentation)
         c.isActive = isActive
         return c
@@ -110,7 +118,10 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
      */
     @JvmOverloads
     fun equalTo(other: Number, isActive: Boolean = true): LayoutConstraint {
-        val c = LayoutConstraint(Symbolics.equals(this.kiwiExpression, other.toDouble()), getSolver(null), Strength.REQUIRED,
+        val root = getSolverRootComponent(null)
+        val c = LayoutConstraint(
+                root.layout.adjustChildConstraint(Symbolics.equals(this.kiwiExpression, other.toDouble())),
+                root.layout.solver!!, Strength.REQUIRED,
                 this.stringRepresentation + " == " + other)
         c.isActive = isActive
         return c
@@ -121,7 +132,10 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
      */
     @JvmOverloads
     fun gequalTo(other: Number, isActive: Boolean = true): LayoutConstraint {
-        val c = LayoutConstraint(Symbolics.greaterThanOrEqualTo(this.kiwiExpression, other.toDouble()), getSolver(null), Strength.REQUIRED,
+        val root = getSolverRootComponent(null)
+        val c = LayoutConstraint(
+                root.layout.adjustChildConstraint(Symbolics.greaterThanOrEqualTo(this.kiwiExpression, other.toDouble())),
+                root.layout.solver!!, Strength.REQUIRED,
                 this.stringRepresentation + " >= " + other)
         c.isActive = isActive
         return c
@@ -132,7 +146,10 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
      */
     @JvmOverloads
     fun lequalTo(other: Number, isActive: Boolean = true): LayoutConstraint {
-        val c = LayoutConstraint(Symbolics.lessThanOrEqualTo(this.kiwiExpression, other.toDouble()), getSolver(null), Strength.REQUIRED,
+        val root = getSolverRootComponent(null)
+        val c = LayoutConstraint(
+                root.layout.adjustChildConstraint(Symbolics.lessThanOrEqualTo(this.kiwiExpression, other.toDouble())),
+                root.layout.solver!!, Strength.REQUIRED,
                 this.stringRepresentation + " <= " + other)
         c.isActive = isActive
         return c
@@ -152,23 +169,27 @@ open class LayoutExpression internal constructor(internal val kiwiExpression: Ex
     /** Kotlin infix shortcut for [gequalTo] */
     infix fun geq(other: Number) = gequalTo(other)
 
-    private fun getSolver(other: LayoutExpression?): Solver {
-        var solver: Solver? = null
+    private fun getSolverRootComponent(other: LayoutExpression?): GuiComponent {
+
         val involved = if(other == null) this.involvedComponents else this.involvedComponents + other.involvedComponents
-        if(involved.any { it.layout.rootSolver == null }) {
-            throw IllegalArgumentException("Not all components are in valid solver contexts!")
-        }
-        involved.forEach {
-            if(solver == null) {
-                solver = it.layout.rootSolver
-            } else {
-                if(it.layout.rootSolver != solver) {
-                    throw IllegalArgumentException("Not all components are in the same solver context! Are any of them in baked or isolated contexts?")
-                }
-            }
+        if(involved.isEmpty()) throw IllegalArgumentException("Constraint uses no components")
+
+        if(involved.any { it.layout.validSolvers.isEmpty() }) {
+            throw IllegalArgumentException("Not all components are in valid solver contexts")
         }
 
-        return solver!!
+        val candidates = involved.flatMap { it.layout.validSolvers }.toMutableList()
+
+        candidates.removeIf { candidate -> involved.any { candidate !in it.layout.validSolvers } }
+        val valid = candidates.toSet()
+
+        if(valid.isEmpty()) {
+            throw IllegalArgumentException("No common solvers")
+        }
+
+        return involved.find { it.layout.solver in valid } ?:
+                involved.mapNotNull { it.layout.containingSolverComponent }.find { it.layout.solver in valid } ?:
+                throw Exception("WTF")
     }
 
     override fun toString(): String {

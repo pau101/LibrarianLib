@@ -52,4 +52,16 @@ object Strength {
     fun clip(value: Double): Double {
         return Math.max(0.0, Math.min(REQUIRED, value))
     }
+
+    fun name(value: Double): String {
+        return when(value) {
+            WEAK -> "WEAK"
+            MEDIUM -> "MEDIUM"
+            PREFERRED -> "PREFERRED"
+            IMPLICIT -> "IMPLICIT"
+            STRONG -> "STRONG"
+            REQUIRED -> "REQUIRED"
+            else -> "$value"
+        }
+    }
 }
