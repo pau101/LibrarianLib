@@ -8,6 +8,7 @@ import com.teamwizardry.librarianlib.features.gui.components.ComponentVoid
 import com.teamwizardry.librarianlib.features.gui.debugger.ComponentDebugger
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.kotlin.div
+import com.teamwizardry.librarianlib.features.kotlin.round
 import com.teamwizardry.librarianlib.features.kotlin.unaryMinus
 import com.teamwizardry.librarianlib.features.utilities.client.StencilUtil
 import net.minecraft.client.Minecraft
@@ -80,11 +81,11 @@ internal class BaseGuiImplementation(
         fullscreenComponents.transform.scale = scaledresolution.scaleFactor.toDouble()
         fullscreenComponents.size = vec(gui.width, gui.height)
 
-        centered.pos = root.size/2
+        centered.pos = (root.size/2).round()
 
         mainComponents.transform.scale = scaledresolution.scaleFactor.toDouble()
         mainComponents.size = vec(guiWidth, guiHeight)
-        mainComponents.pos = -vec(guiWidth, guiHeight)/(2 * scaledresolution.scaleFactor)
+        mainComponents.pos = (-vec(guiWidth, guiHeight)/(2 * scaledresolution.scaleFactor)).round()
 
 //        val left = (gui.width - guiWidth)/2
 //        val top = (gui.height - guiHeight)/2

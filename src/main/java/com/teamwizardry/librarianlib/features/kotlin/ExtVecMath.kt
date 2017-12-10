@@ -48,6 +48,7 @@ operator fun Vec3i.component1() = x
 operator fun Vec3i.component2() = y
 operator fun Vec3i.component3() = z
 
+fun Vec3d.round() = Vec3d(x.toInt().toDouble(), y.toInt().toDouble(), z.toInt().toDouble())
 
 // Vec2d ===============================================================================================================
 
@@ -76,6 +77,8 @@ fun Vec2d.withY(other: Int) = this.withY(other.toDouble())
 
 operator fun Vec2d.component1() = x
 operator fun Vec2d.component2() = y
+
+fun Vec2d.round() = Vec2d(x.toInt().toDouble(), y.toInt().toDouble())
 
 // BlockPos ============================================================================================================
 

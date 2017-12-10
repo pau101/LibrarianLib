@@ -83,10 +83,10 @@ class ComponentLayoutHandler(val component: GuiComponent) {
     var topStay = 0.0
     /** Specifies the strength with which the width defined by [GuiComponent.size] should be maintained */
     var widthStay = 0.0
-//        get() = if(baked) Strength.REQUIRED else field
+        get() = if(baked) Strength.REQUIRED else field
     /** Specifies the strength with which the height defined by [GuiComponent.size] should be maintained */
     var heightStay = 0.0
-//        get() = if(baked) Strength.REQUIRED else field
+        get() = if(baked) Strength.REQUIRED else field
 
     /** Specifies the strength with which the size defined by [GuiComponent.size] should be maintained */
     var sizeStay
@@ -180,12 +180,6 @@ class ComponentLayoutHandler(val component: GuiComponent) {
     }
 
     fun bake() {
-        if(!isolated) {
-            throw IllegalStateException("Only isolated layouts can be baked")
-        }
-        if(baked) {
-            throw IllegalStateException("Component already baked")
-        }
         needsLayout = true
         updateLayoutIfNeeded()
         solver = null

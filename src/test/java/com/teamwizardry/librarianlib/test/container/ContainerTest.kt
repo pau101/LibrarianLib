@@ -70,7 +70,7 @@ class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 1
         mainComponents.add(bg)
 
         val offhand = PastrySlot(container.invPlayer.offhand)
-        val hotbar = PastryInventoryRow(container.invPlayer.hotbar)
+        val hotbar = PastryInventoryGrid(container.invPlayer.hotbar, 9)
         val main = PastryInventoryRow(container.invPlayer.main)
 
         mainComponents.add(offhand, main, hotbar)
