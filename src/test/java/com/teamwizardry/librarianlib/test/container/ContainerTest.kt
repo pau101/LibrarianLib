@@ -20,6 +20,7 @@ import com.teamwizardry.librarianlib.features.sprite.Texture
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.init.Items
 import net.minecraft.util.ResourceLocation
+import no.birkett.kiwi.Strength
 import org.lwjgl.input.Mouse
 import java.awt.Color
 
@@ -70,34 +71,86 @@ class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 1
     val offhandLeft = LayoutConstantCell(4)
     val upperGrid = PastryInventoryGrid(container.invBlock.main, 9)
     val smallGrid = PastryInventoryGrid(container.invBlock.small, 3)
+    val addButton = PastryButton("Add").named("addButton")
+    val removeButton = PastryButton("Remove").named("removeButton")
+    val upperBg = PastryBackground()
 
-    @Hook("moveButton")
-    fun moveClick(e: GuiComponentEvents.MouseClickEvent) {
+    @Hook("toggleButton")
+    fun toggleClick(e: GuiComponentEvents.MouseClickEvent) {
         smallGrid.isVisible = !smallGrid.isVisible
     }
 
+    @Hook("addButton")
+    fun addClick(e: GuiComponentEvents.MouseClickEvent) {
+
+        val comp = ComponentRect(0, 0, 100, 30)
+        val mini = ComponentRect(0, 0, 30, 10)
+        comp.color = Color.RED
+        mini.color = Color.BLUE
+        comp.layout.sizeStay = Strength.REQUIRED
+        mini.layout.sizeStay = Strength.REQUIRED
+
+        comp.add(mini)
+        upperBg.add(comp)
+
+        comp.layout {
+            comp.layout.right eq upperBg.layout.right - 2
+            comp.layout.top eq upperBg.layout.top + 2
+
+            mini.layout.centerX eq comp.layout.centerX
+            mini.layout.centerY eq comp.layout.centerY
+        }
+
+        addButton.enabled = false
+        removeButton.enabled = true
+    }
+
+    @Hook("removeButton")
+    fun removeClick(e: GuiComponentEvents.MouseClickEvent) {
+        upperBg.relationships.getAllByClass(ComponentRect::class.java).forEach {
+            upperBg.relationships.remove(it)
+        }
+
+        addButton.enabled = true
+        removeButton.enabled = false
+    }
+
     init {
+        removeButton.enabled = false
         val bg = PastryBackground()
 
-        mainComponents.add(bg)
+        mainComponents.add(upperBg, bg)
 
         val offhand = PastrySlot(container.invPlayer.offhand)
         val hotbar = PastryInventoryRow(container.invPlayer.hotbar)
         val main = PastryInventoryGrid(container.invPlayer.main, 9)
         val armor = PastryInventoryColumn(container.invPlayer.armor)
 
-        val button = PastryButton("Move").named("moveButton")
+        val button = PastryButton("Toggle Ghost slots").named("toggleButton")
 
 
         mainComponents.add(offhand, main, hotbar, armor, upperGrid, smallGrid, button)
+        upperBg.add(addButton, removeButton)
+
         layout {
             bg.layout.boundsEqualTo(mainComponents)
+
+            upperBg.layout.bottom eq mainComponents.layout.top
+            upperBg.layout.left eq mainComponents.layout.left + 16
+            upperBg.layout.right eq mainComponents.layout.right - 16
+            upperBg.layout.top eq bg.layout.top - 48
+
+            addButton.layout.left eq upperBg.layout.left + 2
+            removeButton.layout.left eq upperBg.layout.left + 2
+
+            addButton.layout.top eq upperBg.layout.top + 2
+            removeButton.layout.top eq addButton.layout.bottom + 2
 
             armor.layout.left eq mainComponents.layout.left + 4
             armor.layout.top eq mainComponents.layout.top + 4
 
-            offhand.layout.bottom eq bg.layout.top + 4
-            offhand.layout.left eq mainComponents.layout.left + offhandLeft
+            offhand.layout.bottom eq armor.layout.bottom + 4
+            offhand.layout.left eq armor.layout.right+ offhandLeft
 
             hotbar.layout.bottom eq mainComponents.layout.bottom - 4
             hotbar.layout.centerX eq mainComponents.layout.centerX
@@ -105,8 +158,8 @@ class GuiContainerTest(container: ContainerTest) : GuiContainerBase(container, 1
             main.layout.bottom eq hotbar.layout.top - 4
             main.layout.centerX eq mainComponents.layout.centerX
 
-            button.layout.right eq mainComponents.layout.right - 2
-            button.layout.top eq mainComponents.layout.top + 2
+            button.layout.left eq mainComponents.layout.right + 4
+            button.layout.bottom eq mainComponents.layout.top + 2
 
             upperGrid.layout.left eq armor.layout.right + 4
             upperGrid.layout.top eq mainComponents.layout.top + 4

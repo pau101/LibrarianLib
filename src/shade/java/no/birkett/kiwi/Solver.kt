@@ -201,6 +201,10 @@ class Solver {
         return cns.containsKey(constraint)
     }
 
+    fun usesVariable(variable: Variable): Boolean {
+        return vars.containsKey(variable)
+    }
+
     @Throws(DuplicateEditVariableException::class, RequiredFailureException::class, UnsatisfiableConstraintException::class)
     fun addEditVariable(variable: Variable, strength: Double, value: Double) {
         var strength = strength

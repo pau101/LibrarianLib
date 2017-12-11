@@ -60,7 +60,10 @@ open class GuiContainerBase(val container: ContainerBase, val guiWidth: Int, val
             }
         }
 
+        GlStateManager.pushMatrix()
+        baseGuiImplementation.debugTransform()
         super.drawScreen(mouseX, mouseY, partialTicks)
+        GlStateManager.popMatrix()
     }
 
     override fun mouseClicked(mouseX: Int, mouseY: Int, mouseButton: Int) {

@@ -4,6 +4,8 @@ import com.teamwizardry.librarianlib.core.LibrarianLog
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.helpers.vec
+import com.teamwizardry.librarianlib.features.kotlin.component1
+import com.teamwizardry.librarianlib.features.kotlin.component2
 import com.teamwizardry.librarianlib.features.math.Vec2d
 import no.birkett.kiwi.*
 
@@ -229,6 +231,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
             }
             onAddedToLayoutContext()
         }
+    internal val constraints = mutableSetOf<LayoutConstraint>()
 
     internal val containingSolver: Solver?
         get() = component.parent?.layout?.solver ?: component.parent?.layout?.containingSolver
@@ -236,6 +239,20 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         get() = listOf(solver, containingSolver).filterNotNull()
     internal val containingSolverComponent: GuiComponent?
         get() = if(component.parent?.layout?.solver != null) component.parent else component.parent?.layout?.containingSolverComponent
+
+    internal fun removeComponent(component: GuiComponent) {
+        val removed = mutableSetOf<GuiComponent>()
+
+        removed.add(component)
+        component.relationships.addChildrenRecursively(removed)
+
+        val removedConstraints = constraints.filter { it.involvedComponents.any { it in removed } }
+        constraints.removeAll(removedConstraints)
+        removedConstraints.forEach {
+            it.isActive = false
+            it.valid = false
+        }
+    }
 
     private fun addIntrinsic(solver: Solver) {
         if(isolated) {
@@ -274,9 +291,16 @@ class ComponentLayoutHandler(val component: GuiComponent) {
     }
 
     private fun update(solver: Solver) {
-        if(solver != this.solver)
-            component.pos = vec(posX.variable.value, posY.variable.value)
-        component.size = vec(sizeX.variable.value, sizeY.variable.value)
+        if(solver != this.solver) {
+            var (x, y) = component.pos
+            if(solver.usesVariable(posX.variable)) x = posX.variable.value
+            if(solver.usesVariable(posY.variable)) y = posY.variable.value
+            component.pos = vec(x, y)
+        }
+        var (x, y) = component.size
+        if(solver.usesVariable(sizeX.variable)) x = sizeX.variable.value
+        if(solver.usesVariable(sizeY.variable)) y = sizeY.variable.value
+        component.size = vec(x, y)
 
         if(baked && solver != this.solver) return
 
@@ -332,7 +356,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
     }
 
     internal fun Solver.setEditVariable(variable: Variable, value: Double, strength: Double, name: String) {
-//        val strength = if(strength >= Strength.REQUIRED) Strength.REQUIRED - 1 else strength
+        if(!this.usesVariable(variable)) return
 
         var edit = editVariable(variable)
 

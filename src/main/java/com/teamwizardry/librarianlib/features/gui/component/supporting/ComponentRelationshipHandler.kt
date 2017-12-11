@@ -35,7 +35,7 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
             }
         }
 
-    private fun addChildrenRecursively(list: MutableList<GuiComponent>) {
+    internal fun addChildrenRecursively(list: MutableCollection<GuiComponent>) {
         list.addAll(components)
         components.forEach { it.relationships.addChildrenRecursively(list) }
     }
@@ -115,6 +115,7 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
             return
         if (component.BUS.fire(GuiComponentEvents.RemoveFromParentEvent(component, this.component)).isCanceled())
             return
+        component.layout.containingSolverComponent?.layout?.removeComponent(component)
         component.relationships.parent = null
         components.remove(component)
         component.layout.setNeedsLayout()

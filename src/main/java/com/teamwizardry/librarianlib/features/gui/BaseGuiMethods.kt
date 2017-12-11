@@ -98,12 +98,7 @@ internal class BaseGuiImplementation(
         val relPos = vec(mouseX, mouseY)
         GlStateManager.pushMatrix()
 
-        if(isDebugMode) {
-            GlStateManager.translate(gui.width / 2.0, gui.height / 2.0, 0.0)
-            GlStateManager.rotate(-20f, 1f, 0f, 0f)
-            GlStateManager.rotate(-20f, 0f, 1f, 0f)
-            GlStateManager.translate(-gui.width / 2.0, -gui.height / 2.0, 0.0)
-        }
+        debugTransform()
 
         StencilUtil.start()
         root.guiEventHandler.preLayout(relPos, partialTicks)
@@ -128,6 +123,15 @@ internal class BaseGuiImplementation(
         Mouse.setNativeCursor((debugger.render.cursor ?: root.render.cursor)?.lwjglCursor)
         debugger.render.cursor = null
         root.render.cursor = null
+    }
+
+    fun debugTransform() {
+        if(isDebugMode) {
+            GlStateManager.translate(gui.width / 2.0, gui.height / 2.0, 0.0)
+            GlStateManager.rotate(-20f, 1f, 0f, 0f)
+            GlStateManager.rotate(-20f, 0f, 1f, 0f)
+            GlStateManager.translate(-gui.width / 2.0, -gui.height / 2.0, 0.0)
+        }
     }
 
     @Throws(IOException::class)
