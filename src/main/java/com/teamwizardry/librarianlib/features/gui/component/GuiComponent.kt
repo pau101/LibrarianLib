@@ -185,6 +185,15 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int = 0, posY: Int =
      */
     val children
             by relationships::children.delegate
+
+    /**
+     * Identical to [children], except that it will work to iterate over children of opaque components.
+     *
+     * If your component is opaque, use this in your component class as opposed to [children]
+     */
+    protected val trueChildren
+            by relationships::trueChildren.delegate
+
     /**
      * The parent of this component, or null if it has no parent
      */
@@ -281,6 +290,9 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int = 0, posY: Int =
     //endregion
 
     //region - Internal
+    /**
+     * Setting this to true prevents outside code from viewing or changing the children of this component.
+     */
     var opaque = false
         protected set
 

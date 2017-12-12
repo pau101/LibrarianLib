@@ -15,12 +15,12 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
     var zIndex = 0
     internal val components = mutableListOf<GuiComponent>()
     /** [GuiComponent.children] */
-    val children: Collection<GuiComponent> = Collections.unmodifiableCollection(components)
+    val children: Collection<GuiComponent>
         get() =
             if(component.opaque)
                 emptyList()
             else
-                field
+                trueChildren
     /**
      * An unmodifiable collection of all the children of this component, recursively.
      */
@@ -34,6 +34,8 @@ class ComponentRelationshipHandler(private val component: GuiComponent) {
                 return Collections.unmodifiableCollection(list)
             }
         }
+
+    internal val trueChildren: Collection<GuiComponent> = Collections.unmodifiableCollection(components)
 
     internal fun addChildrenRecursively(list: MutableCollection<GuiComponent>) {
         list.addAll(components)

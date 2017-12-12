@@ -20,17 +20,6 @@ class ComponentGuiEventHandler(private val component: GuiComponent) {
         component.relationships.components.toList().forEach { it.guiEventHandler.tick() }
     }
 
-    fun preLayout(mousePos: Vec2d, partialTicks: Float) {
-
-        component.BUS.fire(GuiComponentEvents.PreLayoutEvent(component, mousePos, partialTicks))
-
-        val mousePos = component.geometry.transformFromParentContext(mousePos)
-
-        component.relationships.components.toList().forEach {
-            it.guiEventHandler.preLayout(mousePos, partialTicks)
-        }
-    }
-
     /**
      * Called when the mouse is pressed.
      *

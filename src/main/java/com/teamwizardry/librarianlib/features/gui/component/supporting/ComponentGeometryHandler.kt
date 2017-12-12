@@ -41,6 +41,8 @@ class ComponentGeometryHandler(private val component: GuiComponent) {
 //    var pos: Vec2d
 //        get() = transform.translate
 //        set(value) { transform.translate = value }
+    var mousePos = Vec2d.ZERO
+        internal set
     /** [GuiComponent.mouseOver] */
     var mouseOver = false
     /** True if the mouse is over the component at all, ignoring other components on top of it blocking the cursor */
@@ -115,6 +117,7 @@ class ComponentGeometryHandler(private val component: GuiComponent) {
     fun calculateMouseOver(mousePos: Vec2d) {
         component.BUS.fire(GuiComponentEvents.PreMouseOverEvent(component, mousePos))
         val mousePos = transformFromParentContext(mousePos)
+        this.mousePos = mousePos
         this.mouseOver = false
 
         if (component.isVisible) {

@@ -101,7 +101,6 @@ internal class BaseGuiImplementation(
         debugTransform()
 
         StencilUtil.start()
-        root.guiEventHandler.preLayout(relPos, partialTicks)
         root.layout.updateAllLayoutsIfNeeded()
 
         root.geometry.calculateMouseOver(relPos)
@@ -111,7 +110,6 @@ internal class BaseGuiImplementation(
         GlStateManager.popMatrix()
 
         if(isDebugMode) {
-            debugger.guiEventHandler.preLayout(relPos, partialTicks)
             debugger.layout.updateAllLayoutsIfNeeded()
 
             debugger.geometry.calculateMouseOver(relPos)

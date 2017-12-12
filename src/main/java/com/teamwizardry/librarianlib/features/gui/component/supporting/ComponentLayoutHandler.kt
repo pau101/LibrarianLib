@@ -201,15 +201,22 @@ class ComponentLayoutHandler(val component: GuiComponent) {
 
     fun updateLayoutIfNeeded() {
         val solver = this.solver
-        if(solver == null) {
+        if(solver == null && !baked) {
             containingSolverComponent?.layout?.updateLayoutIfNeeded()
-        } else if (needsLayout || solver.changed) {
-            addIntrinsic(solver)
-            solver.updateVariables()
-            update(solver)
+        } else if (needsLayout || solver?.changed == true) {
+
+            component.BUS.fire(GuiComponentEvents.PreLayoutEvent(component))
+
+            solver?.also { solver ->
+                addIntrinsic(solver)
+                solver.updateVariables()
+                update(solver)
+            }
+
+            component.BUS.fire(GuiComponentEvents.PostLayoutEvent(component))
 
             needsLayout = false
-            solver.changed = false
+            solver?.changed = false
         }
     }
 
@@ -329,7 +336,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         component.relationships.components.forEach {
             it.layout.updateAllLayoutsIfNeeded()
         }
-        if(solver != null)
+        if(solver != null || baked)
             updateLayoutIfNeeded()
     }
 

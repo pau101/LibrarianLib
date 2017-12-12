@@ -12,8 +12,6 @@ object GuiComponentEvents {
     /** Fired to add dynamic constraints to the given solver */
     class AddConstraintsEvent(@JvmField val component: GuiComponent, val solver: Solver) : Event()
 
-    /** Fired before layout is calculated */
-    class PreLayoutEvent(@JvmField val component: GuiComponent, val parentMousePos: Vec2d, val partialTicks: Float) : Event()
     /** Fired each frame before the component has been drawn, but after most computed properties update */
     class PreDrawEvent(@JvmField val component: GuiComponent, val mousePos: Vec2d, val partialTicks: Float) : Event()
     /** Fired each frame after the component has been drawn but before children have been drawn */
@@ -85,4 +83,10 @@ object GuiComponentEvents {
     class PreMouseOverEvent(@JvmField val component: GuiComponent, val parentMousePos: Vec2d) : Event()
     /** Fired when checking if the mouse is over this component */
     class MouseOverEvent(@JvmField val component: GuiComponent, val mousePos: Vec2d, var isOver: Boolean) : Event()
+
+    /** Fired before autolayout constraints are updated */
+    class PreLayoutEvent(@JvmField val component: GuiComponent) : Event()
+    /** Fired after autolayout constraints are updated.
+     * Changes to positions in this event will persist until the next layout update */
+    class PostLayoutEvent(@JvmField val component: GuiComponent) : Event()
 }
