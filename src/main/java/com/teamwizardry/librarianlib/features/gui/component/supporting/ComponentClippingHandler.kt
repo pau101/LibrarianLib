@@ -137,13 +137,6 @@ class ComponentClippingHandler(val component: GuiComponent) {
         var d: Int
 
         val points = mutableMapOf<Int, Int>()
-//        (0..15).forEach { i ->
-//            points[i] = 15-i
-//        }
-//        points[0] = 4
-//        points[1] = 4
-//        points[2] = 3
-//        points[3] = 2
 
         points[x] = y
         d = 3 - 2 * r.toInt()

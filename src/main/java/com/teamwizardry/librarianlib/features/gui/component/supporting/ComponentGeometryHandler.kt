@@ -121,20 +121,23 @@ class ComponentGeometryHandler(private val component: GuiComponent) {
         this.mouseOver = false
 
         if (component.isVisible) {
+            var overSelf = isMouseOverSelf(mousePos)
 
             var mouseOverChild = false
-            component.relationships.components.asReversed().forEach { child ->
-                child.geometry.calculateMouseOver(mousePos)
-                if (mouseOverChild) {
-                    child.mouseOver = false // occlusion
-                }
-                if (child.mouseOver) {
-                    mouseOverChild = true
-                    mouseOver = true // mouseover upward transfer
+            if(!component.clipping.clipToBounds || overSelf) {
+                component.relationships.components.asReversed().forEach { child ->
+                    child.geometry.calculateMouseOver(mousePos)
+                    if (mouseOverChild) {
+                        child.mouseOver = false // occlusion
+                    }
+                    if (child.mouseOver) {
+                        mouseOverChild = true
+                        mouseOver = true // mouseover upward transfer
+                    }
                 }
             }
 
-            mouseOver = mouseOver || (shouldCalculateOwnHover && calculateOwnHover(mousePos))
+            mouseOver = mouseOver || (shouldCalculateOwnHover && overSelf)
             mouseOver = component.BUS.fire(GuiComponentEvents.MouseOverEvent(component, mousePos, mouseOver)).isOver
             mouseOverNoOcclusion = mouseOver
             mouseOverDirectly = mouseOver && !mouseOverChild
@@ -146,11 +149,68 @@ class ComponentGeometryHandler(private val component: GuiComponent) {
         component.relationships.components.forEach { it.geometry.allMouseOversFalse() }
     }
 
-    /**
-     * Override this to change the shape of a hover. For instance making a per-pixel sprite hover
-     */
-    open fun calculateOwnHover(mousePos: Vec2d): Boolean {
-        return mousePos.x >= 0 && mousePos.x <= size.x && mousePos.y >= 0 && mousePos.y <= size.y
+    internal fun isMouseOverSelf(mousePos: Vec2d): Boolean {
+        val r = component.clipping.cornerRadius
+
+        if(isInRect(mousePos, 0.0, r, size.x, size.y-r)) return true
+        if(isInRect(mousePos, r, 0.0, size.x-r, r)) return true
+        if(isInRect(mousePos, r, size.y-r, size.x-r, size.y)) return true
+
+        if(r > 0) {
+            if (component.clipping.cornerPixelSize <= 0) {
+                val distSq = component.clipping.cornerPixelSize * component.clipping.cornerPixelSize
+                if(vec(       r,        r).squareDist(mousePos) < distSq) return true
+                if(vec(       r, size.y-r).squareDist(mousePos) < distSq) return true
+                if(vec(size.x-r, size.y-r).squareDist(mousePos) < distSq) return true
+                if(vec(       r, size.y-r).squareDist(mousePos) < distSq) return true
+            } else {
+                if(isInPixelatedArc(mousePos,        r,        r)) return true
+                if(isInPixelatedArc(mousePos,        r, size.y-r)) return true
+                if(isInPixelatedArc(mousePos, size.x-r, size.y-r)) return true
+                if(isInPixelatedArc(mousePos, size.x-r,        r)) return true
+            }
+        }
+
+        return false
+    }
+
+    private fun isInRect(pos: Vec2d, minX: Double, minY: Double, maxX: Double, maxY: Double): Boolean {
+        return pos.x in minX..maxX && pos.y in minY..maxY
+    }
+
+    private fun isInPixelatedArc(mousePos: Vec2d, x: Double, y: Double): Boolean {
+        val v = vec(Math.abs(mousePos.x - x), Math.abs(mousePos.y - y))
+        val a = vec(component.clipping.cornerPixelSize, 0)
+        val b = vec(0, component.clipping.cornerPixelSize)
+        val r = component.clipping.cornerRadius / component.clipping.cornerPixelSize
+        var x = 0
+        var y = r.toInt()
+        var d: Int
+
+        val points = mutableMapOf<Int, Int>()
+
+        points[x] = y
+        d = 3 - 2 * r.toInt()
+        while (x <= y) {
+            if (d <= 0) {
+                d = d + (4 * x + 6)
+            } else {
+                d = d + 4 * (x - y) + 10
+                y--
+            }
+            x++
+
+            if(x-1 > 0)
+                points[x-1] = Math.max(points[x] ?: 0, y)
+            if(y-1 > 0)
+                points[y-1] = Math.max(points[y] ?: 0, x)
+        }
+
+        points.forEach { (y, x) ->
+            if(isInRect(v, 0.0, y.toDouble(), x.toDouble(), y+1.0)) return@isInPixelatedArc true
+        }
+
+        return false
     }
 
 }
