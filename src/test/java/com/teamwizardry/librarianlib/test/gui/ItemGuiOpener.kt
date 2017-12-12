@@ -40,5 +40,6 @@ enum class Guis(val create: () -> GuiScreen) {
     SCISSOR({ GuiTestScissor() }),
     STENCIL({ GuiTestStencil() }),
     AUTOSIZE({ GuiTestAutoSizeScale() }),
-    SPRITE({ GuiTestSprite() })
+    SPRITE({ GuiTestSprite() }),
+    DSL({ GuiTestDSL() })
 }

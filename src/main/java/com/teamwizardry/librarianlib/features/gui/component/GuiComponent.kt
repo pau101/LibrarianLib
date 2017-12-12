@@ -303,7 +303,33 @@ abstract class GuiComponent @JvmOverloads constructor(posX: Int = 0, posY: Int =
 
     override fun toString() = relationships.guiPath() + "@" + System.identityHashCode(this).toString(16)
     //endregion
+
+    //region - DSL
+    operator fun <T: GuiComponent> T.unaryPlus(): T {
+        this@GuiComponent.add(this@unaryPlus)
+        return this@unaryPlus
+    }
+
+    operator fun <T: GuiComponent> T.rem(dslLambda: T.(component: T) -> Unit): T {
+        this.dsl(dslLambda)
+        return this@rem
+    }
+
+    inline operator fun <T, reified E : Event> ((event: E) -> T).not() {
+        this@GuiComponent.BUS.hook(E::class.java, { this@not(it) })
+    }
+
+    operator fun <T> (() -> T).unaryMinus() {
+        this@GuiComponent.layout({ this@unaryMinus() })
+    }
+    //endregion
 }
+
+fun <T: GuiComponent> T.dsl(dslLambda: T.(component: T) -> Unit): T {
+    this.dslLambda(this)
+    return this
+}
+
 
 fun <T: GuiComponent> T.named(name: String): T {
     this.name = name
