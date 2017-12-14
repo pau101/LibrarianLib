@@ -12,44 +12,46 @@ import no.birkett.kiwi.*
 @Suppress("LEAKING_THIS", "UNUSED")
 class ComponentLayoutHandler(val component: GuiComponent) {
 
-    private val posX = Anchor(component, "posX")
-    private val posY = Anchor(component, "posY")
-    private val sizeX = Anchor(component, "width")
-    private val sizeY = Anchor(component, "height")
+    private val posX = Anchor<XAxis>(component, "posX")
+    private val posY = Anchor<YAxis>(component, "posY")
+    private val sizeX = Anchor<Dimension>(component, "sizeX")
+    private val sizeY = Anchor<Dimension>(component, "sizeY")
 
     /** The anchor corresponding to the minimum x coordinate of the component's bounds */
-    val left: LayoutExpression
+    val left: LayoutExpression<XAxis>
         get() {
             val parentLayout = component.parent?.layout ?: return posX
             if(parentLayout.solver != null) return posX
             return fixAnchorExpression(parentLayout.left + posX, "left")
         }
     /** The anchor corresponding to the minimum y coordinate of the component's bounds */
-    val top: LayoutExpression
+    val top: LayoutExpression<YAxis>
         get() {
             val parentLayout = component.parent?.layout ?: return posY
             if(parentLayout.solver != null) return posY
             return fixAnchorExpression(parentLayout.top + posY, "left")
         }
     /** The anchor corresponding to the maximum x coordinate of the component's bounds */
-    val right: LayoutExpression
-        get() = fixAnchorExpression(left + width, "right")
+    @Suppress("UNCHECKED_CAST")
+    val right: LayoutExpression<XAxis>
+        get() = fixAnchorExpression(left + (width as LayoutExpression<XAxis>), "right")
     /** The anchor corresponding to the maximum y coordinate of the component's bounds */
-    val bottom: LayoutExpression
-        get() = fixAnchorExpression(top + height, "bottom")
+    @Suppress("UNCHECKED_CAST")
+    val bottom: LayoutExpression<YAxis>
+        get() = fixAnchorExpression(top + (height as LayoutExpression<YAxis>), "bottom")
     /** The anchor corresponding to the x coordinate of the center of the component's bounds */
-    val centerX: LayoutExpression
+    val centerX: LayoutExpression<XAxis>
         get() = fixAnchorExpression((left + right) / 2, "centerX")
     /** The anchor corresponding to the y coordinate of the center of the component's bounds */
-    val centerY: LayoutExpression
+    val centerY: LayoutExpression<YAxis>
         get() = fixAnchorExpression((top + bottom) / 2, "centerY")
 
     /** The anchor corresponding to the width of the component's bounds */
-    val width: LayoutExpression
-        get() = sizeX
+    val width: LayoutExpression<Dimension>
+        get() = fixAnchorExpression(sizeX + 0, "width") // + 0 to make a new expression so I can rename it. I can't rename plain anchors.
     /** The anchor corresponding to the height of the component's bounds */
-    val height: LayoutExpression
-        get() = sizeY
+    val height: LayoutExpression<Dimension>
+        get() = fixAnchorExpression(sizeY + 0, "height") // ditto.
 
     /**
      * If nonzero, the width and height constraints will be set to the component's implicit size if it exists, rather
@@ -340,7 +342,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
             updateLayoutIfNeeded()
     }
 
-    fun fixAnchorExpression(expr: LayoutExpression, name: String): LayoutExpression {
+    fun <T: ExpressionMetric> fixAnchorExpression(expr: LayoutExpression<T>, name: String): LayoutExpression<T> {
         expr.stringRepresentation = "$component#$name"
 
         // otherwise the entire path from the root component to this is considered involved, which means often there

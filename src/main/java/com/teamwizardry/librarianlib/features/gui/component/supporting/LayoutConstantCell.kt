@@ -12,25 +12,10 @@ class LayoutConstantCell(value: Number){
         changeHandlers.add(handler)
     }
 
-    /**
-     * Return an anchor multiplied by [other]
-     */
-    operator fun times(other: LayoutExpression): LayoutExpression = LayoutExpressionTimes(LayoutExpressionMutableConstant(this), other)
-
-    /**
-     * Return an anchor divided by [other]
-     */
-    operator fun div(other: LayoutExpression): LayoutExpression = LayoutExpressionDiv(LayoutExpressionMutableConstant(this), other)
-
-    /**
-     * Return an anchor increased by [other]
-     */
-    operator fun plus(other: LayoutExpression): LayoutExpression  = LayoutExpressionPlus(LayoutExpressionMutableConstant(this), other)
-
-    /**
-     * Return an anchor reduced by [other]
-     */
-    operator fun minus(other: LayoutExpression): LayoutExpression  = LayoutExpressionMinus(LayoutExpressionMutableConstant(this), other)
+    operator fun <T: ExpressionMetric> times(other: LayoutExpression<T>): LayoutExpression<T> = LayoutExpressionTimes(LayoutExpressionMutableConstant(this), other)
+    operator fun <T: ExpressionMetric> div(other: LayoutExpression<T>): LayoutExpression<T> = LayoutExpressionDiv(LayoutExpressionMutableConstant(this), other)
+    operator fun <T: ExpressionMetric> plus(other: LayoutExpression<T>): LayoutExpression<T> = LayoutExpressionPlus(LayoutExpressionMutableConstant(this), other)
+    operator fun <T: ExpressionMetric> minus(other: LayoutExpression<T>): LayoutExpression<T> = LayoutExpressionMinus(LayoutExpressionMutableConstant(this), other)
 
     operator fun plusAssign(other: Number) { value = value.toDouble() + other.toDouble() }
     operator fun minusAssign(other: Number) { value = value.toDouble() - other.toDouble() }

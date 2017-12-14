@@ -83,7 +83,7 @@ abstract class LayoutConstraint(internal val solverComponent: GuiComponent) {
     }
 }
 
-class LayoutConstraintEqual(val root: GuiComponent, val left: LayoutExpression, val right: LayoutExpression) : LayoutConstraint(root) {
+class LayoutConstraintEqual(val root: GuiComponent, val left: LayoutExpression<*>, val right: LayoutExpression<*>) : LayoutConstraint(root) {
     override val _kiwiConstraint: Constraint
         get() = Symbolics.equals(left.kiwiExpression, right.kiwiExpression)
     override val stringRepresentation: String
@@ -98,7 +98,7 @@ class LayoutConstraintEqual(val root: GuiComponent, val left: LayoutExpression, 
     }
 }
 
-class LayoutConstraintLessThanOrEqual(val root: GuiComponent, val left: LayoutExpression, val right: LayoutExpression) : LayoutConstraint(root) {
+class LayoutConstraintLessThanOrEqual(val root: GuiComponent, val left: LayoutExpression<*>, val right: LayoutExpression<*>) : LayoutConstraint(root) {
     override val _kiwiConstraint: Constraint
         get() = Symbolics.lessThanOrEqualTo(left.kiwiExpression, right.kiwiExpression)
     override val stringRepresentation: String
@@ -113,7 +113,7 @@ class LayoutConstraintLessThanOrEqual(val root: GuiComponent, val left: LayoutEx
     }
 }
 
-class LayoutConstraintGreaterThanOrEqual(val root: GuiComponent, val left: LayoutExpression, val right: LayoutExpression) : LayoutConstraint(root) {
+class LayoutConstraintGreaterThanOrEqual(val root: GuiComponent, val left: LayoutExpression<*>, val right: LayoutExpression<*>) : LayoutConstraint(root) {
     override val _kiwiConstraint: Constraint
         get() = Symbolics.greaterThanOrEqualTo(left.kiwiExpression, right.kiwiExpression)
     override val stringRepresentation: String
