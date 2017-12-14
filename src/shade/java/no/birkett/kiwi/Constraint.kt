@@ -8,17 +8,17 @@ import java.util.*
 class Constraint {
 
     var expression: Expression
-    var strength: Double = 0.0
+    var strength: Strength = Strength.NONE
         private set
     var op: RelationalOperator
 
-    @JvmOverloads constructor(expr: Expression, op: RelationalOperator, strength: Double = Strength.REQUIRED) {
+    @JvmOverloads constructor(expr: Expression, op: RelationalOperator, strength: Strength = Strength.REQUIRED) {
         this.expression = reduce(expr)
         this.op = op
-        this.strength = Strength.clip(strength)
+        this.strength = strength
     }
 
-    constructor(other: Constraint, strength: Double) : this(other.expression, other.op, strength) {}
+    constructor(other: Constraint, strength: Strength) : this(other.expression, other.op, strength) {}
 
     private fun reduce(expr: Expression): Expression {
 
@@ -40,7 +40,7 @@ class Constraint {
         return Expression(reducedTerms, expr.constant)
     }
 
-    fun setStrength(strength: Double): Constraint {
+    fun setStrength(strength: Strength): Constraint {
         this.strength = strength
         return this
     }

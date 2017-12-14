@@ -3,39 +3,44 @@ package no.birkett.kiwi
 /**
  * Created by alex on 30/01/15.
  */
-object Strength {
+enum class Strength(bitmask: Int) {
 
     /**
-     * Used for required constraints
+     * Used to represent no strength at all
      */
-    val REQUIRED = create(0b11111)
-
-    /**
-     * Used for optional user constraints
-     */
-    val STRONG = create(0b10000)
-
-    /**
-     * Used for implicit constraints
-     */
-    val IMPLICIT = create(0b01000)
-
-    /**
-     * Used for anything that should override existing defaults but not any manual constraints or implicit values
-     */
-    val PREFERRED = create(0b00100)
-
-    /**
-     * Used for width and height constraints so they will pull the left and bottom along with them
-     */
-    val MEDIUM = create(0b00010)
+    NONE(0b00000),
 
     /**
      * Used for constraints that keep anchors at their existing values
      */
-    val WEAK = create(0b00001)
+    WEAK(0b00001),
 
-    private fun create(bitmask: Int): Double {
+    /**
+     * Used for width and height constraints so they will pull the left and bottom along with them
+     */
+    MEDIUM(0b00010),
+
+    /**
+     * Used for anything that should override existing defaults but not any manual constraints or implicit values
+     */
+    PREFERRED(0b00100),
+
+    /**
+     * Used for implicit constraints
+     */
+    IMPLICIT(0b01000),
+
+    /**
+     * Used for optional user constraints
+     */
+    STRONG(0b10000),
+
+    /**
+     * Used for required constraints
+     */
+    REQUIRED(0b11111);
+
+    val value: Double = {
         var mask = bitmask
         var factor = 1.0
         var result = 0.0
@@ -46,22 +51,20 @@ object Strength {
             factor *= 1000
             mask = mask shr 1
         }
-        return result
-    }
+        result
+    }()
 
-    fun clip(value: Double): Double {
-        return Math.max(0.0, Math.min(REQUIRED, value))
-    }
-
-    fun name(value: Double): String {
-        return when(value) {
-            WEAK -> "WEAK"
-            MEDIUM -> "MEDIUM"
-            PREFERRED -> "PREFERRED"
-            IMPLICIT -> "IMPLICIT"
-            STRONG -> "STRONG"
-            REQUIRED -> "REQUIRED"
-            else -> "$value"
+    fun min(other: Strength): Strength {
+        if(other < this) {
+            return other
         }
+        return this
+    }
+
+    fun max(other: Strength): Strength {
+        if(other > this) {
+            return other
+        }
+        return this
     }
 }

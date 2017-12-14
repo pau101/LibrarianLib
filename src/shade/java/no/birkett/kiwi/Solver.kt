@@ -148,12 +148,12 @@ class Solver {
         }
     }
 
-    internal fun removeMarkerEffects(marker: Symbol, strength: Double) {
+    internal fun removeMarkerEffects(marker: Symbol, strength: Strength) {
         val row = rows[marker]
         if (row != null) {
-            objective.insert(row, -strength)
+            objective.insert(row, -strength.value)
         } else {
-            objective.insert(marker, -strength)
+            objective.insert(marker, -strength.value)
         }
     }
 
@@ -206,13 +206,10 @@ class Solver {
     }
 
     @Throws(DuplicateEditVariableException::class, RequiredFailureException::class, UnsatisfiableConstraintException::class)
-    fun addEditVariable(variable: Variable, strength: Double, value: Double) {
-        var strength = strength
+    fun addEditVariable(variable: Variable, strength: Strength, value: Double) {
         if (edits.containsKey(variable)) {
             throw DuplicateEditVariableException()
         }
-
-        strength = Strength.clip(strength)
 
 //        if (strength == Strength.REQUIRED) {
 //            throw RequiredFailureException()
@@ -350,7 +347,7 @@ class Solver {
                     val error = Symbol(Symbol.Type.ERROR)
                     tag.other = error
                     row.insert(error, -coeff)
-                    this.objective.insert(error, constraint.strength)
+                    this.objective.insert(error, constraint.strength.value)
                 }
             }
             RelationalOperator.OP_EQ -> {
@@ -361,8 +358,8 @@ class Solver {
                     tag.other = errminus
                     row.insert(errplus, -1.0) // v = eplus - eminus
                     row.insert(errminus, 1.0) // v - eplus + eminus = 0
-                    this.objective.insert(errplus, constraint.strength)
-                    this.objective.insert(errminus, constraint.strength)
+                    this.objective.insert(errplus, constraint.strength.value)
+                    this.objective.insert(errminus, constraint.strength.value)
                 } else {
                     val dummy = Symbol(Symbol.Type.DUMMY)
                     tag.marker = dummy

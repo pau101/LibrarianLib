@@ -82,19 +82,19 @@ class ComponentLayoutHandler(val component: GuiComponent) {
     }
 
     /** Specifies the strength with which the x coordinate defined by [GuiComponent.pos] should be maintained */
-    var leftStay = 0.0
+    var leftStay = Strength.NONE
     /** Specifies the strength with which the y coordinate defined by [GuiComponent.pos] should be maintained */
-    var topStay = 0.0
+    var topStay = Strength.NONE
     /** Specifies the strength with which the width defined by [GuiComponent.size] should be maintained */
-    var widthStay = 0.0
+    var widthStay = Strength.NONE
         get() = if(baked) Strength.REQUIRED else field
     /** Specifies the strength with which the height defined by [GuiComponent.size] should be maintained */
-    var heightStay = 0.0
+    var heightStay = Strength.NONE
         get() = if(baked) Strength.REQUIRED else field
 
     /** Specifies the strength with which the size defined by [GuiComponent.size] should be maintained */
     var sizeStay
-        get() = Math.min(widthStay, heightStay)
+        get() = widthStay.min(heightStay)
         set(value) {
             widthStay = value
             heightStay = value
@@ -102,7 +102,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
 
     /** Specifies the strength with which the position defined by [GuiComponent.pos] should be maintained */
     var positionStay
-        get() = Math.min(leftStay, topStay)
+        get() = leftStay.min(topStay)
         set(value) {
             leftStay = value
             topStay = value
@@ -110,7 +110,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
 
     /** Specifies the strength with which the size and position defined by [GuiComponent.size] and [GuiComponent.pos] should be maintained */
     var boundsStay
-        get() = Math.min(sizeStay, positionStay)
+        get() = sizeStay.min(positionStay)
         set(value) {
             sizeStay = value
             positionStay = value
@@ -267,7 +267,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         if(isolated) {
             if(solver == this.solver) {
                 val implicit = component.getImplicitSize()
-                if (implicitSizeStrength != 0.0 && implicit != null) {
+                if (implicitSizeStrength != Strength.NONE && implicit != null) {
                     solver.setEditVariable(sizeX.variable, implicit.x, implicitSizeStrength, "width")
                     solver.setEditVariable(sizeY.variable, implicit.y, implicitSizeStrength, "height")
                 } else {
@@ -283,7 +283,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
             }
         } else {
             val implicit = component.getImplicitSize()
-            if (implicitSizeStrength != 0.0 && implicit != null) {
+            if (implicitSizeStrength != Strength.NONE && implicit != null) {
                 solver.setEditVariable(sizeX.variable, implicit.x, implicitSizeStrength, "width")
                 solver.setEditVariable(sizeY.variable, implicit.y, implicitSizeStrength, "height")
             } else {
@@ -364,12 +364,12 @@ class ComponentLayoutHandler(val component: GuiComponent) {
         return constraint
     }
 
-    internal fun Solver.setEditVariable(variable: Variable, value: Double, strength: Double, name: String) {
+    internal fun Solver.setEditVariable(variable: Variable, value: Double, strength: Strength, name: String) {
         if(!this.usesVariable(variable)) return
 
         var edit = editVariable(variable)
 
-        if(strength == 0.0) {
+        if(strength == Strength.NONE) {
             if(edit != null) removeEditVariable(variable)
             return
         }
@@ -380,7 +380,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
                 addEditVariable(variable, strength, value)
             } catch (e: UnsatisfiableConstraintException) {
                 val fullName = "$component#$name"
-                LibrarianLog.error("Unsatisfiable edit variable: $fullName == $value strength: ${Strength.name(strength)}")
+                LibrarianLog.error("Unsatisfiable edit variable: $fullName == $value strength: $strength")
                 LibrarianLog.errorStackTrace(e)
                 return
             }
@@ -391,7 +391,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
                 suggestValue(variable, value)
             } catch (e: UnsatisfiableConstraintException) {
                 val fullName = "$component#$name"
-                LibrarianLog.error("Unsatisfiable edit variable: $fullName == $value strength: ${Strength.name(strength)}")
+                LibrarianLog.error("Unsatisfiable edit variable: $fullName == $value strength: $strength")
                 LibrarianLog.errorStackTrace(e)
             }
         }

@@ -410,7 +410,7 @@ object Symbolics {
     }
 
     // Constraint strength modifier
-    fun modifyStrength(constraint: Constraint, strength: Double): Constraint {
+    fun modifyStrength(constraint: Constraint, strength: Strength): Constraint {
         return Constraint(constraint, strength)
     }
 

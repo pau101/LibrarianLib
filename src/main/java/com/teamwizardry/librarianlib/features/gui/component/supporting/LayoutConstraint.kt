@@ -55,7 +55,7 @@ abstract class LayoutConstraint(internal val solverComponent: GuiComponent) {
                 remove(false)
                 add()
             } catch (e: UnsatisfiableConstraintException) {
-                LibrarianLog.error("Unsatisfiable constraint: `${this.stringRepresentation}` strength: ${Strength.name(strength)}")
+                LibrarianLog.error("Unsatisfiable constraint: `${this.stringRepresentation}` strength: $strength")
                 LibrarianLog.errorStackTrace(e)
             }
         }
@@ -67,7 +67,7 @@ abstract class LayoutConstraint(internal val solverComponent: GuiComponent) {
             solver.addConstraint(kiwiConstraint)
             solverComponent.layout.constraints.add(this)
         } catch (e: UnsatisfiableConstraintException) {
-            LibrarianLog.error("Unsatisfiable constraint: `${this.stringRepresentation}` strength: ${Strength.name(strength)}")
+            LibrarianLog.error("Unsatisfiable constraint: `${this.stringRepresentation}` strength: $strength")
             LibrarianLog.errorStackTrace(e)
         }
     }
