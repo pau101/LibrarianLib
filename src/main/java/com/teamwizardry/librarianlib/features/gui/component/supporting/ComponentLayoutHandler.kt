@@ -1,6 +1,7 @@
 package com.teamwizardry.librarianlib.features.gui.component.supporting
 
 import com.teamwizardry.librarianlib.core.LibrarianLog
+import com.teamwizardry.librarianlib.features.eventbus.Event
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponent
 import com.teamwizardry.librarianlib.features.gui.component.GuiComponentEvents
 import com.teamwizardry.librarianlib.features.helpers.vec
@@ -207,7 +208,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
             containingSolverComponent?.layout?.updateLayoutIfNeeded()
         } else if (needsLayout || solver?.changed == true) {
 
-            component.BUS.fire(GuiComponentEvents.PreLayoutEvent(component))
+            fireLayoutEvent(GuiComponentEvents.PreLayoutEvent(component))
 
             solver?.also { solver ->
                 addIntrinsic(solver)
@@ -215,7 +216,7 @@ class ComponentLayoutHandler(val component: GuiComponent) {
                 update(solver)
             }
 
-            component.BUS.fire(GuiComponentEvents.PostLayoutEvent(component))
+            fireLayoutEvent(GuiComponentEvents.PostLayoutEvent(component))
 
             needsLayout = false
             solver?.changed = false
@@ -270,10 +271,9 @@ class ComponentLayoutHandler(val component: GuiComponent) {
                 if (implicitSizeStrength != Strength.NONE && implicit != null) {
                     solver.setEditVariable(sizeX.variable, implicit.x, implicitSizeStrength, "width")
                     solver.setEditVariable(sizeY.variable, implicit.y, implicitSizeStrength, "height")
-                } else {
-                    solver.setEditVariable(sizeX.variable, component.size.x, widthStay, "width")
-                    solver.setEditVariable(sizeY.variable, component.size.y, heightStay, "height")
                 }
+                if(widthStay > implicitSizeStrength || implicit == null) solver.setEditVariable(sizeX.variable, component.size.x, widthStay, "width")
+                if(heightStay > implicitSizeStrength || implicit == null) solver.setEditVariable(sizeY.variable, component.size.y, heightStay, "height")
             } else {
                 solver.setEditVariable(sizeX.variable, component.size.x, Strength.REQUIRED, "width")
                 solver.setEditVariable(sizeY.variable, component.size.y, Strength.REQUIRED, "height")
@@ -286,10 +286,9 @@ class ComponentLayoutHandler(val component: GuiComponent) {
             if (implicitSizeStrength != Strength.NONE && implicit != null) {
                 solver.setEditVariable(sizeX.variable, implicit.x, implicitSizeStrength, "width")
                 solver.setEditVariable(sizeY.variable, implicit.y, implicitSizeStrength, "height")
-            } else {
-                solver.setEditVariable(sizeX.variable, component.size.x, widthStay, "width")
-                solver.setEditVariable(sizeY.variable, component.size.y, heightStay, "height")
             }
+            if(widthStay > implicitSizeStrength || implicit == null) solver.setEditVariable(sizeX.variable, component.size.x, widthStay, "width")
+            if(heightStay > implicitSizeStrength || implicit == null) solver.setEditVariable(sizeY.variable, component.size.y, heightStay, "height")
 
             solver.setEditVariable(posX.variable, component.pos.x, leftStay, "posX")
             solver.setEditVariable(posY.variable, component.pos.y, topStay, "posY")
@@ -328,8 +327,16 @@ class ComponentLayoutHandler(val component: GuiComponent) {
     private fun onAddedToLayoutContext() {
         constraintCallbacks.forEach(Runnable::run)
         component.relationships.components.forEach {
-            if(it.layout.solver != null) return@forEach
+            if(it.layout.solver != null || it.layout.baked) return@forEach
             it.layout.onAddedToLayoutContext()
+        }
+    }
+
+    private fun fireLayoutEvent(event: Event) {
+        component.BUS.fire(event)
+        component.relationships.components.forEach {
+            if(it.layout.solver != null || it.layout.baked) return@forEach
+            it.layout.fireLayoutEvent(event)
         }
     }
 
