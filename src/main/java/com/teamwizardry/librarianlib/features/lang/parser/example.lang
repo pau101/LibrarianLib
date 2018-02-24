@@ -1,0 +1,49 @@
+// comments
+/* and more
+ comments */
+
+// normal lang entry
+the.key.here=Some value just like normal
+the.other.key.here=Some long piece of text that \
+    is split across multiple lines. It also has \n\
+    \n\
+    paragraphs
+the.wrapped.key.here="Some piece of text here
+    With many lines
+
+    And all sorts of coolness like unicode: \u00A7, a shorthand for
+    a section symbol (used for colors): \&,
+    and the ability to escape \"double quotes\" and \'single quotes\'
+    (you can use either single or double quotes around a string like this)
+
+   \    and by adding a backslash before the first space you want to keep you can add leading whitespace"
+
+// for all your hierarchical lang key needs:
+root.key {
+    sub.key=I'm a sub key
+    // root.key.sub.key=I'm a sub key
+    sub.root {
+        sub.key=Subs are cool
+        //root.key.sub.root.sub.key=Subs are cool
+    }
+}
+
+#define WHAT_IS_THIS=preprocessor macro
+#define SAY_ITS_A(thing)="This is a...
+
+    $thing"
+#define SAY_WE_ARE(thing)=We are ${thing}s
+
+what.are.we=What are we? $SAY_WE_ARE(fuckin $WHAT_IS_THIS)
+// =What are we? We are fuckin preprocessor macros
+
+#define THIER_OWN=Outside
+some.key=$THEIR_OWN
+// =Outside
+localization.groups.can {
+    #define THEIR_OWN=Macros
+    inner.key=$THEIR_OWN
+    // =Macros
+}
+another.key=$THEIR_OWN
+// =Outside
