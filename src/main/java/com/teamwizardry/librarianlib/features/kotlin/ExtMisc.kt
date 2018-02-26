@@ -59,6 +59,8 @@ fun String.canLocalize(): Boolean {
 
 fun String.toRl(): ResourceLocation = ResourceLocation(this)
 val missingno = ResourceLocation("minecraft:missingno")
+fun ResourceLocation.parentDirectory()
+        = ResourceLocation(this.resourceDomain, this.resourcePath.substring(0, this.resourcePath.lastIndexOf('/')))
 
 fun <K, V> MutableMap<K, V>.withRealDefault(default: (K) -> V): DefaultedMutableMap<K, V> {
     return when (this) {

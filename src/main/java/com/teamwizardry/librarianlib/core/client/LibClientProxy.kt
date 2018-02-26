@@ -2,6 +2,7 @@ package com.teamwizardry.librarianlib.core.client
 
 import com.teamwizardry.librarianlib.core.LibrarianLib
 import com.teamwizardry.librarianlib.core.common.LibCommonProxy
+import com.teamwizardry.librarianlib.features.exlang.ExLangLoader
 import com.teamwizardry.librarianlib.features.forgeevents.CustomWorldRenderEvent
 import com.teamwizardry.librarianlib.features.helpers.VariantHelper
 import com.teamwizardry.librarianlib.features.helpers.vec
@@ -58,6 +59,7 @@ class LibClientProxy : LibCommonProxy(), IResourceManagerReloadListener {
         F3Handler
         ScissorUtil
         LibShaders
+        ExLangLoader
         ShaderHelper.init()
 
         val s = MethodHandleHelper.wrapperForGetter(Minecraft::class.java, "metadataSerializer_", "field_110452_an")(Minecraft.getMinecraft()) as MetadataSerializer

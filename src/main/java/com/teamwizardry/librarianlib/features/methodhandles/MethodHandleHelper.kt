@@ -257,16 +257,34 @@ object MethodHandleHelper {
     }
 
     @JvmStatic
-    fun <T : Any, V> delegateForStaticReadOnly(clazz: Class<*>, vararg fieldNames: String): ImmutableStaticFieldDelegate<T, V> {
+    fun <V> delegateForStaticReadOnly(clazz: Class<*>, vararg fieldNames: String): ImmutableStaticFieldDelegate<V> {
         val getter = wrapperForStaticGetter(clazz, *fieldNames)
         return ImmutableStaticFieldDelegate(getter)
     }
 
     @JvmStatic
-    fun <T : Any, V> delegateForStaticReadWrite(clazz: Class<*>, vararg fieldNames: String): MutableStaticFieldDelegate<T, V> {
+    fun <V> delegateForStaticReadWrite(clazz: Class<*>, vararg fieldNames: String): MutableStaticFieldDelegate<V> {
         val getter = wrapperForStaticGetter(clazz, *fieldNames)
         val setter = wrapperForStaticSetter(clazz, *fieldNames)
         return MutableStaticFieldDelegate(getter, setter)
+    }
+
+    // reified
+
+    inline fun <reified T : Any, V> delegateForReadOnly(vararg fieldNames: String): ImmutableFieldDelegate<T, V> {
+        return delegateForReadOnly(T::class.java, *fieldNames)
+    }
+
+    inline fun <reified T : Any, V> delegateForReadWrite(vararg fieldNames: String): MutableFieldDelegate<T, V> {
+        return delegateForReadWrite(T::class.java, *fieldNames)
+    }
+
+    inline fun <reified T : Any, V> delegateForStaticReadOnly(vararg fieldNames: String): ImmutableStaticFieldDelegate<V> {
+        return delegateForStaticReadOnly(T::class.java, *fieldNames)
+    }
+
+    inline fun <reified T : Any, V> delegateForStaticReadWrite(vararg fieldNames: String): MutableStaticFieldDelegate<V> {
+        return delegateForStaticReadWrite(T::class.java, *fieldNames)
     }
 
     //endregion
@@ -289,8 +307,8 @@ fun <V> Class<*>.mhStaticSetter(vararg names: String): (V) -> Unit = MethodHandl
 fun <T : Any, V> Class<T>.mhValDelegate(vararg names: String) = MethodHandleHelper.delegateForReadOnly<T, V>(this, *names)
 fun <T : Any, V> Class<T>.mhVarDelegate(vararg names: String) = MethodHandleHelper.delegateForReadWrite<T, V>(this, *names)
 
-fun <T : Any, V> Class<T>.mhStaticValDelegate(vararg names: String) = MethodHandleHelper.delegateForStaticReadOnly<T, V>(this, *names)
-fun <T : Any, V> Class<T>.mhStaticVarDelegate(vararg names: String) = MethodHandleHelper.delegateForStaticReadWrite<T, V>(this, *names)
+fun <T : Any, V> Class<T>.mhStaticValDelegate(vararg names: String) = MethodHandleHelper.delegateForStaticReadOnly<V>(this, *names)
+fun <T : Any, V> Class<T>.mhStaticVarDelegate(vararg names: String) = MethodHandleHelper.delegateForStaticReadWrite<V>(this, *names)
 
 fun <T : Any> Class<T>.mhMethod(name: String, obf: String?, vararg params: Class<*>) = MethodHandleHelper.wrapperForMethod(this, name, obf, *params)
 fun <T : Any> Class<T>.mhStaticMethod(name: String, obf: String?, vararg params: Class<*>) = MethodHandleHelper.wrapperForStaticMethod(this, name, obf, *params)

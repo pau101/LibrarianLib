@@ -47,3 +47,11 @@ localization.groups.can {
 }
 another.key=$THEIR_OWN
 // =Outside
+
+{ // a block without a key, just an isolated context.
+}
+
+
+Duplicates found when loading lang files for mod `modid`:
+key | filename(line:column)
+    | filename(line:column)

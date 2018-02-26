@@ -70,12 +70,12 @@ data class MutableFieldDelegate<in T, V>(val getter: (T) -> Any?, val setter: (T
 }
 
 
-data class ImmutableStaticFieldDelegate<in T, out V> @JvmOverloads constructor(val getter: () -> Any?, val cache: Boolean = false) : ReadOnlyProperty<T, V> {
+data class ImmutableStaticFieldDelegate<out V> @JvmOverloads constructor(val getter: () -> Any?, val cache: Boolean = false) : ReadOnlyProperty<Nothing?, V> {
     private var cachedValue: V? = null
     private var initialized = false
 
     @Suppress("UNCHECKED_CAST")
-    override operator fun getValue(thisRef: T, property: KProperty<*>): V {
+    override operator fun getValue(thisRef: Nothing?, property: KProperty<*>): V {
         if (initialized) return cachedValue!!
         val gotten = getter() as V
         if (!initialized && cache) {
@@ -86,9 +86,9 @@ data class ImmutableStaticFieldDelegate<in T, out V> @JvmOverloads constructor(v
     }
 }
 
-data class MutableStaticFieldDelegate<in T, V>(val getter: () -> Any?, val setter: (Any?) -> Unit) : ReadWriteProperty<T, V> {
+data class MutableStaticFieldDelegate<V>(val getter: () -> Any?, val setter: (Any?) -> Unit) : ReadWriteProperty<Nothing?, V> {
     @Suppress("UNCHECKED_CAST")
-    override operator fun getValue(thisRef: T, property: KProperty<*>) = getter() as V
+    override operator fun getValue(thisRef: Nothing?, property: KProperty<*>) = getter() as V
 
-    override operator fun setValue(thisRef: T, property: KProperty<*>, value: V) = setter(value)
+    override operator fun setValue(thisRef: Nothing?, property: KProperty<*>, value: V) = setter(value)
 }

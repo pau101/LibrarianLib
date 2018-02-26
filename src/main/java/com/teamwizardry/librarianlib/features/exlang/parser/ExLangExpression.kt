@@ -1,10 +1,10 @@
-package com.teamwizardry.librarianlib.features.lang.parser
+package com.teamwizardry.librarianlib.features.exlang.parser
 
-import com.teamwizardry.librarianlib.features.lang.lexer.LangLexer
-import com.teamwizardry.librarianlib.features.lang.lexer.LangSymbol.*
-import com.teamwizardry.librarianlib.features.lang.lexer.LangToken
+import com.teamwizardry.librarianlib.features.exlang.lexer.ExLangLexer
+import com.teamwizardry.librarianlib.features.exlang.lexer.ExLangSymbol.*
+import com.teamwizardry.librarianlib.features.exlang.lexer.ExLangToken
 
-class LangExpression(val lexer: LangLexer, val context: LangMacroContext) {
+class ExLangExpression(val lexer: ExLangLexer, val context: ExLangMacroContext) {
     private val parts = mutableListOf<IExpressionPart>()
 
     fun parse() {
@@ -35,13 +35,13 @@ private interface IExpressionPart {
     fun compute(): String
 }
 
-private class PartString(val token: LangToken): IExpressionPart {
+private class PartString(val token: ExLangToken): IExpressionPart {
     override fun compute(): String {
         return token.value
     }
 }
 
-private class PartEscapedCharacter(val token: LangToken): IExpressionPart {
+private class PartEscapedCharacter(val token: ExLangToken): IExpressionPart {
     override fun compute(): String {
         return escapeMap[token.value] ?:
                 throw EvaluationException("Invalid escape sequence `\\${token.value}`. Valid sequences are " +
@@ -70,18 +70,18 @@ private class PartEscapedCharacter(val token: LangToken): IExpressionPart {
     }
 }
 
-private class PartEscapedCodepoint(val token: LangToken): IExpressionPart {
+private class PartEscapedCodepoint(val token: ExLangToken): IExpressionPart {
     override fun compute(): String {
         val short = token.value.toShort(16)
         return short.toChar().toString()
     }
 }
 
-private class PartMacroReference(val token: LangToken, val context: LangMacroContext): IExpressionPart {
-    val parameters = mutableListOf<LangExpression>()
-    var macro: ILangMacro? = null
+private class PartMacroReference(val token: ExLangToken, val context: ExLangMacroContext): IExpressionPart {
+    val parameters = mutableListOf<ExLangExpression>()
+    var macro: IExLangMacro? = null
 
-    fun parse(lexer: LangLexer) {
+    fun parse(lexer: ExLangLexer) {
         macro = context.findMacro(token.value) ?: throw ParserException("Undefined macro ${token.value}", token)
 
         if (lexer.peekToken().symbol == MACRO_REFERENCE_PARAMS_BEGIN) {
@@ -91,7 +91,7 @@ private class PartMacroReference(val token: LangToken, val context: LangMacroCon
                 when(expressionToken.symbol) {
                     MACRO_REFERENCE_PARAMS_END -> break@infinite
                     EXPRESSION_BEGIN -> {
-                        val expression = LangExpression(lexer, context)
+                        val expression = ExLangExpression(lexer, context)
                         expression.parse()
                         parameters.add(expression)
                     }

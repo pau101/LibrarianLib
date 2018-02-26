@@ -1,14 +1,14 @@
-package com.teamwizardry.librarianlib.features.lang.parser
+package com.teamwizardry.librarianlib.features.exlang.parser
 
-import com.teamwizardry.librarianlib.features.lang.lexer.LangLexer
-import com.teamwizardry.librarianlib.features.lang.lexer.LangSymbol.*
-import com.teamwizardry.librarianlib.features.lang.lexer.LangToken
+import com.teamwizardry.librarianlib.features.exlang.lexer.ExLangLexer
+import com.teamwizardry.librarianlib.features.exlang.lexer.ExLangSymbol.*
+import com.teamwizardry.librarianlib.features.exlang.lexer.ExLangToken
 
-class LangMacro(val lexer: LangLexer, val location: LangToken?, val name: String, val block: LangBlock?): ILangMacro, LangMacroContext {
-    val parameters = mutableMapOf<String, ILangMacro>()
-    val expression = LangExpression(lexer, this)
+class ExLangMacro(val lexer: ExLangLexer, val location: ExLangToken?, val name: String, val block: ExLangBlock?): IExLangMacro, ExLangMacroContext {
+    val parameters = mutableMapOf<String, IExLangMacro>()
+    val expression = ExLangExpression(lexer, this)
 
-    override fun findMacro(name: String): ILangMacro? {
+    override fun findMacro(name: String): IExLangMacro? {
         return parameters[name] ?: block?.findMacro(name)
     }
 
@@ -39,7 +39,7 @@ class LangMacro(val lexer: LangLexer, val location: LangToken?, val name: String
     }
 }
 
-class ConstantMacro(val token: LangToken): ILangMacro {
+class ConstantMacro(val token: ExLangToken): IExLangMacro {
     var value = ""
     override fun computeValue(vararg params: String): String {
         if(params.isNotEmpty()) throw EvaluationException("Parameters passed to non-function value", token)
@@ -47,10 +47,10 @@ class ConstantMacro(val token: LangToken): ILangMacro {
     }
 }
 
-interface ILangMacro {
+interface IExLangMacro {
     fun computeValue(vararg params: String): String
 }
 
-interface LangMacroContext {
-    fun findMacro(name: String): ILangMacro?
+interface ExLangMacroContext {
+    fun findMacro(name: String): IExLangMacro?
 }

@@ -1,6 +1,6 @@
-package com.teamwizardry.librarianlib.features.lang.lexer
+package com.teamwizardry.librarianlib.features.exlang.lexer
 
-enum class LangSymbol {
+enum class ExLangSymbol {
     LANG_KEY,
 
     BLOCK_BEGIN,
@@ -18,5 +18,9 @@ enum class LangSymbol {
     MACRO_REFERENCE,
     MACRO_REFERENCE_PARAMS_BEGIN,
     MACRO_REFERENCE_PARAMS_END,
-    EXPRESSION_END;
+    EXPRESSION_END,
+
+    IMPORT_BEGIN,
+    PATH_COMPONENT,
+    PATH_END;
 }
