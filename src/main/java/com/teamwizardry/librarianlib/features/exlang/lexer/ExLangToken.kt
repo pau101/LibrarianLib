@@ -17,6 +17,10 @@ data class ExLangToken(val symbol: ExLangSymbol, val file: ResourceLocation, val
 
     val locationString: String
         get() {
-            return "$file(l$line:c$column)"
+            return "$file($line:$column)"
         }
+
+    override fun toString(): String {
+        return "{symbol: $symbol, location: $file($line:$column), text: `$value`}"
+    }
 }

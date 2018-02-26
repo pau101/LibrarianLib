@@ -11,6 +11,7 @@ import net.minecraft.world.World
 import net.minecraftforge.fml.common.FMLCommonHandler
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
+import java.util.*
 
 abstract class LoggerBase(name: String) {
     val debugMode = LibrarianLib.DEV_ENVIRONMENT
@@ -45,33 +46,48 @@ abstract class LoggerBase(name: String) {
         return arr
     }
 
+    /**
+     * Takes a message and args, and only calls String.format if args are passed. This is to prevent errors when an
+     * external piece of text with format tags is passed
+     */
+    private fun processFormatted(message: String, args: Array<out Any?>): String {
+        if(args.isNotEmpty()) {
+            try {
+                return String.format(message, *processFormatting(args))
+            } catch (e: IllegalFormatException) {
+                return "<<Format error, unformatted:>> $message"
+            }
+        }
+        return message
+    }
+
     fun error(message: String, vararg args: Any?) {
-        logger.log(Level.ERROR, String.format(message, *processFormatting(args)))
+        logger.log(Level.ERROR, processFormatted(message, args))
     }
 
     fun error(e: Exception, message: String, vararg args: Any?) {
-        logger.log(Level.ERROR, String.format(message, *processFormatting(args)))
+        logger.log(Level.ERROR, processFormatted(message, args))
         e.printStackTrace()
     }
 
     fun warn(message: String, vararg args: Any?) {
-        logger.log(Level.WARN, String.format(message, *processFormatting(args)))
+        logger.log(Level.WARN, processFormatted(message, args))
     }
 
     fun info(message: String, vararg args: Any?) {
-        logger.log(Level.INFO, String.format(message, *processFormatting(args)))
+        logger.log(Level.INFO, processFormatted(message, args))
     }
 
     fun debug(message: String, vararg args: Any?) {
-        if (debugMode) logger.log(Level.INFO, String.format(message, *processFormatting(args)))
+        if (debugMode) logger.log(Level.INFO, processFormatted(message, args))
     }
 
     fun message(player: EntityPlayer, message: String, vararg args: Any?) {
-        player.sendMessage(String.format(message, *processFormatting(args)))
+        player.sendMessage(processFormatted(message, args))
     }
 
     fun warn(player: EntityPlayer, message: String, vararg args: Any?) {
-        player.sendStatusMessage(String.format(message, *processFormatting(args)).toComponent().setStyle(Style().setColor(TextFormatting.RED)), false)
+        player.sendStatusMessage(processFormatted(message, args).toComponent().setStyle(Style().setColor(TextFormatting.RED)), false)
     }
 
     /**

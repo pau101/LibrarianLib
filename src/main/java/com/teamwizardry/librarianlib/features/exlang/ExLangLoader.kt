@@ -36,9 +36,10 @@ val LanguageMap.languageList_mh by MethodHandleHelper
         )
 
 object ExLangLoader {
-    val DOCS_PREFIX = "// Written in the LibrarianLib ExLang format. More information at: https://wiki.teamwizardry.com/wiki/ExLang\n"
+    val DOCS_PREFIX = "// Written in the LibrarianLib ExLang format. More information at: https://wiki.teamwizardry.com/wiki/ExLang"
     val invalidHeaders = mutableListOf<ResourceLocation>()
     val correctedHeaders = mutableListOf<ResourceLocation>()
+
     init {
         LibrarianLib.PROXY.addReloadHandler(ClientRunnable {
             reload(Minecraft.getMinecraft().resourceManager)
@@ -87,40 +88,68 @@ object ExLangLoader {
         }
 
         LanguageMap_instance_mh.languageList_mh.putAll(entries)
+
+        correctedHeaders.map {
+            LibrarianLog.info("Added 'Written in...' header to $it")
+        }
+        if(invalidHeaders.isNotEmpty()) {
+            val list = mutableListOf<String>()
+
+            list.add("The following files don't have the correct header and could not be automatically corrected")
+            list.addAll(invalidHeaders.map { "$it" })
+            list.add("This error will only occur in a development environment" +
+                    " and thus should never happen to a resource pack author or user")
+            list.add("")
+            list.add("All ExLang files are required to have the following header (minus the backticks):")
+            list.add("`$DOCS_PREFIX`")
+            list.add("This is for the sake of translators, since they likely have not have seen ExLang files before" +
+                    " and will need an explanation of how they work before they can begin translating.")
+
+            LibrarianLog.bigDie("ERROR: ExLang files missing headers", list)
+        }
     }
 
     fun checkHeader(location: ResourceLocation, stream: InputStream): Reader {
-        val resourceText = IOUtils.toString(stream, Charsets.UTF_8)
-        IOUtils.closeQuietly(stream)
+        try {
+            val resourceText = IOUtils.toString(stream, Charsets.UTF_8)
 
-        if(LibrarianLib.DEV_ENVIRONMENT) {
-            var generate = false
+            if (LibrarianLib.DEV_ENVIRONMENT) {
+                var generate = false
 
-            val file = Paths.get(JsonGenerationUtils.getAssetPath(location.resourceDomain), location.resourcePath).toFile()
-            if (file.exists()) {
-                try {
-                    val localText = file.readText()
-                    if (localText == resourceText) generate = true
-                } catch (e: IOException) {
-                    LibrarianLog.error("Error reading local ExLang file", e)
-                }
-            }
-
-            if (!resourceText.startsWith(DOCS_PREFIX)) {
-                if (generate) {
+                val file = Paths.get(JsonGenerationUtils.getAssetPath(location.resourceDomain), location.resourcePath).toFile()
+                if (file.exists()) {
                     try {
-                        file.writeText(DOCS_PREFIX + resourceText)
-                        correctedHeaders.add(location)
+                        val localText = file.readText()
+                        if (localText == resourceText) generate = true
                     } catch (e: IOException) {
-                        LibrarianLog.error("Error writing corrected ExLang file", e)
+                        LibrarianLog.error("Error reading local ExLang file", e)
                     }
-                } else {
-                    invalidHeaders.add(location)
+                }
+
+                if (!resourceText.startsWith(DOCS_PREFIX) && location !in correctedHeaders) {
+                    if (generate) {
+                        try {
+                            file.writeText(DOCS_PREFIX + "\n" + resourceText)
+                            correctedHeaders.add(location)
+                        } catch (e: IOException) {
+                            LibrarianLog.error("Error writing corrected ExLang file", e)
+                        }
+                    } else {
+                        invalidHeaders.add(location)
+                    }
                 }
             }
-        }
 
-        return StringReader(resourceText)
+            if (resourceText.isEmpty()) { // the lexer barfs on empty input
+                return StringReader(" ")
+            }
+            return StringReader(resourceText)
+        } catch(e: IOException) {
+            LibrarianLog.error("Error loading ExLang file $location", e)
+            return StringReader(" ")
+        } finally {
+            IOUtils.closeQuietly(stream)
+        }
     }
 }
 
@@ -154,6 +183,8 @@ class ExLangDomain(val domain: String, manager: FallbackResourceManager, val lan
     }
 
     fun warnDuplicates(pack: IResourcePack, language: String, duplicated: Map<String, List<ExLangValue>>) {
+        if(duplicated.isEmpty()) return
+
         LibrarianLog.warn("Duplicate lang entries when loading $language.exlang for $domain in pack ${pack.packName}")
         duplicated.forEach { (id, occurrences) ->
             var prefix = id

@@ -3,7 +3,7 @@ package com.teamwizardry.librarianlib.features.exlang.lexer;
 import java.util.LinkedList;
 import org.jetbrains.annotations.NotNull;
 import net.minecraft.util.ResourceLocation;
-
+import com.teamwizardry.librarianlib.features.exlang.parser.LexerException;
 /**
  * This class is a simple example lexer.
  */
@@ -20,6 +20,7 @@ import net.minecraft.util.ResourceLocation;
 %{
     public ResourceLocation file = new ResourceLocation("missingno");
 
+    private ExLangToken lastSuccessfulToken = null;
     private ExLangToken peekedToken = null;
 
     public @NotNull ExLangToken nextToken() throws java.io.IOException {
@@ -28,15 +29,25 @@ import net.minecraft.util.ResourceLocation;
             peekedToken = null;
             return token;
         } else {
-            return yylex();
+            lastSuccessfulToken = errorLex();
+            return lastSuccessfulToken;
         }
     }
 
     public @NotNull ExLangToken peekToken() throws java.io.IOException {
         if(peekedToken == null) {
-            peekedToken = yylex();
+            peekedToken = errorLex();
+            lastSuccessfulToken = peekedToken;
         }
         return peekedToken;
+    }
+
+    private ExLangToken errorLex() {
+        try {
+            return yylex();
+        } catch (Throwable e) {
+            throw new LexerException("Error getting next token.", lastSuccessfulToken, e);
+        }
     }
 
     private LinkedList<Integer> stateStack = new LinkedList<>();
@@ -69,22 +80,15 @@ import net.minecraft.util.ResourceLocation;
     return symbol(ExLangSymbol.BLOCK_END);
 %eofval}
 
-LineTerminator = \r|\n|\r\n
-InputCharacter = [^\r\n]
-WhiteSpace = [ \t\f]
-WhiteSpaceOrNewline     = {LineTerminator} | {WhiteSpace}
-
 /* comments */
 Comment = {TraditionalComment} | {EndOfLineComment}
 
-TraditionalComment   = "/*" [^*] ~"*/" | "/*" "*"+ "/"
-// Comment can be the last line of the file, without line terminator.
-EndOfLineComment     = "//" {InputCharacter}* {LineTerminator}?
-CommentContent       = ( [^*] | \*+ [^/*] )*
+TraditionalComment   = "/*" ([^*]|\*[^/])* ~"*/"
+EndOfLineComment     = "//" [^\R]* \R?
 
 Identifier = [:jletter:] [:jletterdigit:]*
 
-LanguageKey = [a-z.]+ //TODO: Verify this regex
+LanguageKey = [\w.]+ //TODO: Verify this regex
 
 %state MACRO_DEFINITION_IDENTIFIER, MACRO_DEFINITION_PARAMS_OR_BEGIN, MACRO_DEFINITION_PARAM,
 %state MACRO_DEFINITION_NEXT_PARAM_OR_END, MACRO_DEFINITION_BEGIN
@@ -101,7 +105,7 @@ LanguageKey = [a-z.]+ //TODO: Verify this regex
 
 %%
 
-{WhiteSpaceOrNewline} { /* ignore */ }
+[\R\s] { /* ignore */ }
 
 {Comment} { /* ignore */ }
 
@@ -212,7 +216,7 @@ LanguageKey = [a-z.]+ //TODO: Verify this regex
         yybegin(SINGLE_QUOTED_EXPRESSION);
         return symbol(ExLangSymbol.EXPRESSION_BEGIN);
     }
-    {WhiteSpace}+ { /* ignore */ }
+    \s+ { /* ignore */ }
     [^] {
         yypushback(1);
         yybegin(BARE_EXPRESSION);
@@ -247,9 +251,9 @@ LanguageKey = [a-z.]+ //TODO: Verify this regex
     }
 }
 <BARE_EXPRESSION> {
-    \\{LineTerminator} {WhiteSpace}+ { return symbol(ExLangSymbol.STRING, yytext().replaceAll("\n\\s+", "\n")); }
+    \\\R \s+ { return symbol(ExLangSymbol.STRING, yytext().replaceAll("\n\\s+", "\n")); }
     [^\n\r$,\\]+ { return symbol(ExLangSymbol.STRING, yytext()); }
-    {LineTerminator} {
+    \R {
         _expressionEndOnComma = false;
 
         popState();
@@ -257,8 +261,8 @@ LanguageKey = [a-z.]+ //TODO: Verify this regex
     }
 }
 <DOUBLE_QUOTED_EXPRESSION> {
-    \\{LineTerminator} {WhiteSpace}+ { return symbol(ExLangSymbol.STRING, yytext().replaceAll("\n\\s+", "")); }
-    {LineTerminator} {WhiteSpace}+ { return symbol(ExLangSymbol.STRING, yytext().replaceAll("\n\\s+", "\n")); }
+    \\\R \s+ { return symbol(ExLangSymbol.STRING, yytext().replaceAll("\n\\s+", "")); }
+    \R \s+ { return symbol(ExLangSymbol.STRING, yytext().replaceAll("\n\\s+", "\n")); }
     [^\n\r$,\"\\]+ { return symbol(ExLangSymbol.STRING, yytext()); }
     "\"" {
         _expressionEndOnComma = false;
@@ -268,8 +272,8 @@ LanguageKey = [a-z.]+ //TODO: Verify this regex
     }
 }
 <SINGLE_QUOTED_EXPRESSION> {
-    \\{LineTerminator} {WhiteSpace}+ { return symbol(ExLangSymbol.STRING, yytext().replaceAll("\n\\s+", "")); }
-    {LineTerminator} {WhiteSpace}+ { return symbol(ExLangSymbol.STRING, yytext().replaceAll("\n\\s+", "\n")); }
+    \\\R \s+ { return symbol(ExLangSymbol.STRING, yytext().replaceAll("\n\\s+", "")); }
+    \R \s+ { return symbol(ExLangSymbol.STRING, yytext().replaceAll("\n\\s+", "\n")); }
     [^\n\r$,'\\]+ { return symbol(ExLangSymbol.STRING, yytext()); }
     "'" {
         _expressionEndOnComma = false;
@@ -282,7 +286,7 @@ LanguageKey = [a-z.]+ //TODO: Verify this regex
 // ================================================ Macro references ================================================ //
 
 <MACRO_REFERENCE_PARAMS_OR_END> {
-    {WhiteSpace}* "(" {
+    \s* "(" {
         pushState(MACRO_REFERENCE_NEXT_PARAM_OR_END);
 
         _expressionEndOnComma = true;
@@ -308,4 +312,4 @@ LanguageKey = [a-z.]+ //TODO: Verify this regex
 
 // =================================================== Whitespace =================================================== //
 
-{WhiteSpaceOrNewline} { /* ignore */ }
+[\R\s] { /* ignore */ }

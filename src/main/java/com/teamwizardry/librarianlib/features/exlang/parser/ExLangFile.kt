@@ -23,14 +23,8 @@ class ExLangFile(val resourcePack: IResourcePack, val loc: ResourceLocation, val
         if(!resourcePack.resourceExists(loc)) {
             throw ParserException("Could not find file $loc in resource pack ${resourcePack.packName}")
         }
-        val lexer =
-                try {
-                    val reader = ExLangLoader.checkHeader(loc, resourcePack.getInputStream(loc))
-                    ExLangLexer(reader)
-                } catch(e: IOException) {
-                    LibrarianLog.error(e, "Reading $loc")
-                    ExLangLexer(StringReader(""))
-                }
+        val reader = ExLangLoader.checkHeader(loc, resourcePack.getInputStream(loc))
+        val lexer = ExLangLexer(reader)
         lexer.file = loc
 
         root = ExLangBlock(this, lexer, null, "", null)

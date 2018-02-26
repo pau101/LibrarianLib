@@ -8,6 +8,7 @@ import com.teamwizardry.librarianlib.test.animator.AnimatorEntryPoint
 import com.teamwizardry.librarianlib.test.cap.CapabilityTest
 import com.teamwizardry.librarianlib.test.chunkdata.ChunkDataEntryPoint
 import com.teamwizardry.librarianlib.test.container.ContainerEntryPoint
+import com.teamwizardry.librarianlib.test.exlang.ExLangEntryPoint
 import com.teamwizardry.librarianlib.test.fx.FXEntryPoint
 import com.teamwizardry.librarianlib.test.gui.GuiEntryPoint
 import com.teamwizardry.librarianlib.test.saving.SavingEntryPoint
@@ -90,7 +91,8 @@ class TestMod {
                 WorldDataEntryPoint,
                 AnimatorEntryPoint,
 //                RenderEntryPoint, // DO NOT ENABLE THIS OR ALL IS SPONGE
-                EndEntryPoint
+                EndEntryPoint,
+                ExLangEntryPoint
         )
 
         object Tab : ModCreativeTab() {
