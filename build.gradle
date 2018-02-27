@@ -99,6 +99,7 @@ configurations {
 
 dependencies {
     ktlint "com.github.shyiko:ktlint:0.14.0"
+    compile "org.antlr:antlr4-runtime:4.5.1"
     //required 'com.github.Eladkay:Mixin:-SNAPSHOT'
 // todo once mcmultipart is 1.11
 //    deobfCompile "MCMultiPart:MCMultiPart:1.2.1:universal"

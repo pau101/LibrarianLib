@@ -1,0 +1,16 @@
+// foo bar baz and stuff
+
+foo = "foo bar \" baz" // foo and stuff
+bop = 'and more '+$FOO("bob", $JOE+'cool'+$FOO('ref', 'nest'))
+
+foo {
+    bop = "baz"
+    sameline="thing"
+    key = "value
+    and stuff"
+    sub {
+        lots = "of fun"
+    }
+}
+
+// foo
