@@ -17,11 +17,11 @@ directive: defineVarDirective | defineFuncDirective | importDirective;
 importDirective: IMPORT expression;
 defineVarDirective: DEFINE IDENTIFIER EQUALS expression;
 defineFuncDirective: DEFINE IDENTIFIER PARAMS_BEGIN defineParams PARAMS_END EQUALS expression;
-defineParams: (IDENTIFIER (PARAM_SEPARATOR IDENTIFIER)*)?;
+defineParams: IDENTIFIER (PARAM_SEPARATOR IDENTIFIER)*;
 
-expression: ((string | macroReference | macroCall) (PLUS (string | macroReference | macroCall))*);//(macroReference | macroCall | string);
+expression: (stringExpression | macroCallExpression | macroReferenceExpression);//(macroReference | macroCall | string);
 
-macroReference: MACRO_REF;
-macroCall: MACRO_REF PARAMS_BEGIN (expression (PARAM_SEPARATOR expression)*)? PARAMS_END;
+stringExpression: STRING_BEGIN (ESCAPE_SEQUENCE | TEXT | macroCallExpression | macroReferenceExpression)* STRING_END;
+macroCallExpression: MACRO_CALL (expression (PARAM_SEPARATOR expression)*)? PARAMS_END;
+macroReferenceExpression: MACRO_REF;
 
-string: STRING;

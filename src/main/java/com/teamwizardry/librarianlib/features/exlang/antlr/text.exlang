@@ -1,7 +1,11 @@
 // foo bar baz and stuff
 
+#import "somePath/$DIR/andStuff"
+#define JOE="Joe the rando"
+#define FOO(first, second)="First we have $first, then we have $second"
+
 foo = "foo bar \" baz" // foo and stuff
-bop = 'and more '+$FOO("bob", $JOE+'cool'+$FOO('ref', 'nest'))
+bop = "and more $FOO('bob', '$JOE cool $FOO("ref", "nest")')"
 
 foo {
     bop = "baz"
