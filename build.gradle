@@ -71,6 +71,14 @@ minecraft {
     replaceIn 'LibrarianLib.kt'
 }
 
+sourceSets {
+    main {
+        java {
+            srcDirs 'gen'
+        }
+    }
+}
+
 import net.minecraftforge.gradle.user.TaskSourceCopy
 
 // Enables source replacements for Kotlin code
@@ -99,7 +107,7 @@ configurations {
 
 dependencies {
     ktlint "com.github.shyiko:ktlint:0.14.0"
-    compile "org.antlr:antlr4-runtime:4.5.1"
+    compile "org.antlr:antlr4-runtime:4.7.1"
     //required 'com.github.Eladkay:Mixin:-SNAPSHOT'
 // todo once mcmultipart is 1.11
 //    deobfCompile "MCMultiPart:MCMultiPart:1.2.1:universal"
@@ -109,6 +117,7 @@ dependencies {
 reobf {
     jar {
 //        extraLines "PK: package/name com/teamwizardry/librarianlib/shade/package/name"
+        extraLines "PK: org/antlr com/teamwizardry/librarianlib/shade/org/antlr"
     }
 }
 
@@ -148,6 +157,7 @@ jar {
 
 task sourceJar(type: Jar, dependsOn: "sourceMainJava", overwrite: true) {
     from "src/main/java"
+    from "gen"
     classifier = 'sources'
 }
 
@@ -176,6 +186,7 @@ idea {
         sourceDirs += file('src/api/java')
         sourceDirs += file('src/test/java')
         sourceDirs += file('src/test/resources')
+        sourceDirs += file('gen')
         testSourceDirs = []
     }
     project {

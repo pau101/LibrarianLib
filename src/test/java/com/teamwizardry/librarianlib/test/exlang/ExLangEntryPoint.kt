@@ -25,7 +25,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent
 object ExLangEntryPoint: TestEntryPoint {
 
     override fun preInit(event: FMLPreInitializationEvent) {
-
+        ExLangItemRegister
     }
 
     override fun init(event: FMLInitializationEvent) {
@@ -37,6 +37,10 @@ object ExLangEntryPoint: TestEntryPoint {
     override fun postInit(event: FMLPostInitializationEvent) {
 
     }
+}
+
+object ExLangItemRegister {
+    val reload = ItemExLangReload()
 }
 
 
@@ -132,5 +136,4 @@ abstract class ExLangTest {
     }
 }
 data class TestFailure(val key: String, val expectedValue: String, val translatedValue: String)
-
 

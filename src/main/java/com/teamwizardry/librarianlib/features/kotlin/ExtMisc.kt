@@ -57,10 +57,19 @@ fun String.canLocalize(): Boolean {
     return LibrarianLib.PROXY.canTranslate(this)
 }
 
+fun String.indent(levels: Int = 1, indent: String = "\t") = indent * levels + this.replace("\\R".toRegex(), "$0${indent * levels}")
+
 fun String.toRl(): ResourceLocation = ResourceLocation(this)
 val missingno = ResourceLocation("minecraft:missingno")
-fun ResourceLocation.parentDirectory()
-        = ResourceLocation(this.resourceDomain, this.resourcePath.substring(0, this.resourcePath.lastIndexOf('/')))
+
+fun <T> ListIterator<T>.peekNext(): T {
+    this.next()
+    return this.previous()
+}
+fun <T> ListIterator<T>.peekPrevious(): T {
+    this.previous()
+    return this.next()
+}
 
 fun <K, V> MutableMap<K, V>.withRealDefault(default: (K) -> V): DefaultedMutableMap<K, V> {
     return when (this) {

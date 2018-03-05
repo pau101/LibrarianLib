@@ -1,11 +1,13 @@
 // foo bar baz and stuff
 
-#import "somePath/$DIR/andStuff"
+#import "somePath/andStuff"
 #define JOE="Joe the rando"
 #define FOO(first, second)="First we have $first, then we have $second"
 
 foo = "foo bar \" baz" // foo and stuff
-bop = "and more $FOO('bob', '$JOE cool $FOO("ref", "nest")')"
+bop = "and more $FOO('bob', '${JOE}s cool $FOO("ref w/ \u00FF unicode", "nest")')"
+
+#undefine FOO
 
 foo {
     bop = "baz"
@@ -16,5 +18,12 @@ foo {
         lots = "of fun"
     }
 }
+
+{
+    #define JOE="Sike! It's Bob!"
+    some.root_key.says_bob=$JOE
+}
+
+some.root_key.back_to_joe=$JOE
 
 // foo
